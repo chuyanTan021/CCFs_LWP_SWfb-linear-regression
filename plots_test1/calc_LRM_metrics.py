@@ -264,10 +264,14 @@ def calc_LRM_metrics(**model_data):
 
 
     # put 'Tr_sst'/data into 'fitLRM' FUNCTION to get predicted LWP values
-    rawdata_dict =  fitLRM(C_dict, 270.0 , s_range, y_range, x_range)
+    
+    Tr_sst   =  0.0   ###.. important line
+    
+    rawdata_dict =  fitLRM(C_dict, Tr_sst , s_range, y_range, x_range)
     rawdata_dict2 = p4plot1(rawdata_dict, s_range, y_range, x_range, shape_yr_pi, shape_yr_abr)
+    
     WD = '/glade/work/chuyan/Research/linear_regression_CCFs_Clouds_metrics/plots_test1/'
-    savez(WD+C_dict['model_data']['modn']+'_dats', model_data=C_dict['model_data'], rawdata_dict=rawdata_dict2 )
+    savez(WD+C_dict['model_data']['modn'] +'_'+str(Tr_sst)+'_dats', model_data=C_dict['model_data'], rawdata_dict=rawdata_dict2)
     
     
     return rawdata_dict2
@@ -294,8 +298,8 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     dict1_mon_bin_abr  = dict0_abr_var['dict1_mon_bin_abr']
 
     # data array in which shapes?
-    shape_yr_PI = dict1_yr_bin_PI['LWP_yr_bin'].shape
-    shape_yr_abr = dict1_yr_bin_abr['LWP_yr_bin'].shape
+    shape_yr_PI_3 = dict1_yr_bin_PI['LWP_yr_bin'].shape
+    shape_yr_abr_3 = dict1_yr_bin_abr['LWP_yr_bin'].shape
 
     shape_yr_PI_gmt = dict1_yr_bin_PI['gmt_yr_bin'].shape
     shape_yr_abr_gmt = dict1_yr_bin_abr['gmt_yr_bin'].shape
@@ -386,6 +390,10 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     #print('result1 coef: ', result1.coef_)
     #print('result1 intercept: ', result1.intercept_)
 
+    #..Save them into rawdata_dict
+    aeffi  = result1.coef_
+    aint   = result1.intercept_
+
     '''
     #..for test
     a = load('sensitivity_4ccfs_ipsl270.npy')
@@ -395,23 +403,24 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     '''
 
     #..Remove abnormal and missing values , train model with TR sst < Tr_SST.K
-    XX = np.array([dict2_predi_fla_PI['SST'][ind7], dict2_predi_fla_PI['p_e'][ind7], dict2_predi_fla_PI['LTS'][ind7], dict2_predi_fla_PI['SUB'][ind7]])
 
-    regr2=linear_model.LinearRegression()
-    result2 = regr2.fit(XX.T, dict2_predi_fla_PI['LWP'][ind7])   #..regression for LWP WITH LTS and skin-T < TR_sst
+    XX = np.array([dict2_predi_fla_PI['SST'][ind7], dict2_predi_fla_PI['p_e'][ind7], dict2_predi_fla_PI['LTS'][ind7], dict2_predi_fla_PI['SUB'][ind7]])
+    if len(ind7)!=0:
+        regr2=linear_model.LinearRegression()
+        result2 = regr2.fit(XX.T, dict2_predi_fla_PI['LWP'][ind7])   #..regression for LWP WITH LTS and skin-T < TR_sst
+
+        beffi  = result2.coef_
+        bint   = result2.intercept_
+
+    else:
+        beffi  = full(4, 0.0)
+        bint   = 0.0
+
 
     #print('result2 coef: ', result2.coef_)
     #print('result2 intercept: ', result2.intercept_)
 
-
-    #..Save them into rawdata_dict
-    aeffi  = result1.coef_
-    aint   = result1.intercept_
-
-    beffi  = result2.coef_
-    bint   = result2.intercept_
-
-
+    #..save them into rawdata_dict
     C_dict['LRM_le'] = (aeffi, aint)
     C_dict['LRM_st'] = (beffi, bint)
     
@@ -424,7 +433,7 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     YB[ind7] = sstltlwp_predi
     
     # 'YB' resample into the shape of 'LWP_yr_bin':
-    C_dict['LWP_predi_bin_PI']   =  array(YB).reshape(shape_yr_PI)
+    C_dict['LWP_predi_bin_PI']   =  array(YB).reshape(shape_yr_PI_3)
     print('  predicted LWP array for PI, shape in ',  C_dict['LWP_predi_bin_PI'].shape)
     
 
@@ -432,8 +441,12 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     MSE_shape6 =  mean_squared_error(dict2_predi_fla_PI['LWP'][ind6].reshape(-1,1), sstlelwp_predi.reshape(-1,1))
     print('RMSE_shape6(PI): ', sqrt(MSE_shape6))
 
-    R_2_shape7  = r2_score(dict2_predi_fla_PI['LWP'][ind7].reshape(-1, 1), sstltlwp_predi.reshape(-1, 1))
-    print('R_2_shape7: ', R_2_shape7)
+    if len(ind7)!=0:
+        R_2_shape7  = r2_score(dict2_predi_fla_PI['LWP'][ind7].reshape(-1, 1), sstltlwp_predi.reshape(-1, 1))
+        print('R_2_shape7: ', R_2_shape7)
+    else:
+        R_2_shape7  = 0.0
+        print('R_2_shape7 = \'0\' because Tr_sst <= all available T_skin data')
 
     MSE_shape1 =  mean_squared_error(dict2_predi_fla_PI['LWP'].reshape(-1,1), YB.reshape(-1,1))
     print('RMSE_shape1: ', sqrt(MSE_shape1))
@@ -443,7 +456,7 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
 
     print('examine regres-mean Lwp for pi-C shape6:', mean(dict2_predi_fla_PI['LWP'][ind6]), mean(sstlelwp_predi))
     print('examine regres-mean Lwp for pi-C shape7:', mean(dict2_predi_fla_PI['LWP'][ind7]), mean(sstltlwp_predi))
-    
+
     
     # ABR
     shape_fla_abr   =  dict2_predi_fla_abr['LWP'].shape
@@ -500,7 +513,7 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     YB_abr[ind6_abr]  =   sstlelwp_predi_abr
     YB_abr[ind7_abr]  =   sstltlwp_predi_abr
     # 'YB' reshaple into the shape of 'LWP_yr_bin_abr':
-    C_dict['LWP_predi_bin_abr']   =  array(YB_abr).reshape(shape_yr_abr)
+    C_dict['LWP_predi_bin_abr']   =  array(YB_abr).reshape(shape_yr_abr_3)
     
     print(' predicted LWP array for abrupt4xCO2, shape in ',  C_dict['LWP_predi_bin_abr'].shape)  
     

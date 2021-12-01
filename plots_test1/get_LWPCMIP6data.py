@@ -24,7 +24,7 @@ def get_LWPCMIP6(modn='IPSL-CM6A-LR', consort='IPSL', cmip='cmip6', exper='', en
     #else:
     #    amip = True
     #print(modn)
-#   modn='IPSL-CM5A-LR'; consort='IPSL'; cmip='cmip5'; exper='amip'; ensmem='r1i1p1'; gg=''; typevar='Amon'
+    #. modn='IPSL-CM5A-LR'; consort='IPSL'; cmip='cmip5'; exper='amip'; ensmem='r1i1p1'; gg=''; typevar='Amon'
     if exper == 'historical':
         time1 = [1950, 1, 1]
         time2 = [2014, 12, 30]
@@ -38,7 +38,7 @@ def get_LWPCMIP6(modn='IPSL-CM6A-LR', consort='IPSL', cmip='cmip6', exper='', en
     exper = 'abrupt-4xCO2'
     if exper == 'abrupt-4xCO2':
         
-        TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1],time2=[2149,12,31])[-1]
+        TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1],time2=[ 3349, 12, 31])[-1]
         time1=[int(min(TEST1_time[:,0])),1,1]
         time2=[int(max(TEST1_time[:,0])),12,31]
     
@@ -66,8 +66,8 @@ def get_LWPCMIP6(modn='IPSL-CM6A-LR', consort='IPSL', cmip='cmip6', exper='', en
 
     #print(sfc_T_abr.shape)
     #..1800 months =150 yrs for CESM2:abrupt experiemnt    
-    inputVar_abr = {'sfc_T': sfc_T_abr, 'T_700': T_700_abr, 'sfc_P': sfc_P_abr, 'sub': sub_abr, 'clivi': clivi_abr,
-                 'clwvi': clwvi_abr, 'tas': tas_abr, 'P': P_abr, 'E': E_abr, 'prw': prw_abr, 'pres': Pres_abr, 'lat':lat_abr, 'lon':lon_abr, 'times':times_abr}
+    inputVar_abr = {'sfc_T': sfc_T_abr, 'T_700': T_700_abr, 'sfc_P': sfc_P_abr, 'sub': sub_abr, 'clivi': clivi_abr, 
+                    'clwvi':clwvi_abr, 'tas': tas_abr, 'P': P_abr, 'E': E_abr, 'prw': prw_abr, 'pres': Pres_abr, 'lat':lat_abr, 'lon':lon_abr, 'times':times_abr}
     
     
     
@@ -75,9 +75,9 @@ def get_LWPCMIP6(modn='IPSL-CM6A-LR', consort='IPSL', cmip='cmip6', exper='', en
     exper = 'piControl'
     if exper == 'piControl':
         
-        TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1], time2=[8000,12,31])[-1]
+        TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1], time2=[8000, 12,31])[-1]
         timep1=[int(min(TEST2_time[:,0])),1,1] #.. max-799
-        timep2=[int(min(TEST2_time[:,0]))+98,12,31]#.. max-750
+        timep2=[int(min(TEST2_time[:,0]))+98,12,31] #.. max-750
         
         print (timep1, timep2)
     
