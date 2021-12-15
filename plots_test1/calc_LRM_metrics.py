@@ -265,9 +265,9 @@ def calc_LRM_metrics(**model_data):
 
     # put 'Tr_sst'/data into 'fitLRM' FUNCTION to get predicted LWP values
     
-    Tr_sst   =  0.0   ###.. important line
+    Tr_sst   = 250.0   ###.. important line
     
-    rawdata_dict =  fitLRM(C_dict, Tr_sst , s_range, y_range, x_range)
+    rawdata_dict =  fitLRM(C_dict, Tr_sst, s_range, y_range, x_range)
     rawdata_dict2 = p4plot1(rawdata_dict, s_range, y_range, x_range, shape_yr_pi, shape_yr_abr)
     
     WD = '/glade/work/chuyan/Research/linear_regression_CCFs_Clouds_metrics/plots_test1/'
@@ -275,6 +275,11 @@ def calc_LRM_metrics(**model_data):
     
     
     return rawdata_dict2
+
+
+
+
+
 
 
 def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
@@ -342,7 +347,7 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     C_dict['dict2_predi_nor_abr']  = dict2_predi_nor_abr
     
     print('shape1: ', dict2_predi_fla_PI['LWP'].shape)     # shape1
-    shape_fla_PI   =  dict2_predi_fla_PI['LWP'].shape
+    shape_fla_PI   =   dict2_predi_fla_PI['LWP'].shape
     #print(min(dict2_predi_fla_PI['LTS']),  max(dict2_predi_fla_PI['LTS']) )
 
     # PI
@@ -354,7 +359,7 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     ind_false = nonzero(ind1==False)   
     #..Sign the the indexing into YB, or YB value will have a big changes
     print('shape2: ', array(ind_true).shape)        # shape2
-    #print(argwhere(isnan(dict2_predi_fla_PI['LTS'][ind_true])==True))
+    #  print(argwhere(isnan(dict2_predi_fla_PI['LTS'][ind_true])==True))
 
 
     #..Split data points with skin Temperature largerorEqual /Smaller than TR_sst: 
@@ -373,10 +378,13 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     #..designate LWP single-array's value, PI
     YB =  full((shape_fla_PI), 0.0)
     YB[ind_false] =  dict2_predi_fla_PI['LWP'][ind_false]   #..LWP single-column array with no LTS points as original values, with has LTS value points as 0.0.
-
-    print('YB(raw PI LWP array) ', YB)
+    
+    #print('YB(raw PI LWP array) ', YB)
     #print(YB.shape)
-
+    
+     #..designate IWP single-array's value, PI
+    YB_iwp =  full((shape_fla_PI), 0.0)
+    YB_iwp[ind_false] =  dict2_predi_fla_PI['IWP'][ind_false]
 
 
     #.. Multiple linear regreesion of Liquid Water Path to CCFs :
@@ -386,13 +394,19 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
 
     regr1 = linear_model.LinearRegression()
     result1 = regr1.fit(X.T, dict2_predi_fla_PI['LWP'][ind6] )   #..regression for LWP WITH LTS and skin-T >= TR_sst
-
-    #print('result1 coef: ', result1.coef_)
-    #print('result1 intercept: ', result1.intercept_)
+    
+    #..ADD dec7TH:
+    regr1_iwp = linear_model.LinearRegression()
+    result1_IWP = regr1_iwp.fit(X.T, dict2_predi_fla_PI['IWP'][ind6] )   #..regression for Ice Water Path with having 'LTS' values
+    #print('result1 coef: ', result1_iwp.coef_)
+    #print('result1 intercept: ', result1_IWP.intercept_)
 
     #..Save them into rawdata_dict
     aeffi  = result1.coef_
     aint   = result1.intercept_
+    
+    aeffi_iwp  = result1_IWP.coef_
+    aint_iwp  = result1_IWP.intercept_
 
     '''
     #..for test
@@ -411,10 +425,19 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
 
         beffi  = result2.coef_
         bint   = result2.intercept_
+        
+        regr2_iwp = linear_model.LinearRegression()
+        result2_IWP = regr2_iwp.fit(XX.T, dict2_predi_fla_PI['IWP'][ind7])
 
+        beffi_iwp =  result2_IWP.coef_
+        bint_iwp  =   result2_IWP.intercept_
+        
     else:
         beffi  = full(4, 0.0)
         bint   = 0.0
+        
+        beffi_iwp =  full(4, 0.0)
+        bint_iwp = 0.0
 
 
     #print('result2 coef: ', result2.coef_)
@@ -424,41 +447,63 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     C_dict['LRM_le'] = (aeffi, aint)
     C_dict['LRM_st'] = (beffi, bint)
     
+    C_dict['LRM_le_forIWP']= (aeffi_iwp, aint_iwp)
+    C_dict['LRM_st_forIWP'] =(beffi_iwp, bint_iwp)
+    
     # Regression for pi VALUES:
     sstlelwp_predi = dot(aeffi.reshape(1, -1),  X)  + aint   #..larger or equal than Tr_SST
     sstltlwp_predi = dot(beffi.reshape(1, -1), XX)  + bint   #..less than Tr_SST
+    
+    
+    sstleiwp_predi  = dot(aeffi_iwp.reshape(1,-1), X) + aint_iwp
+    sstltiwp_predi  = dot(beffi_iwp.reshape(1,-1), XX) + bint_iwp
     
     # emsemble into 'YB' predicted data array for Pi:
     YB[ind6] = sstlelwp_predi
     YB[ind7] = sstltlwp_predi
     
+    YB_iwp[ind6]  = sstleiwp_predi
+    YB_iwp[ind7] =  sstltiwp_predi
+    
     # 'YB' resample into the shape of 'LWP_yr_bin':
     C_dict['LWP_predi_bin_PI']   =  array(YB).reshape(shape_yr_PI_3)
     print('  predicted LWP array for PI, shape in ',  C_dict['LWP_predi_bin_PI'].shape)
     
-
+    C_dict['IWP_predi_bin_PI']  = array(YB_iwp).reshape(shape_yr_PI_3)
+    print('predicted IWP array for PI, shape in ',  C_dict['IWP_predi_bin_PI'].shape)
     #.. Test performance
     MSE_shape6 =  mean_squared_error(dict2_predi_fla_PI['LWP'][ind6].reshape(-1,1), sstlelwp_predi.reshape(-1,1))
     print('RMSE_shape6(PI): ', sqrt(MSE_shape6))
-
+    MSE_shape6_IWP = mean_squared_error(dict2_predi_fla_PI['IWP'][ind6].reshape(-1,1), sstleiwp_predi.reshape(-1,1))
+    R_2_shape6_IWP = r2_score(dict2_predi_fla_PI['IWP'][ind6].reshape(-1,1), sstleiwp_predi.reshape(-1, 1))
     if len(ind7)!=0:
         R_2_shape7  = r2_score(dict2_predi_fla_PI['LWP'][ind7].reshape(-1, 1), sstltlwp_predi.reshape(-1, 1))
-        print('R_2_shape7: ', R_2_shape7)
+        R_2_shape7_IWP = r2_score(dict2_predi_fla_PI['IWP'][ind7].reshape(-1,1), sstltiwp_predi.reshape(-1, 1))
+        
+        print('R_2_shape7 for LWP: ', R_2_shape7)
+        
     else:
         R_2_shape7  = 0.0
+        R_2_shape7_IWP  = 0.0
+        
         print('R_2_shape7 = \'0\' because Tr_sst <= all available T_skin data')
 
     MSE_shape1 =  mean_squared_error(dict2_predi_fla_PI['LWP'].reshape(-1,1), YB.reshape(-1,1))
-    print('RMSE_shape1: ', sqrt(MSE_shape1))
+    print('RMSE_shape1 for LWP: ', sqrt(MSE_shape1))
 
     R_2_shape1  = r2_score(dict2_predi_fla_PI['LWP'].reshape(-1, 1), YB.reshape(-1, 1))
-    print('R_2_shape1: ', R_2_shape1)
+    print('R_2_shape1 for LWP: ', R_2_shape1)
+    
+    R_2_shape1_IWP  = r2_score(dict2_predi_fla_PI['IWP'].reshape(-1, 1), YB_iwp.reshape(-1, 1))
 
-    print('examine regres-mean Lwp for pi-C shape6:', mean(dict2_predi_fla_PI['LWP'][ind6]), mean(sstlelwp_predi))
-    print('examine regres-mean Lwp for pi-C shape7:', mean(dict2_predi_fla_PI['LWP'][ind7]), mean(sstltlwp_predi))
-
+    print('examine regres-mean Lwp for pi-C shape6:', nanmean(dict2_predi_fla_PI['LWP'][ind6]), nanmean(sstlelwp_predi))
+    print('examine regres-mean Lwp for pi-C shape7:', nanmean(dict2_predi_fla_PI['LWP'][ind7]), nanmean(sstltlwp_predi))
+    print('examine regres-mean IWP for pi-C shape1:', mean(dict2_predi_fla_PI['IWP']) , mean(YB_iwp))
+    
+    
     
     # ABR
+    
     shape_fla_abr   =  dict2_predi_fla_abr['LWP'].shape
     print(dict2_predi_fla_abr['p_e'].shape)  #..compare with the following line
 
@@ -466,9 +511,7 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     ind1_abr =  isnan(dict2_predi_fla_abr['LTS'])==False
     print('shape1_abr :', ind1_abr.shape)
     
-    
-    
-    ind_true_abr =  nonzero(ind1_abr ==True )   #..Sign the the indexing of 'Non-NaN' in LTS_yr_bin
+    ind_true_abr =  nonzero(ind1_abr ==True)   #..Sign the the indexing of 'Non-NaN' in LTS_yr_bin
     print('shape2_abr :', array(ind_true_abr).shape, dict2_predi_fla_abr['LTS'][ind_true_abr].shape)
 
     ind_false_abr =  nonzero(ind1_abr==False)   #..Sign the the indexing of 'NaN'
@@ -476,11 +519,11 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     
     
     #..Split the abrupt4x data points with TR_sst 
-    #..
+    
 
     ind_sst_le_abr  = nonzero(dict2_predi_fla_abr['SST'] >= TR_sst)
     ind6_abr  = intersect1d(ind_true_abr, ind_sst_le_abr)
-    print('shape6_abr: ', ind6_abr.shape)   #..shape6_
+    print('shape6_abr: ', ind6_abr.shape)   #..shape6_abr
     
     
     ind_sst_st_abr  = nonzero(dict2_predi_fla_abr['SST'] < TR_sst)
@@ -490,9 +533,13 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     
     #..designate LWP single-array's value, abr
     YB_abr   =  full((shape_fla_abr),  0.0)   # predicted LWP value array for future uses
-    
     YB_abr[ind_false_abr] = dict2_predi_fla_abr['LWP'][ind_false_abr]   #..LWP single-column array with no LTS points as original values, with has LTS value points as 0.0. 
     print('YB_abr(raw abrupt4x LWP array: ', YB_abr)
+    
+    
+    YB_abr_iwp   =  full((shape_fla_abr),  0.0)   # predicted LWP value array for future uses
+    YB_abr_iwp[ind_false_abr] = dict2_predi_fla_abr['IWP'][ind_false_abr]   #..IWP 
+    
     
     
     # Regression for abr LWP VALUES:
@@ -508,21 +555,33 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     sstlelwp_predi_abr = dot(aeffi.reshape(1, -1),  X_abr)  +  aint   #.. skin_T  larger or equal than Tr_SST
     sstltlwp_predi_abr = dot(beffi.reshape(1, -1),  XX_abr)  + bint   #.. skin_T  less than Tr_SST
     
+    sstleiwp_predi_abr =  dot(aeffi_iwp.reshape(1,-1), X_abr) + aint_iwp   #.. SST larger or equal to than TR_sst
+    sstltiwp_predi_abr =   dot(beffi_iwp.reshape(1,-1), XX_abr) + bint_iwp   #..SST smaller than
+    
     
     # emsemble into 'YB_abr' predicted data array for Abrupt4xCO2:
     YB_abr[ind6_abr]  =   sstlelwp_predi_abr
     YB_abr[ind7_abr]  =   sstltlwp_predi_abr
+    
+    YB_abr_iwp[ind6_abr]  =  sstleiwp_predi_abr
+    YB_abr_iwp[ind7_abr]  =  sstltiwp_predi_abr
+    
     # 'YB' reshaple into the shape of 'LWP_yr_bin_abr':
     C_dict['LWP_predi_bin_abr']   =  array(YB_abr).reshape(shape_yr_abr_3)
+    C_dict['IWP_predi_bin_abr']  =   array(YB_abr_iwp).reshape(shape_yr_abr_3)
     
-    print(' predicted LWP array for abrupt4xCO2, shape in ',  C_dict['LWP_predi_bin_abr'].shape)  
+    print(' predicted LWP array for abrupt4xCO2, shape in ',  C_dict['LWP_predi_bin_abr'].shape)   
     
     
-    # Test performance..abr
+    # Test performance for abr(predict) set:
     MSE_shape1_abr = mean_squared_error(YB_abr.reshape(-1,1),  dict2_predi_fla_abr['LWP'].reshape(-1, 1))
-    R_2_shape1_abr = r2_score(dict2_predi_fla_abr['LWP'].reshape(-1,1), YB_abr.reshape(-1, 1))
+    R_2_shape1_abr = r2_score(dict2_predi_fla_abr['LWP'].reshape(-1,1), YB_abr.reshape(-1, 1 ))
+    MSE_shape1_abr_IWP  = mean_squared_error(YB_abr_iwp.reshape(-1,1), dict2_predi_fla_abr['IWP'].reshape(-1, 1))
+    R_2_shape1_abr_IWP = r2_score(dict2_predi_fla_abr['IWP'].reshape(-1,1), YB_abr_iwp.reshape(-1, 1 ))
+    
     print('RMSE_shape1_abr: ', sqrt(MSE_shape1_abr))
     print('R_2_shape1_abr: ', R_2_shape1_abr)
+    
     
     # calc D(CCFs) to DGMT and save into 'Dx/DtG' ARRAY
     regr3 = linear_model.LinearRegression()
@@ -531,29 +590,38 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     print('b of D(LWP) /D(gmt) : ', re_LWP.intercept_)
 
     regr4 = linear_model.LinearRegression()
+    re_IWP= regr4.fit(dict2_predi_fla_abr['gmt'][ind_true_abr].reshape(-1,1), dict2_predi_fla_abr['IWP'][ind_true_abr])
     regr5 = linear_model.LinearRegression()
     regr6 = linear_model.LinearRegression()
-
     regr7 = linear_model.LinearRegression()
 
-    re_SST = regr4.fit(dict2_predi_fla_abr['gmt'][ind_true_abr].reshape(-1,1), dict2_predi_fla_abr['SST'][ind_true_abr])
-    re_p_e = regr5.fit(dict2_predi_fla_abr['gmt'][ind_true_abr].reshape(-1,1), dict2_predi_fla_abr['p_e'][ind_true_abr])
-    re_LTS = regr6.fit(dict2_predi_fla_abr['gmt'][ind_true_abr].reshape(-1,1), dict2_predi_fla_abr['LTS'][ind_true_abr])
+    regr8 = linear_model.LinearRegression()
 
-    re_SUB = regr7.fit(dict2_predi_fla_abr['gmt'][ind_true_abr].reshape(-1,1), dict2_predi_fla_abr['SUB'][ind_true_abr])
-    print('dCCF /dGMT (with LTS POINTS): ', re_SST.coef_, re_p_e.coef_, re_LTS.coef_, re_SUB.coef_ )
+    re_SST = regr5.fit(dict2_predi_fla_abr['gmt'][ind_true_abr].reshape(-1,1), dict2_predi_fla_abr['SST'][ind_true_abr])
+    re_p_e = regr6.fit(dict2_predi_fla_abr['gmt'][ind_true_abr].reshape(-1,1), dict2_predi_fla_abr['p_e'][ind_true_abr])
+    re_LTS = regr7.fit(dict2_predi_fla_abr['gmt'][ind_true_abr].reshape(-1,1), dict2_predi_fla_abr['LTS'][ind_true_abr])
+
+    re_SUB = regr8.fit(dict2_predi_fla_abr['gmt'][ind_true_abr].reshape(-1,1), dict2_predi_fla_abr['SUB'][ind_true_abr])
+    print('d(CCFs)/d(gmt)| (has LTS VALUES)= ', re_SST.coef_, re_p_e.coef_, re_LTS.coef_,  re_SUB.coef_)
 
     #..save into rawdata_dict
-    Dx_DtG =[re_LWP.coef_, re_SST.coef_,  re_p_e.coef_,  re_LTS.coef_, re_SUB.coef_]
-    C_dict['dX_dTg']  =   Dx_DtG
+    Dx_DtG =[re_LWP.coef_, re_IWP.coef_, re_SST.coef_,  re_p_e.coef_,  re_LTS.coef_,  re_SUB.coef_]
+    C_dict['dX_dTg'] =  Dx_DtG
+    
+    
     
     #..save test performance metrics into rawdata_dict
     EXAMINE_metrics =  {'RMSE_shape1_pi': sqrt(MSE_shape1), 'R_2_shape1_pi': R_2_shape1, 'RMSE_shape6_pi': sqrt(MSE_shape6), 'R_2_shape7': R_2_shape7, \
-                       'RMSE_shape1_abr': sqrt(MSE_shape1_abr), 'R_2_shape1_abr': R_2_shape1_abr}
+                        'R_2_shape1_pi_IWP': R_2_shape1_IWP, 'RMSE_shape6_pi_IWP': sqrt(MSE_shape6_IWP), 'R_2_shape6_pi_IWP': R_2_shape6_IWP, 'R_2_shape7_pi_IWP': R_2_shape7_IWP, \
+                        'RMSE_shape1_abr': sqrt(MSE_shape1_abr), 'R_2_shape1_abr': R_2_shape1_abr, \
+                        'RMSE_shape1_abr_IWP': sqrt(MSE_shape1_abr_IWP), 'R_2_shape1_abr_IWP': R_2_shape1_abr_IWP}
     
     C_dict['EXAMINE_metrics'] = EXAMINE_metrics
     
     return C_dict
+
+
+
 
 
 def p4plot1(rawdata_dict, s_range, y_range, x_range, shape_yr_pi, shape_yr_abr):
@@ -588,6 +656,8 @@ def p4plot1(rawdata_dict, s_range, y_range, x_range, shape_yr_pi, shape_yr_abr):
     
     areamean_dict_predi['LWP_area_yr_pi']  =   area_mean(rawdata_dict['LWP_predi_bin_PI'], y_range, x_range)
     areamean_dict_predi['LWP_area_yr_abr']  =   area_mean(rawdata_dict['LWP_predi_bin_abr'], y_range, x_range)
+    areamean_dict_predi['IWP_area_yr_pi']   =    area_mean(rawdata_dict['IWP_predi_bin_PI'], y_range, x_range)
+    areamean_dict_predi['IWP_area_yr_abr']   =    area_mean(rawdata_dict['IWP_predi_bin_abr'], y_range, x_range)
     
     areamean_dict_PI['gmt_area_yr']  =  area_mean(dict1_yr_bin_PI['gmt_yr_bin'], s_range, x_range)
     areamean_dict_abr['gmt_area_yr']  =  area_mean(dict1_yr_bin_abr['gmt_yr_bin'], s_range, x_range)
@@ -600,11 +670,11 @@ def p4plot1(rawdata_dict, s_range, y_range, x_range, shape_yr_pi, shape_yr_abr):
     
     # genarate some array convenient for plotting
     #..Years from pi-control to abrupt4xCO2 experiment, which are choosed years
-    Yrs =  arange(shape_yr_pi + shape_yr_abr)
+    Yrs =  arange(shape_yr_pi+shape_yr_abr)
     
     # Global-mean surface air temperature, from pi-control to abrupt4xCO2 experiment
     
-    GMT =  full((shape_yr_pi + shape_yr_abr), 0.0)
+    GMT =  full((shape_yr_pi+shape_yr_abr),  0.0)
     GMT[0:shape_yr_pi]  =   areamean_dict_PI['gmt_area_yr']
     GMT[shape_yr_pi:]  =   areamean_dict_abr['gmt_area_yr']
     
@@ -614,11 +684,19 @@ def p4plot1(rawdata_dict, s_range, y_range, x_range, shape_yr_pi, shape_yr_abr):
     predict_lwp[0:shape_yr_pi]  =   areamean_dict_predi['LWP_area_yr_pi']
     predict_lwp[shape_yr_pi:]  =   areamean_dict_predi['LWP_area_yr_abr']
     
+    predict_iwp  = full((shape_yr_pi + shape_yr_abr), 0.0)
+    predict_iwp[0:shape_yr_pi]  =   areamean_dict_predi['IWP_area_yr_pi']
+    predict_iwp[shape_yr_pi:]  =   areamean_dict_predi['IWP_area_yr_abr']
+    
     # reported values, from pi-Conrol to abrupt4xCO2 experiment
     
     report_lwp  =   full((shape_yr_pi + shape_yr_abr), 0.0)
     report_lwp[0:shape_yr_pi]  =   areamean_dict_PI['LWP_area_yr']
     report_lwp[shape_yr_pi:]   =  areamean_dict_abr['LWP_area_yr']
+    
+    report_iwp  =   full((shape_yr_pi + shape_yr_abr), 0.0)
+    report_iwp[0:shape_yr_pi]  =   areamean_dict_PI['IWP_area_yr']
+    report_iwp[shape_yr_pi:]   =  areamean_dict_abr['IWP_area_yr']
     
     
     # put them into the rawdata_dict:
@@ -629,5 +707,8 @@ def p4plot1(rawdata_dict, s_range, y_range, x_range, shape_yr_pi, shape_yr_abr):
     rawdata_dict['report_lwp']  =   report_lwp
     
     
-    return rawdata_dict
+    rawdata_dict['predict_iwp']  = predict_iwp
+    rawdata_dict['report_iwp']   = report_iwp
+    
 
+    return rawdata_dict
