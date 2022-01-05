@@ -145,3 +145,126 @@ def historical_analysis(startyr, endyr, **model_data):
     
     
     return rawdata_dict
+
+
+
+
+def pcoloranalysis(startyr, endyr, **model_data):
+    ### For comparing and analysizing the LWP over SUB@500 v.s. SST for GCMs(each) AND obs DATA
+    rawdata_dict = historical_analysis(startyr, endyr, **model_data)
+    rawdata_dict2 = get_obs(startyr, endyr)
+    
+    
+    
+    ##. for Pcplor mesh plot: data array:'
+    # GCM monthly unbinned data:
+    # XX_ay_gcm  = rawdata_dict['dict0_var']['SUB'][ :, 5:54, :]
+    # YY_ay_gcm  = rawdata_dict['dict0_var']['SST'][ :, 5:54, :]
+    # PC_ay_gcm  =  rawdata_dict['dict0_var']['LWP'][:, 5:54,:] 
+
+    # GCM annually unbinned data:
+    # XX_ay_gcm  =  rawdata_dict['dict1_var_yr']['SUB_yr']
+    # YY_ay_gcm  =  rawdata_dict['dict1_var_yr']['SST_yr']
+    # PC_ay_gcm  =  rawdata_dict['dict1_var_yr']['LWP_yr']
+
+    # GCM annually binned data:
+    XX_ay_gcm  =  rawdata_dict['dict1_yr_bin']['SUB_yr_bin']
+    YY_ay_gcm  =  rawdata_dict['dict1_yr_bin']['SST_yr_bin']
+    PC_ay_gcm  =  rawdata_dict['dict1_yr_bin']['LWP_yr_bin']
+
+
+
+    # OBS(MAC:LWP, ERA5: CCFS) monthly unbinned data:
+    # XX_ay_obs  =  rawdata_dict2['dict0_var']['SUB']
+    # YY_ay_obs  =  rawdata_dict2['dict0_var']['SST']
+    # PC_ay_obs  =  rawdata_dict2['dict0_var']['LWP_mac']
+
+    # OBS(MAC:LWP, ERA5: CCFS) annually unbinned data:
+    # XX_ay_obs  =  rawdata_dict2['dict1_era_yr']['SUB_yr']
+    # YY_ay_obs  =  rawdata_dict2['dict1_era_yr']['SST_yr']
+    # PC_ay_obs  =  rawdata_dict2['dict1_mac_yr']['LWP_mac_yr']
+
+    # OBS(MAC:LWP, ERA5: CCFS) annually binned data:
+    # XX_ay_obs  =  rawdata_dict2['dict1_era_yr_bin']['SUB_yr_bin']
+    # YY_ay_obs  =  rawdata_dict2['dict1_era_yr_bin']['SST_yr_bin']
+    PC_ay_obs  =  rawdata_dict2['dict1_mac_yr_bin']['LWP_mac_yr_bin']
+
+    XX_ay_obs  =  rawdata_dict2['dict1_era_yr_bin']['SUB_yr_bin_unmasked']
+    YY_ay_obs  =  rawdata_dict2['dict1_era_yr_bin']['SST_yr_bin_unmasked']
+
+    
+    #..  Plotting   ..
+    y_gcm = linspace(nanpercentile(YY_ay_gcm, 1), nanpercentile(YY_ay_gcm, 99), 22)
+    x_gcm = linspace(nanpercentile(XX_ay_gcm, 5), nanpercentile(XX_ay_gcm, 95), 15)
+    print(x_gcm, y_gcm)
+
+
+    y_obs = linspace(nanpercentile(YY_ay_obs, 1), nanpercentile(YY_ay_obs, 99), 22)
+    x_obs = linspace(nanpercentile(XX_ay_obs, 5), nanpercentile(XX_ay_obs, 95), 15)
+    #print(x_obs, y_obs)
+
+
+    LWP_bin_Tskin_sub_gcm , count_number_Aa_gcm =  binned_skinTSUB500(XX_ay_gcm, YY_ay_gcm, PC_ay_gcm , y_gcm, x_gcm)
+
+    LWP_bin_Tskin_sub_obs , count_number_Aa_obs =  binned_skinTSUB500(XX_ay_obs, YY_ay_obs, PC_ay_obs , y_obs, x_obs)
+    ##. fro plotting Pcolormesh 
+    X_gcm, Y_gcm  = meshgrid(x_gcm, y_gcm)
+    X_obs, Y_obs  = meshgrid(x_obs, y_obs)
+
+
+
+    #..defined a proper LWP ticks within its range
+    levels_value  = linspace(nanpercentile(PC_ay_gcm, 22), nanpercentile(PC_ay_gcm, 99.925), 40, dtype=float)
+    
+    #levels_value = arange(0.02, 0.18, 0.004)
+    levels_count = linspace(5, 300, 60, dtype=int)
+
+
+    #..pick the desired colormap
+    cmap = plt.get_cmap('YlOrRd')
+
+    norm1 = BoundaryNorm(levels_value, ncolors= cmap.N, extend='both')
+    norm2 = BoundaryNorm(levels_count, ncolors= cmap.N, extend='both')
+
+
+
+    #.. what will the pcolormesh plot looks like?
+    fig, ax  = plt.subplots(2, 2, figsize =(18.5, 13.5))
+
+    print(ax)
+
+    im1  = ax[0, 0].pcolormesh(x_gcm, y_gcm, LWP_bin_Tskin_sub_gcm, cmap=cmap, norm= norm1) #..anmean_LWP_bin_Tskew_wvp..LWP_bin_Tskin_sub
+
+    ax[0,0].set_title("(a) exp 'historical'("+str(startyr)+'-'+str(endyr)+")  GCM data: "+model_data['modn'], loc='left', fontsize = 11)
+    ax[0,0].set_xlabel('omega 500 mb'+ r'$(Pa\ s^{-1})$',   fontsize =12)
+    ax[0,0].set_ylabel('SST ' + r'$(K)$',  fontsize=12)
+    fig.colorbar(im1, ax = ax[0,0], label="Liquid Water Path " + r"$(kg\ m^{-2}}$)")
+
+    ax[1,0].set_title("(b) exp 'historical'("+str(startyr)+'-'+str(endyr)+")  GCM data: "+model_data['modn'], loc='left', fontsize = 11)
+    ax[1,0].set_xlabel('omega 500 mb'+ r'$(Pa\ s^{-1})$',   fontsize =12)
+    ax[1,0].set_ylabel('SST ' + r'$(K)$',  fontsize=12)
+    im2  = ax[1, 0].pcolormesh(x_gcm, y_gcm, count_number_Aa_gcm, cmap=cmap, norm= norm2)
+    fig.colorbar(im2, ax = ax[1,0], label="# of points")
+
+
+    ax[0,1].set_title("(c) OBS("+str(startyr)+'-'+str(endyr)+") data: MAC_LWP, ERA5_CCFS", loc='left', fontsize = 11)
+    ax[0,1].set_xlabel('omega 500 mb'+ r'$(Pa\ s^{-1})$',   fontsize =12)
+    ax[0,1].set_ylabel('SST ' + r'$(K)$',  fontsize=10)
+    im3  = ax[0,1].pcolormesh(x_obs, y_obs, LWP_bin_Tskin_sub_obs, cmap=cmap, norm= norm1)
+    fig.colorbar(im3, ax = ax[0, 1], label="Liquid Water Path " + r"$(kg\ m^{-2}$)" )
+
+
+    ax[1,1].set_title("(d) OBS("+str(startyr)+'-'+str(endyr)+") data: MAC_LWP, ERA5_CCFS", loc='left', fontsize = 11)
+    ax[1,1].set_xlabel('omega 500 mb'+ r'$(Pa\ s^{-1})$',   fontsize =12)
+    ax[1,1].set_ylabel('SST ' + r'$(K)$',  fontsize=12)
+    im4  = ax[1, 1].pcolormesh(x_obs, y_obs, count_number_Aa_obs, cmap=cmap, norm= norm2)
+    fig.colorbar(im4, ax = ax[1,1], label="# of points")
+    
+    
+    
+    WD = '/glade/work/chuyan/Research/Cloud_CCFs_RMs/plots_test3/'
+    
+    plt.savefig(WD + 'Pcolor_'+ model_data['modn']+'-_SSTSUB_LWP|annuallybinned')
+    
+    
+    return None

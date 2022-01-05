@@ -403,7 +403,7 @@ def get_obs(time_start, time_end):
     #..First transfer finer_resolution data (era5) to coarser data (MAC)resolution: 1_degree X 1_degree :
     for a in arange(len(deck_era)):
         dict1_era_yr_bin[deck_era[a] + '_mediated_yr_bin'], lat_1dt1d, lon_1dt1d = binned_cySouthOCEAN_anr(dict1_era_yr[deck_era[a] + '_yr'], lat_era, lon_era, 1)
-        dict1_era_yr_bin[deck_era[a] + '_yr_bin_unmasked']  = binned_cySouthOcean_anr(dict1_era_yr[deck_era[a] + '_yr'], lat_era, lon_era,5.)
+        dict1_era_yr_bin[deck_era[a] + '_yr_bin_unmasked']  = binned_cySouthOcean_anr(dict1_era_yr[deck_era[a] + '_yr'], lat_era, lon_era, 5.)
         
         #..Second find the 'nan' point indexes in each time-specific 2 dimensions arrays for LWP_mac_yr:
         mask_lwp = isnan(dict1_mac_yr['LWP_mac_yr'])

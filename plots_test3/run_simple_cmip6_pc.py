@@ -131,15 +131,15 @@ def main():
             + '/'+ deck[i]['ensmem'] +'/'+ deck[i]['typevar'] + '/' + 'ts' + '/'+ deck[i]['gg'] + '/'
         
         if len(glob.glob(DP+ '*/*/'))!=0:
-            #print('number of run stored in glade', len(glob.glob(DP+ '*/*/')))
-            print('oh!', 'we have data in model: ', deck[i]['modn'])
             
+            print('oh!', 'we have data in model: ', deck[i]['modn'])
+            print('number of run stored in glade', len(glob.glob(DP+ '*/*/')))
             try:
-                historical_analysis(**deck[i])
-                print('historical analysis done', i)
+                pcoloranalysis(startyr=1992, endyr=2014, **deck[i])
+                print('pcolor analysis done', i)
             
             except:
-                print('fail to call function : historical_analysis', deck[i])
+                print('fail to run function : pcoloranalysis:'+ deck[i]['modn'])
 
 
 if __name__== "__main__":
