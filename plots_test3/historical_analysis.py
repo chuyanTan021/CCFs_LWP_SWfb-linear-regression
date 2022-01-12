@@ -261,10 +261,58 @@ def pcoloranalysis(startyr, endyr, **model_data):
     fig.colorbar(im4, ax = ax[1,1], label="# of points")
     
     
-    
+    '''
     WD = '/glade/work/chuyan/Research/Cloud_CCFs_RMs/plots_test3/'
     
     plt.savefig(WD + 'Pcolor_'+ model_data['modn']+'-_SSTSUB_LWP|annuallybinned')
+    '''
+    ##. the 2-d indice of maxinum count number of count array
+    max_indice_count = unravel_index(nanargmax(count_number_Aa_gcm, axis=None), count_number_Aa_gcm.shape)
+
+    #print(LWP_bin_Tskin_sub_gcm[:, max_indice_count[1]], nanargmax(LWP_bin_Tskin_sub_gcm[:, max_indice_count[1]]))
+    ##. the y axis indice of largest mean-binned LWP value of LWP array
+    max_index_meanLWP   =nanargmax(LWP_bin_Tskin_sub_gcm[:, max_indice_count[1]])
+
+    #.  calc the # of points above/below the 'max_index_meanLWP' and their ratio:
+    C_ab = np.nansum(count_number_Aa_gcm[max_index_meanLWP:, :])
+    C_be = np.nansum(count_number_Aa_gcm[0:max_index_meanLWP, :])
+
+    ratios_gcm  = float(C_ab/C_be)
+
+    print('the ratio of # of points above the transfer SST to # of pointa lower than the transfer_sst : ', ratios_gcm)
+
+    #.. print the 'transfermation' point(mean):
+    if max_index_meanLWP <= len(y_gcm)-3:
+        Tr_sst = (y_gcm[max_index_meanLWP+1] + y_gcm[max_index_meanLWP+2])/ 2.
+    else:
+        Tr_sst  = 260.0
     
+    
+    print("determined Tr_sst: ", Tr_sst)
+    
+    
+    
+    #.. for loop to see which point more close to 60.%
+    ratios_gcm = full((len(y_gcm)-2), 0.00)
+    for i_in in arange(len(y_gcm)-2):
+
+        C_ab = np.nansum(count_number_Aa_gcm[i_in:, :])
+        C_be = np.nansum(count_number_Aa_gcm[0:i_in,:])
+
+        ratios_gcm[i_in]  = float(C_ab/C_be)
+
+    # find the point index who has (above #)/(below #) most closer to '..':
+    ratio_tr1 = 0.75
+
+    ind1 =  min(range(len(ratios_gcm)),key=lambda i: abs(ratios_gcm[i] - ratio_tr1))
+
+
+    TR_sst=((y_gcm[ind1] + y_gcm[ind1+1])/2.)
+
+    print("determined TR_sst: ", TR_sst)
+    
+    
+    
+    calc_LRM_metrics(round(Tr_sst, 2), **model_data)
     
     return None

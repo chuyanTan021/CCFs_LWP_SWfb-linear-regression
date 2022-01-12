@@ -169,8 +169,8 @@ def get_historical(startyr, endyr, modn='IPSL-CM6A-LR', consort='IPSL', cmip='cm
     E           = read_var_mod(modn= modn, consort= consort, varnm='evspsbl', cmip=cmip, exper= exper, ensmem=ensmem, typevar='Amon', gg=gg, read_p=False, time1= time1, time2= time2)[0]
     #..Evaporations, Units also in kg m^-2 s^-1 = mm *s^-1
     
-    prw   = read_var_mod(modn= modn, consort= consort, varnm='prw', cmip=cmip, exper= exper, ensmem=ensmem, typevar='Amon', gg=gg, read_p=False, time1= time1, time2= time2)[0]
-    
+    prw =  read_var_mod(modn= modn, consort= consort, varnm='prw', cmip=cmip, exper= exper, ensmem=ensmem, typevar='Amon', gg=gg, read_p=False, time1= time1, time2= time2)[0]
+    #..prw = zeros((180, 180, 360))
     
     inputVar_historicalGCM = { 'sfc_T': sfc_T, 'sub': sub , 'clivi': clivi, 'clwvi': clwvi, 'P': P , 'E': E , 'prw': prw, 'pres': Pres, 'lat': lat, 'lon': lon, 'times': times}
                  
