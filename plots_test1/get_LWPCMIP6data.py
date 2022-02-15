@@ -33,24 +33,34 @@ def get_LWPCMIP6(modn='IPSL-CM6A-LR', consort='IPSL', cmip='cmip6', exper='', en
         time2 = [2007, 12, 30]
     
     
-    
     #..abrupt4xCO2
     exper = 'abrupt-4xCO2'
-    if exper == 'abrupt-4xCO2':
-        
-        TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1],time2=[ 3349, 12, 31])[-1]
-        time1=[int(min(TEST1_time[:,0])),1,1]
-        time2=[int(max(TEST1_time[:,0])),12,31]
     
-        print(time1, time2)
+    if modn == 'HadGEM3-GC31-LL':
+        ensmem = 'r1i1p1f3'
+    
+        TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='pr',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,15],time2=[ 3349, 12, 15])[-1]
+        time1=[int(min(TEST1_time[:,0])),1,15]
+        time2=[int(min(TEST1_time[:,0]))+299, 12, 15]
+        
+    else:
+        
+        TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='pr',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1],time2=[ 3349, 12, 31])[-1]
+        time1=[int(min(TEST1_time[:,0])),1,1]
+        time2=[int(min(TEST1_time[:,0]))+299, 12, 31]
+        
+    print("retrieve time: ", time1, time2)
+        
+        
     sfc_T_abr       = read_var_mod(modn=modn, consort=consort, varnm='ts', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= time1, time2= time2)[0]
 
     T_700_alevs_abr,Pres_abr,lat_abr,lon_abr,times_abr = read_var_mod(modn=modn, consort=consort, varnm='ta', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=True, time1= time1, time2= time2)
     T_700_abr = T_700_alevs_abr[:, 3,:,:]   #..700 hPa levels
 
-    sfc_P_abr       = read_var_mod(modn=modn, consort=consort, varnm='ps', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= time1, time2= time2)[0]   
+    sfc_P_abr       = read_var_mod(modn=modn, consort=consort, varnm='ps', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= time1, time2= time2)[0]
 
-    sub_abr         = read_var_mod(modn=modn, consort=consort, varnm='wap', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=True, time1= time1, time2= time2)[0][:, 5,:,:]
+    sub_abr_alevs =  read_var_mod(modn=modn, consort=consort, varnm='wap', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=True, time1= time1, time2= time2)[0]
+    sub_abr          =  sub_abr_alevs[:, 5,:,:]
     #..500mb downward motions
 
     clivi_abr       = read_var_mod(modn=modn, consort=consort, varnm='clivi', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= time1, time2= time2)[0]
@@ -73,13 +83,20 @@ def get_LWPCMIP6(modn='IPSL-CM6A-LR', consort='IPSL', cmip='cmip6', exper='', en
     
     #..pi-Control
     exper = 'piControl'
-    if exper == 'piControl':
+    
+    if modn == 'HadGEM3-GC31-LL':
+        ensmem = 'r1i1p1f1'
+        TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,15], time2=[8000,12,15])[-1]
+        timep1=[int(min(TEST2_time[:,0])), 1,15]   #..max-799
+        timep2=[int(min(TEST2_time[:,0]))+98, 12, 15]  #..max-750
+        
+    else:
         
         TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1], time2=[8000, 12,31])[-1]
-        timep1=[int(min(TEST2_time[:,0])),1,1] #.. max-799
-        timep2=[int(min(TEST2_time[:,0]))+98,12,31] #.. max-750
+        timep1=[int(min(TEST2_time[:,0])),1,1]   #..max-799
+        timep2=[int(min(TEST2_time[:,0]))+98, 12,31]  #..max-750
         
-        print (timep1, timep2)
+    print ("retrieve time: ", timep1, timep2)
     
     sfc_T       = read_var_mod(modn= modn, consort= consort, varnm='ts', cmip=cmip, exper= exper, ensmem=ensmem, typevar='Amon', gg=gg, read_p=False, time1= timep1, time2= timep2)[0]
 
@@ -89,8 +106,9 @@ def get_LWPCMIP6(modn='IPSL-CM6A-LR', consort='IPSL', cmip='cmip6', exper='', en
     sfc_P       = read_var_mod(modn= modn, consort= consort, varnm='ps', cmip=cmip, exper= exper, ensmem=ensmem, typevar='Amon', gg=gg, read_p=False, time1= timep1, time2= timep2)[0]   
     #..sea surface Pressure, Units in Pa
 
-    sub         = read_var_mod(modn= modn, consort= consort, varnm='wap', cmip=cmip, exper= exper, ensmem=ensmem, typevar='Amon', gg=gg, read_p=True, time1= timep1, time2= timep2)[0][:, 5,:,:]
-    #..500mb downward motion 
+    sub_alevs    = read_var_mod(modn= modn, consort= consort, varnm='wap', cmip=cmip, exper= exper, ensmem=ensmem, typevar='Amon', gg=gg, read_p=True, time1= timep1, time2= timep2)[0]
+    sub          =  sub_alevs[:, 5,:,:]
+    #..500mb downward motion
 
     clivi       = read_var_mod(modn= modn, consort= consort, varnm='clivi', cmip=cmip, exper= exper, ensmem=ensmem, typevar='Amon', gg=gg, read_p=False, time1= timep1, time2= timep2)[0]
     #..ICE WATER PATH, Units in kg m^-2
