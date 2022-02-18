@@ -66,7 +66,7 @@ def main():
     HADGEM3 = {'modn': 'HadGEM3-GC31-LL', 'consort': 'MOHC', 'cmip': 'cmip6',
                'exper': 'abrupt-4xCO2', 'ensmem': 'r1i1p1f3', 'gg': 'gn', "typevar": 'Amon'}   #  Be careful, failure due to 'day time representation'
     HADGEM3 = {'modn': 'HadGEM3-GC31-LL', 'consort': 'MOHC', 'cmip': 'cmip6',
-                'exper': 'piControl', 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'}   #..missing 'wap' in 'piControl' exp
+                'exper': 'piControl', 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'} #..missing 'wap' in 'piControl' exp(Daniel says that HadGEM3-GC31 not using p-level, so don't have variables on p-level
     
     INM_CM48 = {'modn': 'INM-CM4-8', 'consort': 'INM', 'cmip': 'cmip6',
                 'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gr1', "typevar": 'Amon'}
@@ -81,11 +81,11 @@ def main():
     MIROC6 = {'modn': 'MIROC6', 'consort': 'MIROC', 'cmip': 'cmip6',
               'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'}
     MIROCES2L= {'modn': 'MIROC-ES2L', 'consort': 'MIROC', 'cmip': 'cmip6',
-              'exper': exp, 'ensmem': 'r1i1p1f2', 'gg': 'gn', "typevar": 'Amon'}   # dont have
+              'exper': exp, 'ensmem': 'r1i1p1f2', 'gg': 'gn', "typevar": 'Amon'}   # don't have
     MRIESM20 = {'modn': 'MRI-ESM2-0', 'consort': 'MRI', 'cmip': 'cmip6',
                 'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'}
     NORESM2LM = {'modn': 'NorESM2-LM', 'consort': 'NCC', 'cmip': 'cmip6',
-                 'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'}# 'pr' variable start at 130th yr in 'abrupt-4xCO2', while other variable start at 0th yr
+                 'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'}# 'pr', 'tas' are not complete in 'abrupt-4xCO2', while some variables in 'piControl' still not complete
     
     SAM0={'modn': 'SAM0-UNICON', 'consort': 'SNU', 'cmip': 'cmip6',
                 'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'}
@@ -107,22 +107,22 @@ def main():
     
     
     #deck = [ACCESSCM2, AWICM11MR, BCCESM1, CESM2, CESM2FV2, CESM2WACCM, CNRMESM2, CAMSCSM1, CNRMCM6, ECE, ECEV, E3SM10, GFDLCM4, GISSE21H, GISSE21G, HADGEM3, INM_CM48, IPSLCM6ALR, MRIESM20, MIROC6, MPIESM12LR, NORESM2LM, SAM0]   #..current #23, Total in #30
-    # deck  = [HADGEM3]   #..current #TEST 5 
-    
-    #..deck =  [BCCESM1, CanESM5, CESM2, CESM2FV2, CESM2WACCM, CNRMESM2 , GISSE21G, GISSE21H, IPSLCM6ALR, MRIESM20, MIROC6, SAM0]   #..Dec29th, #12
+    deck  = [E3SM10, GFDLCM4, FGOALSg3 , CAMSCSM1,INM_CM48, MPIESM12LR]   #..current #TEST 6
+    deck_nas = ['E3SM10', 'GFDLCM4', 'FGOALSg3', 'CAMSCSM1','INM_CM48', 'MPIESM12LR']
+    #.deck =  [BCCESM1, CanESM5, CESM2, CESM2FV2, CESM2WACCM, CNRMESM2 , GISSE21G, GISSE21H, IPSLCM6ALR, MRIESM20, MIROC6, SAM0]   #..Dec29th, #12
     #.. add..HADGEM3, UKESM10(both them don't have 'wap' in 'pi-C' exp, and need to solve 'day number' issue in cftime.Datetime360Day object of time dimension)
     
     # deck = [BCCESM1, CanESM5, CESM2, CESM2FV2, CESM2WACCM, CNRMESM2, GISSE21G, GISSE21H,IPSLCM6ALR, MRIESM20, MIROC6, SAM0]   #..current #12
     # deck_nas  = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0']   #..current #12
     
     
-    deck = [BCCESM1, CanESM5, CESM2, CESM2FV2, CESM2WACCM, CNRMESM2, GISSE21G, GISSE21H, IPSLCM6ALR, MRIESM20, MIROC6, SAM0, E3SM10, GFDLCM4, CAMSCSM1,INM_CM48, MPIESM12LR]   #..current # 17
-    deck_nas  = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'GFDLCM4', 'CAMSCSM1','INM_CM48', 'MPIESM12LR']   #..current #17
+    # deck = [BCCESM1, CanESM5, CESM2, CESM2FV2, CESM2WACCM, CNRMESM2, GISSE21G, GISSE21H, IPSLCM6ALR, MRIESM20, MIROC6, SAM0, E3SM10, FGOALSg3, GFDLCM4, CAMSCSM1,INM_CM48, MPIESM12LR]   #..current # 18
+    # deck_nas  = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1','INM_CM48', 'MPIESM12LR']   #..current #18
     
     #..HadGEM3-GC31-LL, FGOALS-g3, NorESM2-LM still not being archeved
     
     
-    
+    '''
     MP = '/glade/collections/cmip/CMIP6/'
     
     for i in range(len(deck)):
@@ -132,13 +132,13 @@ def main():
             #print('number of run stored in glade', len(glob.glob(DP+ '*/*/')))
             print('oh!', 'we have data in model: ', deck[i]['modn'])
             try:
-                calc_LRM_metrics(0.0, 0.0, **deck[i])
+                calc_LRM_metrics(273, 0.0, **deck[i])
                 print('done ', i)
             except:
                 print('fail to call function : calc_LRM_metrics', deck[i])
-    
-
     '''
+
+    
     # PLUG IN 2 CUT OFF 
     MP = '/glade/collections/cmip/CMIP6/'
     
@@ -161,7 +161,7 @@ def main():
 
                 print("TR_min_abs(bias): " , TR_sst1, '  K ', TR_sub1 , ' Pa/s ')
                 print("TR_large_pi_R_2: ", TR_sst2, '  K ', TR_sub2 , ' Pa/s ')
-                calc_LRM_metrics(float(TR_sst2), float(TR_sub2), **deck[i])
+                calc_LRM_metrics(float(TR_sst1), float(TR_sub1), **deck[i])
                 
                 print('done ', i)
             except:
@@ -171,4 +171,3 @@ def main():
 
 if __name__== "__main__":
     main()
-    
