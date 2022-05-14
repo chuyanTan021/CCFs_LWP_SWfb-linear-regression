@@ -398,9 +398,9 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     C_dict['ind_Hot_PI'] = ind6_PI
     C_dict['ind_Cold_PI'] = ind7_PI
     
-    C_dict['Coef_dict_PI_IWP']= coef_array_iwp
+    C_dict['Coef_dict_IWP']= coef_array_iwp
 
-    C_dict['Predict_dict_PI_IWP']  = predict_dict_PI_iwp
+    C_dict['Predict_dict_PI_IWP'] = predict_dict_PI_iwp
     C_dict['ind_Hot_PI_IWP'] = ind6_PI_iwp
     C_dict['ind_Cold_PI_IWP'] = ind7_PI_iwp
     
@@ -743,7 +743,7 @@ def fitLRM2(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     C_dict['ind_Cold_Down_PI'] = ind9_PI
     C_dict['ind_Hot_Down_PI'] = ind10_PI
     
-    C_dict['Coef_dict_PI_IWP']= coef_array_iwp
+    C_dict['Coef_dict_IWP']= coef_array_iwp
 
     C_dict['Predict_dict_PI_IWP']  = predict_dict_PI_iwp
     C_dict['ind_Cold_Up_PI_IWP'] = ind7_PI_iwp
