@@ -8,7 +8,7 @@ from numpy import *
 import matplotlib.pyplot as plt
 import matplotlib as mpl 
 import xarray as xr
-import PyNIO as Nio
+# import PyNIO as Nio
 import pandas as pd
 import glob
 from scipy.stats import *
@@ -369,7 +369,7 @@ def get_annually_dict(dict_rawdata, dict_names, shape_time, shape_lat, shape_lon
 
 
 
-def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', CCFs = ['SST', 'p_e', 'LTS', 'SUB'], r = 2):
+def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 2):
     
     # 'predict_dict' is a dictionary to store the 'predict_label_LWP' and 'predict_value_LWP'
     predict_dict  = {}
@@ -381,12 +381,12 @@ def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', CCFs = ['SST', 'p_e',
     predict_value_LWP = zeros((X_dict['SST'].shape[0]))
 
     # 'predictors' is an array that has the need predictors in flatten format;
-    predictors = []
+    Predictors = []
 
-    for i in range(len(CCFs)):
-        predictors.append(X_dict[CCFs[i]] *1.)
-    predictors = asarray(predictors)
-    # print(predictors.shape)  # (4, ..)
+    for i in range(len(predictor)):
+        Predictors.append(X_dict[predictor[i]] *1.)
+    Predictors = asarray(Predictors)
+    print("predictors metrix shape: ", Predictors.shape)  # (4, ..)
 
     shape_fla_training = X_dict[predictant].shape
     print('shape1: ', shape_fla_training)   # shape1
@@ -394,10 +394,10 @@ def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', CCFs = ['SST', 'p_e',
     print('2LRM: HERE TR_sst = ', cut_off1, 'K')  #.. # of total flatten points
     
     # Detecting nan values in the CCFs metrics
-    Z  = X_dict['LTS'] * 1. 
+    Z  = X_dict['LTS'] * 1.
 
-    for j in range(len(CCFs)):
-        Z  =  Z * predictors[j, :]
+    for j in range(len(predictor)):
+        Z  =  Z * Predictors[j, :]
 
     Z = Z * (X_dict[predictant]* 1.)
     ind_false = isnan(Z)
@@ -428,7 +428,7 @@ def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', CCFs = ['SST', 'p_e',
     # train model with sst >= TR_sst, unit in K
 
     regr1 = linear_model.LinearRegression()
-    result1 = regr1.fit(predictors[:][0:len(CCFs), ind6].T,  X_dict[predictant][ind6])
+    result1 = regr1.fit(Predictors[:][0:len(predictor), ind6].T,  X_dict[predictant][ind6])
     #..Save the coef and intp
     aeffi = result1.coef_
     aintp = result1.intercept_
@@ -436,7 +436,7 @@ def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', CCFs = ['SST', 'p_e',
     # train model with SST < TR_sst, unit in K
     if len(ind7)!=0:
         regr2 = linear_model.LinearRegression()
-        result2 = regr2.fit(predictors[:][0:len(CCFs), ind7].T, X_dict[predictant][ind7])
+        result2 = regr2.fit(Predictors[:][0:len(predictor), ind7].T, X_dict[predictant][ind7])
 
         beffi = result2.coef_
         bintp = result2.intercept_
@@ -453,8 +453,8 @@ def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', CCFs = ['SST', 'p_e',
     # print(asarray(coef_array).shape)
     
     # Save predict Value 
-    predict_value_LWP[ind6] = dot(aeffi.reshape(1, -1), predictors[:][0:len(CCFs), ind6]).flatten() +aintp  #..larger or equal than Tr_SST
-    predict_value_LWP[ind7] = dot(beffi.reshape(1, -1), predictors[:][0:len(CCFs), ind7]).flatten() +bintp  #..less than Tr_SST
+    predict_value_LWP[ind6] = dot(aeffi.reshape(1, -1), Predictors[:][0:len(predictor), ind6]).flatten() +aintp  #..larger or equal than Tr_SST
+    predict_value_LWP[ind7] = dot(beffi.reshape(1, -1), Predictors[:][0:len(predictor), ind7]).flatten() +bintp  #..less than Tr_SST
 
     predict_dict['label'] =  predict_label_LWP
     predict_dict['value'] =  predict_value_LWP
@@ -463,7 +463,7 @@ def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', CCFs = ['SST', 'p_e',
     return predict_dict, ind6, ind7, coef_array, shape_fla_training
 
 
-def rdlrm_2_predict(X_dict, coef_array, cut_off1, predictant = 'LWP', CCFs = ['SST', 'p_e', 'LTS', 'SUB'], r = 2):
+def rdlrm_2_predict(X_dict, coef_array, cut_off1, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 2):
     # 'predict_dict' is a dictionary to store the 'predict_label_LWP' and 'predict_value_LWP' (for CCF1, 2, 3, 4,.. and the intercept);
     predict_dict = {}
 
@@ -474,11 +474,11 @@ def rdlrm_2_predict(X_dict, coef_array, cut_off1, predictant = 'LWP', CCFs = ['S
     predict_value_LWP = zeros((X_dict['SST'].shape[0]))
     print(predict_value_LWP.shape)
     # 'predictors' is an array that has the need predictors in flatten format;
-    predictors = []
+    Predictors = []
 
-    for i in range(len(CCFs)):
-        predictors.append(X_dict[CCFs[i]] *1.)
-    predictors = asarray(predictors)
+    for i in range(len(predictor)):
+        Predictors.append(X_dict[predictor[i]] *1.)
+    Predictors = asarray(Predictors)
     # print(predictors.shape)  # (4, ..)
 
     shape_fla_testing = X_dict[predictant].shape
@@ -487,8 +487,8 @@ def rdlrm_2_predict(X_dict, coef_array, cut_off1, predictant = 'LWP', CCFs = ['S
     # Detecting nan values in the CCFs metrics
     Z  = X_dict['LTS'] * 1. 
 
-    for j in range(len(CCFs)):
-        Z  =  Z * predictors[j, :]
+    for j in range(len(predictor)):
+        Z  =  Z * Predictors[j, :]
 
     Z = Z * (X_dict[predictant]* 1.)
     ind_false = isnan(Z)
@@ -497,7 +497,7 @@ def rdlrm_2_predict(X_dict, coef_array, cut_off1, predictant = 'LWP', CCFs = ['S
     print('shape2: ', asarray(nonzero(ind_true==True)).shape)  #.. # of 'non-nan'
 
     # Replace 'nan' value in right place
-    predict_label_LWP[ind_false] = 0
+    predict_label_LWP[ind_false] = 0 
     predict_value_LWP[ind_false] = nan
 
 
@@ -522,7 +522,7 @@ def rdlrm_2_predict(X_dict, coef_array, cut_off1, predictant = 'LWP', CCFs = ['S
         predict_label_LWP[ind] = k + 1
 
         # predict values
-        predict_value_LWP[ind] = dot(coef_array[k,0].reshape(1, -1), predictors[:][0:len(CCFs), ind]).flatten() + coef_array[k,1]  #..larger or equal than Tr_SST
+        predict_value_LWP[ind] = dot(coef_array[k,0].reshape(1, -1), Predictors[:][0:len(predictor), ind]).flatten() + coef_array[k,1]  #..larger or equal than Tr_SST
 
     # print("predict_value_LWP ", predict_value_LWP)
     # print("label", predict_label_LWP)  # '1' for 'Cold' regime, '2' for 'Hot' regime
@@ -565,7 +565,7 @@ def Test_performance_2(A, B, ind6, ind7):
 
 
 
-def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', CCFs = ['SST', 'p_e', 'LTS', 'SUB'], r = 4):
+def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 4):
     
     # 'predict_dict' is a dictionary to store the 'predict_label_LWP' and 'predict_value_LWP'
     predict_dict  = {}
@@ -577,12 +577,12 @@ def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', CCFs = ['SS
     predict_value_LWP = zeros((X_dict['SST'].shape[0]))
 
     # 'predictors' is an array that has the need predictors in flatten format;
-    predictors = []
+    Predictors = []
 
-    for i in range(len(CCFs)):
-        predictors.append(X_dict[CCFs[i]] *1.)
-    predictors = asarray(predictors)
-    # print(predictors.shape)  # (4, ..)
+    for i in range(len(predictor)):
+        Predictors.append(X_dict[predictor[i]] *1.)
+    Predictors = asarray(Predictors)
+    # print(Predictors.shape)  # (4, ..)
 
     shape_fla_training = X_dict[predictant].shape
     print('shape1: ', shape_fla_training)   # shape1
@@ -591,10 +591,10 @@ def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', CCFs = ['SS
     print('4LRM:  ... TR_sub = ', cut_off2, 'Pa s-1')
 
     # Detecting nan values in the CCFs metrics
-    Z  = X_dict['LTS'] * 1. 
+    Z  = X_dict['LTS'] * 1.
 
-    for j in range(len(CCFs)):
-        Z  =  Z * predictors[j, :]
+    for j in range(len(predictor)):
+        Z  =  Z * Predictors[j, :]
 
     Z = Z * (X_dict[predictant]* 1.)
     ind_false = isnan(Z)
@@ -630,22 +630,22 @@ def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', CCFs = ['SS
     # train model with SST < TR_sst, unit in K
     if (len(ind7)!=0) & (len(ind8)!=0) & (len(ind9)!=0) & (len(ind10)!=0):
         regr7 = linear_model.LinearRegression()
-        result7 = regr7.fit(predictors[:][0:len(CCFs), ind7].T, X_dict[predictant][ind7])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'up'
+        result7 = regr7.fit(Predictors[:][0:len(predictor), ind7].T, X_dict[predictant][ind7])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'up'
         aeffi = result7.coef_
         aintp = result7.intercept_
 
         regr8 = linear_model.LinearRegression()
-        result8 = regr8.fit(predictors[:][0:len(CCFs), ind8].T, X_dict[predictant][ind8])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
+        result8 = regr8.fit(Predictors[:][0:len(predictor), ind8].T, X_dict[predictant][ind8])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
         beffi = result8.coef_
         bintp = result8.intercept_
 
         regr9 = linear_model.LinearRegression()
-        result9 = regr9.fit(predictors[:][0:len(CCFs), ind9].T, X_dict[predictant][ind9])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'down'
+        result9 = regr9.fit(Predictors[:][0:len(predictor), ind9].T, X_dict[predictant][ind9])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'down'
         ceffi = result9.coef_
         cintp = result9.intercept_
 
         regr10 = linear_model.LinearRegression()
-        result10 = regr10.fit(predictors[:][0:len(CCFs), ind10].T, X_dict[predictant][ind10])   #..regression for LWP WITH LTS and skin-T >= TR_sst & 'down'
+        result10 = regr10.fit(Predictors[:][0:len(predictor), ind10].T, X_dict[predictant][ind10])   #..regression for LWP WITH LTS and skin-T >= TR_sst & 'down'
         deffi = result10.coef_
         dintp = result10.intercept_
     
@@ -654,7 +654,7 @@ def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', CCFs = ['SS
         aintp = 0.0
 
         regr8 = linear_model.LinearRegression()
-        result8 = regr8.fit(predictors[:][0:len(CCFs), ind8].T, X_dict[predictant][ind8])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
+        result8 = regr8.fit(Predictors[:][0:len(predictor), ind8].T, X_dict[predictant][ind8])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
         beffi = result8.coef_
         bintp = result8.intercept_
 
@@ -662,7 +662,7 @@ def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', CCFs = ['SS
         cintp = 0.0
 
         regr10 = linear_model.LinearRegression()
-        result10 = regr10.fit(predictors[:][0:len(CCFs), ind10].T, X_dict[predictant][ind10])   #..regression for LWP WITH LTS and skin-T >= TR_sst & 'down'
+        result10 = regr10.fit(Predictors[:][0:len(predictor), ind10].T, X_dict[predictant][ind10])   #..regression for LWP WITH LTS and skin-T >= TR_sst & 'down'
         deffi = result10.coef_
         dintp = result10.intercept_
     
@@ -681,10 +681,10 @@ def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', CCFs = ['SS
     # print(asarray(coef_array).shape)
     
     # Save predict Value 
-    predict_value_LWP[ind7] = dot(aeffi.reshape(1, -1), predictors[:][0:len(CCFs), ind7]).flatten() +aintp  #..less than Tr_SST and less/euqal to Tr_SUB
-    predict_value_LWP[ind8] = dot(beffi.reshape(1, -1), predictors[:][0:len(CCFs), ind8]).flatten() +bintp  #..larger or equal than Tr_SST and less/euqal to Tr_SUB
-    predict_value_LWP[ind9] = dot(ceffi.reshape(1, -1), predictors[:][0:len(CCFs), ind9]).flatten() +cintp  #..less than Tr_SST and larger than Tr_SUB
-    predict_value_LWP[ind10] = dot(deffi.reshape(1, -1), predictors[:][0:len(CCFs), ind10]).flatten() +dintp  #..larger or equal than Tr_SST and larger than Tr_SUB
+    predict_value_LWP[ind7] = dot(aeffi.reshape(1, -1), Predictors[:][0:len(predictor), ind7]).flatten() +aintp  #..less than Tr_SST and less/euqal to Tr_SUB
+    predict_value_LWP[ind8] = dot(beffi.reshape(1, -1), Predictors[:][0:len(predictor), ind8]).flatten() +bintp  #..larger or equal than Tr_SST and less/euqal to Tr_SUB
+    predict_value_LWP[ind9] = dot(ceffi.reshape(1, -1), Predictors[:][0:len(predictor), ind9]).flatten() +cintp  #..less than Tr_SST and larger than Tr_SUB
+    predict_value_LWP[ind10] = dot(deffi.reshape(1, -1), Predictors[:][0:len(predictor), ind10]).flatten() +dintp  #..larger or equal than Tr_SST and larger than Tr_SUB
 
     predict_dict['label'] =  predict_label_LWP
     predict_dict['value'] =  predict_value_LWP
@@ -695,32 +695,32 @@ def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', CCFs = ['SS
 
 
 
-def rdlrm_4_predict(X_dict, coef_array, cut_off1, cut_off2, predictant = 'LWP', CCFs = ['SST', 'p_e', 'LTS', 'SUB'], r = 4):
+def rdlrm_4_predict(X_dict, coef_array, cut_off1, cut_off2, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 4):
     # 'predict_dict' is a dictionary to store the 'predict_label_LWP' and 'predict_value_LWP' (for CCF1, 2, 3, 4,.. and the intercept);
     predict_dict = {}
 
-    # 'predict_label_LWP' is an array to store the regimes_lebel of each grid points in 3-D structure of data array
+    # 'predict_label_LWP' is an array to store the regimes_label of each grid points in 3-D structure of data array
     predict_label_LWP = zeros((X_dict['SST'].shape[0]))
 
     # 'predict_value_LWP' is an array to store the predicted LWP
     predict_value_LWP = zeros((X_dict['SST'].shape[0]))
     
     # 'predictors' is an array that has the need predictors in flatten format;
-    predictors = []
+    Predictors = []
 
-    for i in range(len(CCFs)):
-        predictors.append(X_dict[CCFs[i]] *1.)
-    predictors = asarray(predictors)
-    # print(predictors.shape)  # (4, ..)
+    for i in range(len(predictor)):
+        Predictors.append(X_dict[predictor[i]] *1.)
+    Predictors = asarray(Predictors)
+    # print(Predictors.shape)  # (4, ..)
 
     shape_fla_testing = X_dict[predictant].shape
     print('shape1: ', shape_fla_testing)   # shape1
 
     # Detecting nan values in the CCFs metrics
-    Z  = X_dict['LTS'] * 1. 
+    Z  = X_dict['LTS'] * 1.
 
-    for j in range(len(CCFs)):
-        Z  =  Z * predictors[j, :]
+    for j in range(len(predictor)):
+        Z  =  Z * Predictors[j, :]
 
     Z = Z * (X_dict[predictant]* 1.)
     ind_false = isnan(Z)
@@ -757,7 +757,7 @@ def rdlrm_4_predict(X_dict, coef_array, cut_off1, cut_off2, predictant = 'LWP', 
         predict_label_LWP[ind] = k + 1
     
         # predict values
-        predict_value_LWP[ind] = dot(coef_array[k,0].reshape(1, -1), predictors[:][0:len(CCFs), ind]).flatten() + coef_array[k,1]  #..larger or equal than Tr_SST
+        predict_value_LWP[ind] = dot(coef_array[k,0].reshape(1, -1), Predictors[:][0:len(predictor), ind]).flatten() + coef_array[k,1]  #..larger or equal than Tr_SST
 
     # print("predict_value_LWP ", predict_value_LWP)
     # print("label", predict_label_LWP)  # '1' for 'Cold'& 'Up' regime, '2' for 'Hot'& 'Up' regime; '3' for 'Cold'& 'Down' regime; and '4' for 'Hot'& 'Down' regime.
