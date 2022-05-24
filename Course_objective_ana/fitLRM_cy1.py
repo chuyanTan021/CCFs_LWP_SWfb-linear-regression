@@ -46,8 +46,8 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     dict1_mon_bin_abr  = dict0_abr_var['dict1_mon_bin_abr']
 
     # data array in which shapes?
-    shape_yr_PI_3 = dict1_yr_bin_PI['LWP_yr_bin'].shape
-    shape_yr_abr_3 = dict1_yr_bin_abr['LWP_yr_bin'].shape
+    shape_yr_PI = dict1_yr_bin_PI['LWP_yr_bin'].shape
+    shape_yr_abr = dict1_yr_bin_abr['LWP_yr_bin'].shape
 
     shape_yr_PI_gmt = dict1_yr_bin_PI['gmt_yr_bin'].shape
     shape_yr_abr_gmt = dict1_yr_bin_abr['gmt_yr_bin'].shape
@@ -58,9 +58,9 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     shape_mon_PI_gmt = dict1_mon_bin_PI['gmt_mon_bin'].shape
     shape_mon_abr_gmt = dict1_mon_bin_abr['gmt_mon_bin'].shape
 
-    #.. archieve the 'shape' infos
-    C_dict['shape_yr_PI_3']  = shape_yr_PI_3
-    C_dict['shape_yr_abr_3']  = shape_yr_abr_3
+    #.. archieve the 'shape' infos: 3-D
+    C_dict['shape_yr_PI_3']  = shape_yr_PI
+    C_dict['shape_yr_abr_3']  = shape_yr_abr
     C_dict['shape_yr_PI_gmt_3'] = shape_yr_PI_gmt
     C_dict['shape_yr_abr_gmt_3'] = shape_yr_abr_gmt
 
@@ -104,7 +104,7 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     C_dict['dict2_predi_fla_abr'] = dict2_predi_fla_abr
     C_dict['dict2_predi_nor_PI'] =  dict2_predi_nor_PI
     C_dict['dict2_predi_nor_abr']  = dict2_predi_nor_abr
-    C_dict['GMT_pi_mon']  = GMT_pi_mon
+    C_dict['GMT_pi_mon'] = GMT_pi_mon
     C_dict['GMT_abr_mon'] = GMT_abr_mon
 
     #.. Training Module (2lrm)
@@ -240,8 +240,10 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     print("2lrm predicted mean Albedo (with cloud) using lrm's LWP", nanmean(YB_abr_albedo_lL), " in 'abrupt-4xCO2' ")
     YB_abr_rsut_lL = predict_dict_abr_rsut_lL['value']
     
-    print(" Mean report & predicted albedo_lL for 'abrupt-4xCO2' (all):", nanmean(dict2_predi_fla_abr['albedo']), '& ', nanmean(YB_abr_albedo_lL))
-    print(" Mean report & predicted albedo for 'abrupt-4xCO2' (all):", nanmean(dict2_predi_fla_abr['albedo']), '& ', nanmean(YB_abr_albedo))
+    print(" Mean report & predicted albedo_lL for 'abrupt-4xCO2' (All):", nanmean(dict2_predi_fla_abr['albedo']), '& ', nanmean(YB_abr_albedo_lL))
+    print(" Mean report & predicted albedo for 'abrupt-4xCO2' (All):", nanmean(dict2_predi_fla_abr['albedo']), '& ', nanmean(YB_abr_albedo))
+    print(" Mean report & predicted albedo_lL for 'abrupt-4xCO2' ('Hot'):", nanmean(dict2_predi_fla_abr['albedo'][ind7_abr]), '& ', nanmean(YB_abr_albedo_lL[ind7_abr]))
+    print(" Mean report & predicted albedo_lL for 'abrupt-4xCO2' ('Cold'):", nanmean(dict2_predi_fla_abr['albedo'][ind6_abr]), '& ', nanmean(YB_abr_albedo_lL[ind6_abr]))
 
 
 
@@ -340,8 +342,8 @@ def fitLRM2(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     dict1_mon_bin_abr  = dict0_abr_var['dict1_mon_bin_abr']
 
     # data array in which shapes?
-    shape_yr_PI_3 = dict1_yr_bin_PI['LWP_yr_bin'].shape
-    shape_yr_abr_3 = dict1_yr_bin_abr['LWP_yr_bin'].shape
+    shape_yr_PI = dict1_yr_bin_PI['LWP_yr_bin'].shape
+    shape_yr_abr = dict1_yr_bin_abr['LWP_yr_bin'].shape
 
     shape_yr_PI_gmt = dict1_yr_bin_PI['gmt_yr_bin'].shape
     shape_yr_abr_gmt = dict1_yr_bin_abr['gmt_yr_bin'].shape
@@ -352,9 +354,9 @@ def fitLRM2(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     shape_mon_PI_gmt = dict1_mon_bin_PI['gmt_mon_bin'].shape
     shape_mon_abr_gmt = dict1_mon_bin_abr['gmt_mon_bin'].shape
 
-    #.. archieve the 'shape' infos:
-    C_dict['shape_yr_PI_3']  = shape_yr_PI_3
-    C_dict['shape_yr_abr_3']  = shape_yr_abr_3
+    #.. archieve the 'shape' infos: 3-D
+    C_dict['shape_yr_PI_3']  = shape_yr_PI
+    C_dict['shape_yr_abr_3']  = shape_yr_abr
     C_dict['shape_yr_PI_gmt_3']  = shape_yr_PI_gmt
     C_dict['shape_yr_abr_gmt_3']  = shape_yr_abr_gmt
 
@@ -486,7 +488,7 @@ def fitLRM2(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     stats_dict_PI_rsut_lL = Test_performance_4(dict2_predi_fla_PI['rsut'], YB_rsut_lL, ind7_PI, ind8_PI, ind9_PI, ind10_PI)
     
     print(" Mean of report & predicted albedo_lL for 'piControl' (all): ", nanmean(dict2_predi_fla_PI['albedo']), '& ', nanmean(YB_albedo_lL))
-    print(" Mean of report & predicted albedo_lL for 'piControl' of Up, Down regime: " , nanmean(dict2_predi_fla_PI['albedo'][ind10_PI]), '& ', nanmean(YB_albedo_lL[ind10_PI]))
+    print(" Mean of report & predicted albedo_lL for 'piControl' of Hot, Down regime: " , nanmean(dict2_predi_fla_PI['albedo'][ind10_PI]), '& ', nanmean(YB_albedo_lL[ind10_PI]))
 
 
     # ####)################################
@@ -567,7 +569,12 @@ def fitLRM2(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     stats_dict_abr_rsut_lL = Test_performance_4(dict2_predi_fla_abr['rsut'], YB_abr_rsut_lL, ind7_abr, ind8_abr, ind9_abr, ind10_abr)
 
     print(" Mean of report & predicted albedo_lL for 'abrupt-4xCO2' (all): ", nanmean(dict2_predi_fla_abr['albedo']), '& ', nanmean(YB_abr_albedo_lL))
-    print(" Mean of report & predicted albedo_lL for 'abrupt-4xCO2' of Up, Down regime: " , nanmean(dict2_predi_fla_abr['albedo'][ind10_abr]), '& ', nanmean(YB_abr_albedo_lL[ind10_abr]))
+    print(" Mean of report & predicted albedo_lL for 'abrupt-4xCO2' of Cold, Down regime: ", nanmean(dict2_predi_fla_abr['albedo'][ind9_abr]), '& ', nanmean(YB_abr_albedo_lL[ind9_abr]))
+    print(" Mean of report & predicted albedo_lL for 'abrupt-4xCO2' of Cold, Up regime: ", nanmean(dict2_predi_fla_abr['albedo'][ind7_abr]), '& ', nanmean(YB_abr_albedo_lL[ind7_abr]))
+    print(" Mean of report & predicted albedo_lL for 'abrupt-4xCO2' of Hot, Down regime: " , nanmean(dict2_predi_fla_abr['albedo'][ind10_abr]), '& ', nanmean(YB_abr_albedo_lL[ind10_abr]))
+    print(" Mean of report & predicted albedo_lL for 'abrupt-4xCO2' of Hot, Up regime: ", nanmean(dict2_predi_fla_abr['albedo'][ind8_abr]), '& ', nanmean(YB_abr_albedo_lL[ind8_abr]))
+    
+
     '''
     # calc d(CCFs) to d(gmt) for 4 Regime and save them into 'Dx/DtG' dict
     
@@ -720,15 +727,17 @@ def p4plot1(s_range, y_range, x_range, shape_yr_pi, shape_yr_abr, rawdata_dict):
     for e in range(len(datavar_nas)):
     
         #  "monthly" convert to "annually":
-        areamean_dict_PI[datavar_nas[e]+ '_yr_bin'] =  get_annually_metric(dict1_mon_bin_PI[datavar_nas[e]+ '_mon_bin'], shape_mon_PI_3[0],  shape_mon_PI_3[1], shape_mon_PI_3[2])                   
-        areamean_dict_abr[datavar_nas[e]+ '_yr_bin'] =  get_annually_metric(dict1_mon_bin_abr[datavar_nas[e]+ '_mon_bin'], shape_mon_abr_3[0],  shape_mon_abr_3[1], shape_mon_abr_3[2])
-        
-        #  "yr_bin"  area_meaned to 'shape_yr_':
-        areamean_dict_PI[datavar_nas[e]+ '_area_yr'] =  area_mean(areamean_dict_PI[datavar_nas[e]+ '_yr_bin'], y_range, x_range)
-        areamean_dict_abr[datavar_nas[e]+ '_area_yr'] =  area_mean(areamean_dict_abr[datavar_nas[e]+ '_yr_bin'], y_range, x_range)
+        areamean_dict_PI[datavar_nas[e]+ '_yr_bin'] = dict1_mon_bin_PI[datavar_nas[e]+ '_mon_bin']
+        # get_annually_metric(dict1_mon_bin_PI[datavar_nas[e]+ '_mon_bin'], shape_mon_PI_3[0],  shape_mon_PI_3[1], shape_mon_PI_3[2])                   
+        areamean_dict_abr[datavar_nas[e]+ '_yr_bin'] =  dict1_mon_bin_abr[datavar_nas[e]+'_mon_bin']
+        # get_annually_metric(dict1_mon_bin_abr[datavar_nas[e]+ '_mon_bin'], shape_mon_abr_3[0],  shape_mon_abr_3[1], shape_mon_abr_3[2])
 
-    areamean_dict_PI['gmt_area_yr']  =  area_mean(dict1_yr_bin_PI['gmt_yr_bin'], s_range, x_range)
-    areamean_dict_abr['gmt_area_yr']  =  area_mean(dict1_yr_bin_abr['gmt_yr_bin'], s_range, x_range)
+        #  "yr_bin"  area_meaned to 'shape_yr_':
+        areamean_dict_PI[datavar_nas[e]+ '_area_yr'] = area_mean(areamean_dict_PI[datavar_nas[e]+ '_yr_bin'], y_range, x_range)
+        areamean_dict_abr[datavar_nas[e]+ '_area_yr'] = area_mean(areamean_dict_abr[datavar_nas[e]+ '_yr_bin'], y_range, x_range)
+
+    areamean_dict_PI['gmt_area_yr'] = area_mean(dict1_yr_bin_PI['gmt_yr_bin'], s_range, x_range)
+    areamean_dict_abr['gmt_area_yr'] = area_mean(dict1_yr_bin_abr['gmt_yr_bin'], s_range, x_range)
     
     # Calc annually mean predicted LWP, IWP, and SW radiation metrics
     
@@ -744,10 +753,12 @@ def p4plot1(s_range, y_range, x_range, shape_yr_pi, shape_yr_abr, rawdata_dict):
     datarepo_nas = ['LWP', 'IWP', 'albedo', 'rsut']
     
     for f in range(len(datapredi_nas)):
-        areamean_dict_predi[datapredi_nas[f]+'_predi_yr_bin_pi'] =  get_annually_metric(rawdata_dict[datapredi_nas[f]+'_predi_bin_PI'], shape_mon_PI_3[0], shape_mon_PI_3[1], shape_mon_PI_3[2] )
+        areamean_dict_predi[datapredi_nas[f]+'_predi_yr_bin_pi'] = rawdata_dict[datapredi_nas[f]+'_predi_bin_PI']
+        # get_annually_metric(rawdata_dict[datapredi_nas[f]+'_predi_bin_PI'], shape_mon_PI_3[0], shape_mon_PI_3[1], shape_mon_PI_3[2] )
         
-        areamean_dict_predi[datapredi_nas[f]+'_predi_yr_bin_abr'] =  get_annually_metric(rawdata_dict[datapredi_nas[f]+'_predi_bin_abr'], shape_mon_abr_3[0], shape_mon_abr_3[1], shape_mon_abr_3[2] )
-    
+        areamean_dict_predi[datapredi_nas[f]+'_predi_yr_bin_abr'] = rawdata_dict[datapredi_nas[f]+'_predi_bin_abr']
+        # get_annually_metric(rawdata_dict[datapredi_nas[f]+'_predi_bin_abr'], shape_mon_abr_3[0], shape_mon_abr_3[1], shape_mon_abr_3[2] )
+
 
     ###  Calc area_mean of predicted LWP, IWP and SW radiation metrics
     
@@ -761,11 +772,11 @@ def p4plot1(s_range, y_range, x_range, shape_yr_pi, shape_yr_abr, rawdata_dict):
     # print("Annually area_mean predicted  albedo (with cloud) in 'abrupt-4xCO2' run: ",areamean_dict_predi['albedo_lL_area_yr_abr'], r'$ w m^{-2}$')
     
     ############# end mon
-    
+
 
     # Store the annually report & predicted metrics
     
-    rawdata_dict['areamean_dict_predi'] =  areamean_dict_predi
+    rawdata_dict['areamean_dict_predi'] = areamean_dict_predi
     rawdata_dict['areamean_dict_abr'] = areamean_dict_abr
     rawdata_dict['areamean_dict_PI'] = areamean_dict_PI
 
@@ -786,16 +797,16 @@ def p4plot1(s_range, y_range, x_range, shape_yr_pi, shape_yr_abr, rawdata_dict):
     # predicted values, from 'piControl' to 'abrupt-4xCO2' experiment
     
     for h in range(len(datapredi_nas)):
-        predict_metrics_annually[datapredi_nas[h]] = full((shape_yr_pi + shape_yr_abr),  0.0)
-        predict_metrics_annually[datapredi_nas[h]][0:shape_yr_pi] = areamean_dict_predi[datapredi_nas[h]+'_area_yr_pi']
-        predict_metrics_annually[datapredi_nas[h]][shape_yr_pi:] = areamean_dict_predi[datapredi_nas[h]+'_area_yr_abr']
+        predict_metrics_annually[datapredi_nas[h]] = full((shape_yr_pi + areamean_dict_predi[datapredi_nas[h]+'_area_yr_abr'].shape[0]), 0.0)
+        predict_metrics_annually[datapredi_nas[h]][0:shape_yr_pi] = areamean_dict_predi[datapredi_nas[h]+'_area_yr_pi'][0:shape_yr_pi]
+        predict_metrics_annually[datapredi_nas[h]][shape_yr_pi:(shape_yr_pi+areamean_dict_predi[datapredi_nas[h]+'_area_yr_abr'].shape[0])] = areamean_dict_predi[datapredi_nas[h]+'_area_yr_abr']
         
     # report values, from 'piControl' to 'abrupt-4xCO2' experiment
 
     for i in range(len(datarepo_nas)):
-        report_metrics_annually[datarepo_nas[i]] = full((shape_yr_pi + shape_yr_abr), 0.0)  
-        report_metrics_annually[datarepo_nas[i]][0:shape_yr_pi] = areamean_dict_PI[datarepo_nas[i]+'_area_yr']
-        report_metrics_annually[datarepo_nas[i]][shape_yr_pi:] = areamean_dict_abr[datarepo_nas[i]+'_area_yr']
+        report_metrics_annually[datarepo_nas[i]] = full((shape_yr_pi + areamean_dict_abr[datarepo_nas[i]+'_area_yr'].shape[0]), 0.0)  
+        report_metrics_annually[datarepo_nas[i]][0:shape_yr_pi] = areamean_dict_PI[datarepo_nas[i]+'_area_yr'][0:shape_yr_pi]
+        report_metrics_annually[datarepo_nas[i]][shape_yr_pi:(shape_yr_pi+areamean_dict_abr[datarepo_nas[i]+'_area_yr'].shape[0])] = areamean_dict_abr[datarepo_nas[i]+'_area_yr']
     
     print("report albedo (with cloud) using lrm's LWP: ", report_metrics_annually['albedo'])
     print("predicted albedo (with cloud) using lrm's LWP: ", predict_metrics_annually['albedo_lL'])
