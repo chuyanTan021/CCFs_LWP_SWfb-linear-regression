@@ -295,7 +295,7 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
 
     rawdata_dict3['TR_sst'] =  THRESHOLD_sst
 
-    savez(WD+C_dict['model_data']['modn']+'_swrpredi(Jan)_'+str(round(TR_sst, 1))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
+    savez(WD+C_dict['model_data']['modn']+'_r1(Jan)_(largestpiR2)_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
     #.. best fit save_2lrm command:
     # savez(WD+C_dict['model_data']['modn']+'_best(test5)fit_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
 
@@ -305,7 +305,8 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     rawdata_dict4['TR_sst'] =  THRESHOLD_sst
     rawdata_dict4['TR_sub'] =  THRESHOLD_sub
 
-    savez(WD+C_dict['model_data']['modn']+'_swrpredi(Jan)_'+str(round(TR_sst, 1))+'K_'+'ud'+str(round(TR_sub*100, 1))+'_dats', model_data =  C_dict['model_data'],rawdata_dict = rawdata_dict4)
+    savez(WD+C_dict['model_data']['modn']+'_r2_updown(Jan)_(largestpiR2)_'+str(round(TR_sst, 2))+'K_'+'ud'+str(round(TR_sub*100, 2))+'_dats', model_data =  C_dict['model_data'],rawdata_dict = rawdata_dict4)
+    
     #.. best fit save_4lrm command:
     # savez(WD+C_dict['model_data']['modn']+'_best(test5)fit_'+str(round(TR_sst, 2))+'K_'+ 'ud'+str(round(TR_sub*100, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict4)
 

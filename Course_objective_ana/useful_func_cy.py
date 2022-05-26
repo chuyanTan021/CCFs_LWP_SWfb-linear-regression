@@ -20,7 +20,6 @@ from matplotlib.colors import BoundaryNorm
 
 from scipy.optimize import curve_fit
 import seaborn as sns
-from useful_func_cy import *
 import cartopy.crs as ccrs   #..projection method
 import cartopy.feature as cfeat
 
@@ -100,8 +99,155 @@ def get_annually_dict(dict_rawdata, dict_names, shape_time, shape_lat, shape_lon
 
 
 
-def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 2):
+def rdlrm_1_training(X_dict, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 1):
+    # single regime model: training the model from 'piControl' variable to get a single set of Coef
+    # 'predict_dict' is a dictionary to store the 'predict_label_LWP' and 'predict_value_LWP'
+    predict_dict  = {}
     
+    # 'predict_label_LWP' is an array to store the regimes_label
+    predict_label_LWP = zeros((X_dict['SST'].shape[0]))
+    
+    # 'predict_value_LWP' is an array to store the predicted LWP
+    predict_value_LWP = zeros((X_dict['SST'].shape[0]))
+    
+    # 'predictors' is an array that has the need predictors in flatten format;
+    Predictors = []
+
+    for i in range(len(predictor)):
+        Predictors.append(X_dict[predictor[i]] *1.)
+    Predictors = asarray(Predictors)
+    print("predictors metrix shape: ", Predictors.shape)  # (4, ..)
+    
+    shape_fla_training = X_dict[predictant].shape
+    print("shape1: ", shape_fla_training)   # shape1
+    
+
+    # Detecting nan values in the CCFs metrics
+    Z  = X_dict['LTS'] * 1.
+
+    for j in range(len(predictor)):
+        Z  =  Z * (Predictors[j, :]* 1.)
+    Z = Z * (X_dict[predictant]* 1.)
+
+    ind_false = isnan(Z)
+    ind_true = logical_not(ind_false)
+    
+    print("shape2: ", asarray(nonzero(ind_true ==True)).shape)
+
+    # Replace '0'/'nan' value in right place
+    predict_label_LWP[ind_false] = 0
+    predict_value_LWP[ind_false] = nan
+
+    # print Totol # of regimes
+    Regimes  = [ind_false]
+    print(' Total # of regime', len(Regimes))
+
+    # Multiple linear regression of the predictant to the predictor(s) :
+    regr0 = linear_model.LinearRegression()
+    result0 = regr0.fit(Predictors[:][0:len(predictor), ind_true].T,  X_dict[predictant][ind_true])
+    #..Save the coef and intp
+    aeffi = result0.coef_
+    aintp = result0.intercept_
+
+
+    # '1' for valid_data indeing; '0' for invalid_data ('nan') points' indexing
+    predict_label_LWP[ind_true] = 1
+
+    
+    # Save coefs and intps
+    coef_array = asarray([aeffi, aintp])
+    # print(asarray(coef_array).shape)
+    
+    # Save predicted Value, and save values and labels into predict_dict
+    predict_value_LWP[ind_true] = dot(aeffi.reshape(1, -1), Predictors[:][0:len(predictor), ind_true]).flatten() + aintp  #.. valid data points
+
+    predict_dict['label'] =  predict_label_LWP
+    predict_dict['value'] =  predict_value_LWP
+    
+    
+    return predict_dict, ind_true, ind_false, coef_array, shape_fla_training
+
+
+def rdlrm_1_predict(X_dict, coef_array, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 1):
+    
+    # 'predict_dict' is a dictionary to store the 'predict_label_LWP' and 'predict_value_LWP' (for CCF1, 2, 3, 4,.. and the intercept);
+    predict_dict = {}
+
+    # 'predict_label_LWP' is an array to store the regimes_lebel of each grid points in 3-D structure of data array
+    predict_label_LWP = zeros((X_dict['SST'].shape[0]))
+
+    # 'predict_value_LWP' is an array to store the predicted LWP
+    predict_value_LWP = zeros((X_dict['SST'].shape[0]))
+    
+    # 'predictors' is an array that has the need predictors in flatten format;
+    Predictors = []
+    
+    for i in range(len(predictor)):
+        Predictors.append(X_dict[predictor[i]] *1.)
+    Predictors = asarray(Predictors)
+    print(Predictors.shape)  # (4, ..)
+
+    shape_fla_testing = X_dict[predictant].shape
+    print("shape1: ", shape_fla_testing)   # shape1
+
+    # Detecting nan values in the CCFs metrics
+    Z  = X_dict['LTS'] * 1. 
+
+    for j in range(len(predictor)):
+        Z  =  Z * (Predictors[j, :]* 1.)
+
+    Z = Z * (X_dict[predictant]* 1.)
+    
+    
+    ind_false = isnan(Z)
+    ind_true = logical_not(ind_false)
+    
+    print("shape2: ", asarray(nonzero(ind_true==True)).shape)
+
+    # Replace '0'/ 'nan' value in right place
+    predict_label_LWP[ind_false] = 0
+    predict_value_LWP[ind_false] = nan
+
+    # print Total # of regimes
+    Regimes  = [ind_true]
+    print(' Total # of regime', len(Regimes))
+
+    for k in range(len(Regimes)):
+        print('current # of regimes', k)
+        ind  = Regimes[k]
+        # labels of regimes
+        predict_label_LWP[ind] = k + 1
+
+        # predict values
+        predict_value_LWP[ind] = dot(coef_array[0].reshape(1, -1), Predictors[:][0:len(predictor), ind]).flatten() +coef_array[1]  #.. valid data pointt
+    # print("predict_value_LWP ", predict_value_LWP)
+    # print("label", predict_label_LWP)  # '1' for valid_data, '2' for invalid_data ('nan') points
+
+    predict_dict['label'] = predict_label_LWP
+    predict_dict['value'] = predict_value_LWP
+    
+
+    return predict_dict, ind_true, ind_false, shape_fla_testing
+
+
+def Test_performance_1(A, B, ind_True, ind_False = None):
+    from sklearn.metrics import mean_squared_error, r2_score
+    
+    stats_dict = {}
+
+    MSE_shape1 =  mean_squared_error(A[ind_True].reshape(-1,1), B[ind_True].reshape(-1,1))
+    R_2_shape1  = r2_score(A[ind_True].reshape(-1, 1), B[ind_True].reshape(-1, 1))
+    stats_shape1 = [sqrt(MSE_shape1), R_2_shape1]
+
+    stats_dict = {'shape1': stats_shape1}
+
+    return stats_dict
+
+
+
+
+def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 2):
+
     # 'predict_dict' is a dictionary to store the 'predict_label_LWP' and 'predict_value_LWP'
     predict_dict  = {}
 
@@ -128,7 +274,7 @@ def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', predictor = ['SST', '
     Z  = X_dict['LTS'] * 1.
 
     for j in range(len(predictor)):
-        Z  =  Z * Predictors[j, :]
+        Z  =  Z * (Predictors[j, :]* 1.)
 
     Z = Z * (X_dict[predictant]* 1.)
     ind_false = isnan(Z)
@@ -172,7 +318,7 @@ def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', predictor = ['SST', '
         beffi = result2.coef_
         bintp = result2.intercept_
     else:
-        beffi = full(4, 0.0)
+        beffi = full(len(predictor), 0.0)
         bintp = 0.0
 
     # '1' for 'Cold' regime; '2' for 'Hot' regime
@@ -183,7 +329,7 @@ def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', predictor = ['SST', '
     coef_array = asarray([[beffi, bintp], [aeffi, aintp]])
     # print(asarray(coef_array).shape)
     
-    # Save predict Value 
+    # Save predicted Values
     predict_value_LWP[ind6] = dot(aeffi.reshape(1, -1), Predictors[:][0:len(predictor), ind6]).flatten() +aintp  #..larger or equal than Tr_SST
     predict_value_LWP[ind7] = dot(beffi.reshape(1, -1), Predictors[:][0:len(predictor), ind7]).flatten() +bintp  #..less than Tr_SST
 
@@ -192,6 +338,7 @@ def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', predictor = ['SST', '
     
     
     return predict_dict, ind6, ind7, coef_array, shape_fla_training
+
 
 
 def rdlrm_2_predict(X_dict, coef_array, cut_off1, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 2):
@@ -210,7 +357,7 @@ def rdlrm_2_predict(X_dict, coef_array, cut_off1, predictant = 'LWP', predictor 
     for i in range(len(predictor)):
         Predictors.append(X_dict[predictor[i]] *1.)
     Predictors = asarray(Predictors)
-    # print(predictors.shape)  # (4, ..)
+    # print(Predictors.shape)  # (4, ..)
 
     shape_fla_testing = X_dict[predictant].shape
     print('shape1: ', shape_fla_testing)   # shape1
@@ -275,21 +422,26 @@ def Test_performance_2(A, B, ind6, ind7):
     R_2_shape1  = r2_score(A[logical_or(ind6, ind7)].reshape(-1, 1), B[logical_or(ind6, ind7)].reshape(-1, 1))
     stats_shape1 = [sqrt(MSE_shape1), R_2_shape1]
 
-    MSE_shape6 = mean_squared_error(A[ind6].reshape(-1,1), B[ind6].reshape(-1,1))
-    R_2_shape6 = r2_score(A[ind6].reshape(-1,1), B[ind6].reshape(-1,1))
-    stats_shape6 = [sqrt(MSE_shape6), R_2_shape6]
+    if (len(ind7)!=0) & (len(ind6)!=0):
+        MSE_shape6 = mean_squared_error(A[ind6].reshape(-1,1), B[ind6].reshape(-1,1))
+        R_2_shape6 = r2_score(A[ind6].reshape(-1,1), B[ind6].reshape(-1,1))
 
-    if len(ind7)!=0:
         R_2_shape7 = r2_score(A[ind7].reshape(-1, 1), B[ind7].reshape(-1, 1))
         MSE_shape7 = mean_squared_error(A[ind7].reshape(-1, 1), B[ind7].reshape(-1,1))
+    
     else:
-        print(" R_2_shape7 is nan because TR_sst <= all available SST data. ")
-
+        print(" R_2_shape7 is zero shape because TR_sst <= all available SST data, ")
+        print(" or Non-appropraited TR_sub value if choose 2-lrm with 'Up & Dn'.")
         R_2_shape7  = nan
         MSE_shape7  = nan
+    
+        R_2_shape6  = nan
+        MSE_shape6  = nan
+    
+    stats_shape6 = [sqrt(MSE_shape6), R_2_shape6]
     stats_shape7 = [sqrt(MSE_shape7), R_2_shape7]
 
-    stats_dict = {'shape1': stats_shape1, 'shape6': stats_shape6, 'shape7': stats_shape7}
+    stats_dict = {'shape1': stats_shape1, 'shape2': stats_shape6, 'shape3': stats_shape7}
 
     return stats_dict
 
@@ -297,6 +449,8 @@ def Test_performance_2(A, B, ind6, ind7):
 
 
 def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 4):
+    # 'If r = 4: divided by Hot/ Cold (by SST) & Up/ Dn (By SUB500) regimes'
+    # 'If r = 2: divided by only Up/ Down (By SUB500) regimes'
     
     # 'predict_dict' is a dictionary to store the 'predict_label_LWP' and 'predict_value_LWP'
     predict_dict  = {}
@@ -311,21 +465,18 @@ def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', predictor =
     Predictors = []
 
     for i in range(len(predictor)):
-        Predictors.append(X_dict[predictor[i]] *1.)
+        Predictors.append(X_dict[predictor[i]]* 1.)
     Predictors = asarray(Predictors)
     # print(Predictors.shape)  # (4, ..)
 
     shape_fla_training = X_dict[predictant].shape
     print('shape1: ', shape_fla_training)   # shape1
 
-    print('4LRM: HERE TR_sst = ', cut_off1, 'K')  #.. # of total flatten points
-    print('4LRM:  ... TR_sub = ', cut_off2, 'Pa s-1')
-
     # Detecting nan values in the CCFs metrics
     Z  = X_dict['LTS'] * 1.
 
     for j in range(len(predictor)):
-        Z  =  Z * Predictors[j, :]
+        Z  =  Z * (Predictors[j, ]* 1.)
 
     Z = Z * (X_dict[predictant]* 1.)
     ind_false = isnan(Z)
@@ -336,97 +487,151 @@ def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', predictor =
     # Replace 'nan' value in right place
     predict_label_LWP[ind_false] = 0
     predict_value_LWP[ind_false] = nan
+    
+    if r == 4:
 
-    
-    # Split data with skin Temperature (SST) Larger\Equal and Less than Cut_off1
-    ind_hot  = X_dict['SST'] >= cut_off1
-    ind_cold = X_dict['SST'] < cut_off1
-    # Split data with 500mb Subsidence (SUB) Less\Equal and Larger than Cut_off2
-    ind_up   = X_dict['SUB'] <= cut_off2
-    ind_down = X_dict['SUB'] > cut_off2
-    
-    ind7 = ind_true & ind_cold & ind_up
-    ind8 = ind_true & ind_hot & ind_up
-    print('shape7 and 8: ', asarray(nonzero(ind7 ==True)), ' and ', asarray(nonzero(ind8 ==True)))
-    ind9 = ind_true & ind_cold & ind_down
-    ind10 = ind_true & ind_hot & ind_down
-    print('shape9 and 10: ', asarray(nonzero(ind9 ==True)), ' and ', asarray(nonzero(ind10 ==True)))
-    
-    Regimes  = [ind7, ind8, ind9, ind10]
-    print(' Total # of regime', len(Regimes))
-    
-    #.. Multiple linear regreesion of Liquid Water Path to CCFs:
+        print('4LRM: HERE TR_sst = ', cut_off1, 'K')  #.. # of total flatten points
+        print('4LRM:  ... TR_sub = ', cut_off2, 'Pa s-1')
 
+        # Split data with skin Temperature (SST) Larger\Equal and Less than Cut_off1
+        ind_hot  = X_dict['SST'] >= cut_off1
+        ind_cold = X_dict['SST'] < cut_off1
+        # Split data with 500mb Subsidence (SUB) Less\Equal and Larger than Cut_off2
+        ind_up   = X_dict['SUB'] <= cut_off2
+        ind_down = X_dict['SUB'] > cut_off2
+
+        ind7 = ind_true & ind_cold & ind_up
+        ind8 = ind_true & ind_hot & ind_up
+        print('shape7 and 8: ', asarray(nonzero(ind7 ==True)), ' and ', asarray(nonzero(ind8 ==True)))
+        ind9 = ind_true & ind_cold & ind_down
+        ind10 = ind_true & ind_hot & ind_down
+        print('shape9 and 10: ', asarray(nonzero(ind9 ==True)), ' and ', asarray(nonzero(ind10 ==True)))
+
+        Regimes  = [ind7, ind8, ind9, ind10]
+        print(' Total # of regime', len(Regimes))
+
+        #.. Multiple linear regreesion of Liquid Water Path to CCFs:
+
+
+        # train model with SST < TR_sst, unit in K
+        if (len(ind7)!=0) & (len(ind8)!=0) & (len(ind9)!=0) & (len(ind10)!=0):
+            regr7 = linear_model.LinearRegression()
+            result7 = regr7.fit(Predictors[:][0:len(predictor), ind7].T, X_dict[predictant][ind7])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'up'
+            aeffi = result7.coef_
+            aintp = result7.intercept_
+
+            regr8 = linear_model.LinearRegression()
+            result8 = regr8.fit(Predictors[:][0:len(predictor), ind8].T, X_dict[predictant][ind8])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
+            beffi = result8.coef_
+            bintp = result8.intercept_
+
+            regr9 = linear_model.LinearRegression()
+            result9 = regr9.fit(Predictors[:][0:len(predictor), ind9].T, X_dict[predictant][ind9])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'down'
+            ceffi = result9.coef_
+            cintp = result9.intercept_
+
+            regr10 = linear_model.LinearRegression()
+            result10 = regr10.fit(Predictors[:][0:len(predictor), ind10].T, X_dict[predictant][ind10])   #..regression for LWP WITH LTS and skin-T >= TR_sst & 'down'
+            deffi = result10.coef_
+            dintp = result10.intercept_
+
+        elif (len(ind7)==0) & (len(ind9)==0):
+            aeffi = full(len(predictors), 0.0)
+            aintp = 0.0
+
+            regr8 = linear_model.LinearRegression()
+            result8 = regr8.fit(Predictors[:][0:len(predictor), ind8].T, X_dict[predictant][ind8])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
+            beffi = result8.coef_
+            bintp = result8.intercept_
+
+            ceffi = full(len(predictors), 0.0)
+            cintp = 0.0
+
+            regr10 = linear_model.LinearRegression()
+            result10 = regr10.fit(Predictors[:][0:len(predictor), ind10].T, X_dict[predictant][ind10])   #..regression for LWP WITH LTS and skin-T >= TR_sst & 'down'
+            deffi = result10.coef_
+            dintp = result10.intercept_
+
+        else:
+            print('you input a non-wise value for TR_sub at 500 mb')
+            print('please try another TR_sub input...')
+
+        # '1' for 'Cold' & 'Up' regime; '2' for 'Hot' & 'Up' regime; '3' for 'Cold' and 'Down' regime; and '4' for 'Hot' and 'Down' regime
+        predict_label_LWP[ind7] = 1
+        predict_label_LWP[ind8] = 2
+        predict_label_LWP[ind9] = 3
+        predict_label_LWP[ind10] = 4
+
+        # Save coefs and intps
+        coef_array = asarray([[aeffi, aintp], [beffi, bintp], [ceffi, cintp], [deffi, dintp]])
+        # print(asarray(coef_array).shape)
+
+        # Save predict Value 
+        predict_value_LWP[ind7] = dot(aeffi.reshape(1, -1), Predictors[:][0:len(predictor), ind7]).flatten() +aintp  #..less than Tr_SST and less/euqal to Tr_SUB
+        predict_value_LWP[ind8] = dot(beffi.reshape(1, -1), Predictors[:][0:len(predictor), ind8]).flatten() +bintp  #..larger or equal than Tr_SST and less/euqal to Tr_SUB
+        predict_value_LWP[ind9] = dot(ceffi.reshape(1, -1), Predictors[:][0:len(predictor), ind9]).flatten() +cintp  #..less than Tr_SST and larger than Tr_SUB
+        predict_value_LWP[ind10] = dot(deffi.reshape(1, -1), Predictors[:][0:len(predictor), ind10]).flatten() +dintp  #..larger or equal than Tr_SST and larger than Tr_SUB
+
+        predict_dict['label'] = predict_label_LWP
+        predict_dict['value'] = predict_value_LWP
+
+    if r == 2:
     
-    # train model with SST < TR_sst, unit in K
-    if (len(ind7)!=0) & (len(ind8)!=0) & (len(ind9)!=0) & (len(ind10)!=0):
-        regr7 = linear_model.LinearRegression()
-        result7 = regr7.fit(Predictors[:][0:len(predictor), ind7].T, X_dict[predictant][ind7])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'up'
-        aeffi = result7.coef_
-        aintp = result7.intercept_
+        print('2LRM: Up& Dn regimes by TR_sub = ', cut_off2, 'Pa s-1')
+        
+        # Split data with 500mb Subsidence (SUB) Less\Equal and Larger than Cut_off2
+        ind9 = X_dict['SUB'] <= cut_off2  # 'ind_up'
+        ind10 = X_dict['SUB'] > cut_off2  # 'ind_down'
+        
+        ind7 = ind_true & ind9
+        ind8 = ind_true & ind10
+        
+        print('shape7 and 8: ', asarray(nonzero(ind7 ==True)), ' and ', asarray(nonzero(ind8 ==True)))
+        
+        Regimes  = [ind7, ind8]
+        print(' Total # of regime', len(Regimes))
+        
+        #.. Multiple linear regression of predictant to predictor(s) 
+        if (len(ind7)!=0) & (len(ind8)!=0):
+            regr7 = linear_model.LinearRegression()
+            result7 = regr7.fit(Predictors[:][0:len(predictor), ind7].T, X_dict[predictant][ind7])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'up'
+            aeffi = result7.coef_
+            aintp = result7.intercept_
 
-        regr8 = linear_model.LinearRegression()
-        result8 = regr8.fit(Predictors[:][0:len(predictor), ind8].T, X_dict[predictant][ind8])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
-        beffi = result8.coef_
-        bintp = result8.intercept_
+            regr8 = linear_model.LinearRegression()
+            result8 = regr8.fit(Predictors[:][0:len(predictor), ind8].T, X_dict[predictant][ind8])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
+            beffi = result8.coef_
+            bintp = result8.intercept_
+        
+        if (len(ind7)==0) or (len(ind8)==0):
+            print("Non-appropriated TR_SUB value: has some regime be zero shape.")
+            
+            aeffi, beffi = full(len(predictor), 0.0), full(len(predictor), 0.0)
+            aintp, bintp = 0.0, 0.0
+            
+        # '1' for 'Up' regime; '2' for 'Down' regime;
+        predict_label_LWP[ind7] = 1
+        predict_label_LWP[ind8] = 2
+        
+        
+        # Save coefs and intps
+        coef_array = asarray([[aeffi, aintp], [beffi, bintp]]) # 'Up' and 'Down'
+        
+        # Save predicted values and labels into predict_dict
+        predict_value_LWP[ind7] = dot(aeffi.reshape(1, -1), Predictors[:][0:len(predictor), ind7]).flatten() +aintp  #..less/euqal to Tr_SUB
+        predict_value_LWP[ind8] = dot(beffi.reshape(1, -1), Predictors[:][0:len(predictor), ind8]).flatten() +bintp  #..larger than Tr_SUB
 
-        regr9 = linear_model.LinearRegression()
-        result9 = regr9.fit(Predictors[:][0:len(predictor), ind9].T, X_dict[predictant][ind9])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'down'
-        ceffi = result9.coef_
-        cintp = result9.intercept_
+        predict_dict['label'] = predict_label_LWP
+        predict_dict['value'] = predict_value_LWP
 
-        regr10 = linear_model.LinearRegression()
-        result10 = regr10.fit(Predictors[:][0:len(predictor), ind10].T, X_dict[predictant][ind10])   #..regression for LWP WITH LTS and skin-T >= TR_sst & 'down'
-        deffi = result10.coef_
-        dintp = result10.intercept_
-    
-    elif (len(ind7)==0) & (len(ind9)==0):
-        aeffi = full(4, 0.0)
-        aintp = 0.0
-
-        regr8 = linear_model.LinearRegression()
-        result8 = regr8.fit(Predictors[:][0:len(predictor), ind8].T, X_dict[predictant][ind8])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
-        beffi = result8.coef_
-        bintp = result8.intercept_
-
-        ceffi = full(4, 0.0)
-        cintp = 0.0
-
-        regr10 = linear_model.LinearRegression()
-        result10 = regr10.fit(Predictors[:][0:len(predictor), ind10].T, X_dict[predictant][ind10])   #..regression for LWP WITH LTS and skin-T >= TR_sst & 'down'
-        deffi = result10.coef_
-        dintp = result10.intercept_
-    
-    else:
-        print('you input a non-wise value for TR_sub at 500 mb')
-        print('please try another TR_sub input...')
-
-    # '1' for 'Cold' & 'Up' regime; '2' for 'Hot' & 'Up' regime; '3' for 'Cold' and 'Down' regime; and '4' for 'Hot' and 'Down' regime
-    predict_label_LWP[ind7] = 1
-    predict_label_LWP[ind8] = 2
-    predict_label_LWP[ind9] = 3
-    predict_label_LWP[ind10] = 4
-    
-    # Save coefs and intps
-    coef_array = asarray([[aeffi, aintp], [beffi, bintp], [ceffi, cintp], [deffi, dintp]])
-    # print(asarray(coef_array).shape)
-    
-    # Save predict Value 
-    predict_value_LWP[ind7] = dot(aeffi.reshape(1, -1), Predictors[:][0:len(predictor), ind7]).flatten() +aintp  #..less than Tr_SST and less/euqal to Tr_SUB
-    predict_value_LWP[ind8] = dot(beffi.reshape(1, -1), Predictors[:][0:len(predictor), ind8]).flatten() +bintp  #..larger or equal than Tr_SST and less/euqal to Tr_SUB
-    predict_value_LWP[ind9] = dot(ceffi.reshape(1, -1), Predictors[:][0:len(predictor), ind9]).flatten() +cintp  #..less than Tr_SST and larger than Tr_SUB
-    predict_value_LWP[ind10] = dot(deffi.reshape(1, -1), Predictors[:][0:len(predictor), ind10]).flatten() +dintp  #..larger or equal than Tr_SST and larger than Tr_SUB
-
-    predict_dict['label'] =  predict_label_LWP
-    predict_dict['value'] =  predict_value_LWP
-    
-    
     return predict_dict, ind7, ind8, ind9, ind10, coef_array, shape_fla_training
 
 
 
-
 def rdlrm_4_predict(X_dict, coef_array, cut_off1, cut_off2, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 4):
+    # 'If r = 4: divided by Hot/ Cold (by SST) & Up/ Dn (By SUB500) regimes'
+    # 'If r = 2: divided by only Up/ Down (By SUB500) regimes'
+
     # 'predict_dict' is a dictionary to store the 'predict_label_LWP' and 'predict_value_LWP' (for CCF1, 2, 3, 4,.. and the intercept);
     predict_dict = {}
 
@@ -436,11 +641,11 @@ def rdlrm_4_predict(X_dict, coef_array, cut_off1, cut_off2, predictant = 'LWP', 
     # 'predict_value_LWP' is an array to store the predicted LWP
     predict_value_LWP = zeros((X_dict['SST'].shape[0]))
     
-    # 'predictors' is an array that has the need predictors in flatten format;
+    # 'predictors' is an array that has the needed predictors values in flattened format:
     Predictors = []
 
     for i in range(len(predictor)):
-        Predictors.append(X_dict[predictor[i]] *1.)
+        Predictors.append(X_dict[predictor[i]]* 1.)
     Predictors = asarray(Predictors)
     # print(Predictors.shape)  # (4, ..)
 
@@ -459,46 +664,72 @@ def rdlrm_4_predict(X_dict, coef_array, cut_off1, cut_off2, predictant = 'LWP', 
     ind_true = logical_not(ind_false)
     print('shape2: ', asarray(nonzero(ind_true==True)).shape)  #.. # of 'non-nan'
 
-    # Replace 'nan' value in right place
+    # Replace '0'/ 'nan' value in the right place:
     predict_label_LWP[ind_false] = 0
     predict_value_LWP[ind_false] = nan
 
-
-    # LOOP THROUGH REGIMES ('4'):
-    # split data with skin Temperature (SST) Larger\Equal & Less than Cut_off1
-    ind_hot = X_dict['SST'] >= cut_off1
-    ind_cold = X_dict['SST'] < cut_off1
-    # split data with 500mb Subsidence (SUB) Less\Equal & Larger than Cut_off2
-    ind_up  = X_dict['SUB'] <= cut_off2
-    ind_down = X_dict['SUB'] > cut_off2
+    if r == 4:
+        # LOOP THROUGH REGIMES ('4'):
     
-    ind7 = ind_true & ind_cold & ind_up
-    ind8 = ind_true & ind_hot & ind_up
+        # split data with skin Temperature (SST) Larger\Equal & Less than Cut_off1
+        ind_hot = X_dict['SST'] >= cut_off1
+        ind_cold = X_dict['SST'] < cut_off1
+        # split data with 500mb Subsidence (SUB) Less\Equal & Larger than Cut_off2
+        ind_up  = X_dict['SUB'] <= cut_off2
+        ind_down = X_dict['SUB'] > cut_off2
+
+        ind7 = ind_true & ind_cold & ind_up
+        ind8 = ind_true & ind_hot & ind_up
+
+        ind9 = ind_true & ind_cold & ind_down
+        ind10 = ind_true & ind_hot & ind_down
+
+        Regimes = [ind7, ind8, ind9, ind10]
+        print(' Total # of regime', len(Regimes))
+
+        for k in range(len(Regimes)):
+            print('current # of regimes', k)
+            ind  = Regimes[k]
+            # labels of regimes
+            predict_label_LWP[ind] = k + 1
+
+            # predict values
+            predict_value_LWP[ind] = dot(coef_array[k,0].reshape(1, -1), Predictors[:][0:len(predictor), ind]).flatten() + coef_array[k,1]  #..larger or equal than Tr_SST
+
+        # print("predict_value_LWP ", predict_value_LWP)
+        # print("label", predict_label_LWP)  # '1' for 'Cold'& 'Up' regime, '2' for 'Hot'& 'Up' regime; '3' for 'Cold'& 'Down' regime; and '4' for 'Hot'& 'Down' regime.
+
+        predict_dict['label'] = predict_label_LWP
+        predict_dict['value'] = predict_value_LWP
     
-    ind9 = ind_true & ind_cold & ind_down
-    ind10 = ind_true & ind_hot & ind_down
-
-    Regimes = [ind7, ind8, ind9, ind10]
-    print(' Total # of regime', len(Regimes))
-
-    for k in range(len(Regimes)):
-        print('current # of regimes', k)
-        ind  = Regimes[k]
-        # labels of regimes
-        predict_label_LWP[ind] = k + 1
     
-        # predict values
-        predict_value_LWP[ind] = dot(coef_array[k,0].reshape(1, -1), Predictors[:][0:len(predictor), ind]).flatten() + coef_array[k,1]  #..larger or equal than Tr_SST
-
-    # print("predict_value_LWP ", predict_value_LWP)
-    # print("label", predict_label_LWP)  # '1' for 'Cold'& 'Up' regime, '2' for 'Hot'& 'Up' regime; '3' for 'Cold'& 'Down' regime; and '4' for 'Hot'& 'Down' regime.
-
-    predict_dict['label'] = predict_label_LWP
-    predict_dict['value'] = predict_value_LWP
+    if r == 2:
+        # LOOP THROUGH REGIMES ('2'):
     
+        ind9 = X_dict['SUB'] <= cut_off2   # 'ind_up'
+        ind10 = X_dict['SUB'] > cut_off2   # 'ind_down'
+    
+        ind7 = ind_true & ind9
+        ind8 = ind_true & ind10
 
+        Regimes = [ind7, ind8]
+        print(' Total # of regime', len(Regimes))
+
+        for k in range(len(Regimes)):
+            print('current # of regimes', k)
+            ind  = Regimes[k]
+            # labels of regimes
+            predict_label_LWP[ind] = k + 1
+        
+            # predict values
+            predict_value_LWP[ind] = dot(coef_array[k,0].reshape(1, -1), Predictors[:][0:len(predictor), ind]).flatten() + coef_array[k,1]  #..larger or equal than Tr_SST
+        
+        # print("predict_value_LWP ", predict_value_LWP)
+        # print("label", predict_label_LWP)  # '1' for the 'Up' regime, '2' for the 'Down' regime;
+
+        predict_dict['label'] = predict_label_LWP
+        predict_dict['value'] = predict_value_LWP
     return predict_dict, ind7, ind8, ind9, ind10, shape_fla_testing
-
 
 
 def Test_performance_4(A, B, ind7, ind8, ind9, ind10):
@@ -547,7 +778,7 @@ def Test_performance_4(A, B, ind7, ind8, ind9, ind10):
 
 
 
-# Building functions:
+# Building functions for individual contributions from each predictors:
 def rdlrm_4_predict_individual(X_dict, coef_array, cut_off1, cut_off2 , CCFs = 4 , r = 4):
     
     # 'predict_dict' is a dictionary to store the 'predict_label_LWP' and 'predict_value_LWP' (for CCF1, 2, 3, 4, and the intercept);
