@@ -487,9 +487,9 @@ def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', predictor =
     # Replace 'nan' value in right place
     predict_label_LWP[ind_false] = 0
     predict_value_LWP[ind_false] = nan
-    
-    if r == 4:
 
+    if r == 4:
+    
         print('4LRM: HERE TR_sst = ', cut_off1, 'K')  #.. # of total flatten points
         print('4LRM:  ... TR_sub = ', cut_off2, 'Pa s-1')
 
@@ -701,8 +701,7 @@ def rdlrm_4_predict(X_dict, coef_array, cut_off1, cut_off2, predictant = 'LWP', 
 
         predict_dict['label'] = predict_label_LWP
         predict_dict['value'] = predict_value_LWP
-    
-    
+
     if r == 2:
         # LOOP THROUGH REGIMES ('2'):
     
@@ -846,5 +845,5 @@ def rdlrm_4_predict_individual(X_dict, coef_array, cut_off1, cut_off2 , CCFs = 4
     predict_dict['label'] =  predict_label_LWP
     predict_dict['value'] =  predict_value_LWP
     
-    
+
     return predict_dict

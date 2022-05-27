@@ -23,7 +23,7 @@ from read_hs_file import read_var_mod
 
 
 from get_LWPCMIP6data import *
-from fitLRM_cy1 import *
+from fitLRM_cy2 import *
 from useful_func_cy import *
 
 
@@ -290,22 +290,22 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     WD = '/glade/work/chuyan/Research/Cloud_CCFs_RMs/Course_objective_ana/data_file/'
 
 
-    rawdata_dict1 = fitLRM(TR_sst=TR_sst, s_range=s_range, y_range=y_range, x_range=x_range, C_dict = B_dict)
+    rawdata_dict1 = fitLRM3(TR_sst=TR_sst, s_range=s_range, y_range=y_range, x_range=x_range, C_dict = B_dict)
     rawdata_dict3 = p4plot1(s_range=s_range, y_range=y_range, x_range=x_range, shape_yr_pi=shape_yr_pi, shape_yr_abr=shape_yr_abr, rawdata_dict=rawdata_dict1)
 
     rawdata_dict3['TR_sst'] =  THRESHOLD_sst
 
-    savez(WD+C_dict['model_data']['modn']+'_r1(Jan)_(largestpiR2)_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
+    savez(WD+C_dict['model_data']['modn']+'_r2_hotcold(Jan)_(largestpiR2)_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
     #.. best fit save_2lrm command:
     # savez(WD+C_dict['model_data']['modn']+'_best(test5)fit_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
 
-    rawdata_dict2 = fitLRM2(TR_sst=TR_sst, TR_sub=TR_sub, s_range=s_range, y_range=y_range, x_range=x_range, C_dict = D_dict)
+    rawdata_dict2 = fitLRM4(TR_sst=TR_sst, TR_sub=TR_sub, s_range=s_range, y_range=y_range, x_range=x_range, C_dict = D_dict)
     rawdata_dict4 = p4plot1(s_range=s_range, y_range=y_range, x_range=x_range, shape_yr_pi=shape_yr_pi, shape_yr_abr=shape_yr_abr, rawdata_dict=rawdata_dict2)
 
     rawdata_dict4['TR_sst'] =  THRESHOLD_sst
     rawdata_dict4['TR_sub'] =  THRESHOLD_sub
 
-    savez(WD+C_dict['model_data']['modn']+'_r2_updown(Jan)_(largestpiR2)_'+str(round(TR_sst, 2))+'K_'+'ud'+str(round(TR_sub*100, 2))+'_dats', model_data =  C_dict['model_data'],rawdata_dict = rawdata_dict4)
+    savez(WD+C_dict['model_data']['modn']+'_r4(Jan)_(largestpiR2)_'+str(round(TR_sst, 2))+'K_'+'ud'+str(round(TR_sub*100, 2))+'_dats', model_data =  C_dict['model_data'],rawdata_dict = rawdata_dict4)
     
     #.. best fit save_4lrm command:
     # savez(WD+C_dict['model_data']['modn']+'_best(test5)fit_'+str(round(TR_sst, 2))+'K_'+ 'ud'+str(round(TR_sub*100, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict4)

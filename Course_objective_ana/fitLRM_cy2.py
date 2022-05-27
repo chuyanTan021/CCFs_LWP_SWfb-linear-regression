@@ -23,7 +23,7 @@ from get_annual_so import *
 
 
 
-def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
+def fitLRM3(C_dict, TR_sst, s_range, y_range, x_range):
     # 'C_dict' is the raw data dict, 'TR_sst' is the pre-defined skin_Temperature Threshold to distinguish two Multi-Linear Regression Models
 
     # 's_range , 'y_range', 'x_range' used to do area mean for repeat gmt ARRAY
@@ -112,24 +112,24 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
 
     #.. PI
     
-    predict_dict_PI, ind6_PI, ind7_PI, coef_array, shape_fla_training = rdlrm_1_training(dict2_predi_fla_PI, predictant='LWP')
-    predict_dict_PI_iwp, ind6_PI_iwp, ind7_PI_iwp, coef_array_iwp, shape_fla_training_iwp = rdlrm_1_training(dict2_predi_fla_PI, predictant='IWP')
+    predict_dict_PI, ind6_PI, ind7_PI, coef_array, shape_fla_training = rdlrm_2_training(dict2_predi_fla_PI, TR_sst, predictant='LWP')
+    predict_dict_PI_iwp, ind6_PI_iwp, ind7_PI_iwp, coef_array_iwp, shape_fla_training_iwp = rdlrm_2_training(dict2_predi_fla_PI, TR_sst, predictant='IWP')
     
-    predict_dict_PI_albedo, _, _, coef_array_albedo = rdlrm_1_training(dict2_predi_fla_PI, predictant='albedo', predictor=['LWP', 'albedo_cs'], r = 1)[0:4]
-    predict_dict_PI_rsut, _, _, coef_array_rsut = rdlrm_1_training(dict2_predi_fla_PI, predictant='rsut', predictor=['LWP', 'rsutcs'], r = 1)[0:4]
+    predict_dict_PI_albedo, _, _, coef_array_albedo = rdlrm_2_training(dict2_predi_fla_PI, TR_sst, predictant='albedo', predictor=['LWP', 'albedo_cs'], r = 2)[0:4]
+    predict_dict_PI_rsut, _, _, coef_array_rsut = rdlrm_2_training(dict2_predi_fla_PI, TR_sst, predictant='rsut', predictor=['LWP', 'rsutcs'], r = 2)[0:4]
     
     # Added on May 13th, 2022: for second step using LWP to predict the albedo
     dict2_predi_fla_PI['LWP_lrm'] = deepcopy(predict_dict_PI['value'])
     dict2_predi_nor_PI['LWP_lrm'] = (dict2_predi_fla_PI['LWP_lrm'] - nanmean(dict2_predi_fla_PI['LWP_lrm']) )/ nanstd(dict2_predi_fla_PI['LWP_lrm'])
-    predict_dict_PI_albedo_lL, _, _, coef_array_albedo_lL = rdlrm_1_training(dict2_predi_fla_PI, predictant='albedo', predictor=['LWP_lrm', 'albedo_cs'], r = 1)[0:4]
-    predict_dict_PI_rsut_lL, _, _, coef_array_rsut_lL = rdlrm_1_training(dict2_predi_fla_PI, predictant='rsut', predictor=['LWP_lrm', 'rsutcs'], r = 1)[0:4]
+    predict_dict_PI_albedo_lL, _, _, coef_array_albedo_lL = rdlrm_2_training(dict2_predi_fla_PI, TR_sst, predictant='albedo', predictor=['LWP_lrm', 'albedo_cs'], r = 2)[0:4]
+    predict_dict_PI_rsut_lL, _, _, coef_array_rsut_lL = rdlrm_2_training(dict2_predi_fla_PI, TR_sst, predictant='rsut', predictor=['LWP_lrm', 'rsutcs'], r = 2)[0:4]
 
 
     # Save into the rawdata dict
     C_dict['Coef_dict'] = coef_array
     C_dict['Predict_dict_PI']  = predict_dict_PI
-    C_dict['ind_True_PI'] = ind6_PI  # C_dict['ind_Hot_PI'] = ind6_PI
-    C_dict['ind_False_PI'] = ind7_PI  # C_dict['ind_Cold_PI'] = ind7_PI
+    C_dict['ind_Hot_PI'] = ind6_PI
+    C_dict['ind_Cold_PI'] = ind7_PI
     
     C_dict['Coef_dict_IWP']= coef_array_iwp
     C_dict['Predict_dict_PI_IWP']  = predict_dict_PI_iwp
@@ -163,7 +163,7 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     YB_rsut = predict_dict_PI_rsut['value']
 
     YB_albedo_lL = predict_dict_PI_albedo_lL['value']
-    print("2lrm predicted mean Albedo (with cloud) using lrm LWP:", nanmean(YB_albedo_lL), " in 'piControl' ")
+    print("2lrm predicted mean Albedo_lL (with cloud) using predicted lrm's LWP: ", nanmean(YB_albedo_lL), " in 'piControl' ")
     YB_rsut_lL = predict_dict_PI_rsut_lL['value']
 
 
@@ -180,13 +180,13 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
 
     #.. Test performance
     
-    stats_dict_PI = Test_performance_1(dict2_predi_fla_PI['LWP'], YB, ind6_PI, ind7_PI)
-    stats_dict_PI_iwp = Test_performance_1(dict2_predi_fla_PI['IWP'], YB_iwp, ind6_PI_iwp, ind7_PI_iwp)
-    stats_dict_PI_albedo = Test_performance_1(dict2_predi_fla_PI['albedo'], YB_albedo, ind6_PI, ind7_PI)
-    stats_dict_PI_rsut = Test_performance_1(dict2_predi_fla_PI['rsut'], YB_rsut, ind6_PI, ind7_PI)
+    stats_dict_PI = Test_performance_2(dict2_predi_fla_PI['LWP'], YB, ind6_PI, ind7_PI)
+    stats_dict_PI_iwp = Test_performance_2(dict2_predi_fla_PI['IWP'], YB_iwp, ind6_PI_iwp, ind7_PI_iwp)
+    stats_dict_PI_albedo = Test_performance_2(dict2_predi_fla_PI['albedo'], YB_albedo, ind6_PI, ind7_PI)
+    stats_dict_PI_rsut = Test_performance_2(dict2_predi_fla_PI['rsut'], YB_rsut, ind6_PI, ind7_PI)
     
-    stats_dict_PI_albedo_lL = Test_performance_1(dict2_predi_fla_PI['albedo'], YB_albedo_lL, ind6_PI, ind7_PI)
-    stats_dict_PI_rsut_lL = Test_performance_1(dict2_predi_fla_PI['rsut'], YB_rsut_lL, ind6_PI, ind7_PI)
+    stats_dict_PI_albedo_lL = Test_performance_2(dict2_predi_fla_PI['albedo'], YB_albedo_lL, ind6_PI, ind7_PI)
+    stats_dict_PI_rsut_lL = Test_performance_2(dict2_predi_fla_PI['rsut'], YB_rsut_lL, ind6_PI, ind7_PI)
     print("Mean of report & predicted albedo_lL in 'piControl' (All): ", nanmean(dict2_predi_fla_PI['albedo']), '& ', nanmean(YB_albedo_lL))
     # print("Mean of report & predicted albedo in 'piControl' for SST>=TR_sst (ind6):", nanmean(dict2_predi_fla_PI['albedo'][ind6_PI]), '& ', nanmean(YB_albedo_lL[ind6_PI]))
     # print("Mean of report & predicted albedo in 'piControl' for SST< TR_sst (ind7):" , nanmean(dict2_predi_fla_PI['albedo'][ind7_PI]), '& ',  nanmean(YB_albedo_lL[ind7_PI]))
@@ -196,24 +196,24 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     
     #.. Predicting module (2lrm)
 
-    predict_dict_abr, ind6_abr, ind7_abr, shape_fla_testing = rdlrm_1_predict(dict2_predi_fla_abr, coef_array, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 1)
-    predict_dict_abr_iwp, ind6_abr_iwp, ind7_abr_iwp, shape_fla_testing_iwp = rdlrm_1_predict(dict2_predi_fla_abr, coef_array, predictant = 'IWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 1)
+    predict_dict_abr, ind6_abr, ind7_abr, shape_fla_testing = rdlrm_2_predict(dict2_predi_fla_abr, coef_array, TR_sst, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 2)
+    predict_dict_abr_iwp, ind6_abr_iwp, ind7_abr_iwp, shape_fla_testing_iwp = rdlrm_2_predict(dict2_predi_fla_abr, coef_array, TR_sst, predictant = 'IWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 2)
     
-    predict_dict_abr_albedo = rdlrm_1_predict(dict2_predi_fla_abr, coef_array_albedo, predictant = 'albedo', predictor = ['LWP', 'albedo_cs'], r = 1)[0]
-    predict_dict_abr_rsut = rdlrm_1_predict(dict2_predi_fla_abr, coef_array_rsut, predictant = 'rsut', predictor= ['LWP', 'rsutcs'], r = 1)[0]
+    predict_dict_abr_albedo = rdlrm_2_predict(dict2_predi_fla_abr, coef_array_albedo, TR_sst, predictant = 'albedo', predictor = ['LWP', 'albedo_cs'], r = 2)[0]
+    predict_dict_abr_rsut = rdlrm_2_predict(dict2_predi_fla_abr, coef_array_rsut, TR_sst, predictant = 'rsut', predictor= ['LWP', 'rsutcs'], r = 2)[0]
     
     # Added on May 13th, 2022: for second step using LWP to predict the albedo
     dict2_predi_fla_abr['LWP_lrm'] = deepcopy(predict_dict_abr['value'])
     dict2_predi_nor_abr['LWP_lrm'] = (dict2_predi_fla_abr['LWP_lrm'] - nanmean(dict2_predi_fla_abr['LWP_lrm']) )/ nanstd(dict2_predi_fla_abr['LWP_lrm'])
-    predict_dict_abr_albedo_lL = rdlrm_1_predict(dict2_predi_fla_abr, coef_array_albedo, predictant='albedo', predictor=['LWP_lrm', 'albedo_cs'], r = 1)[0]
-    predict_dict_abr_rsut_lL = rdlrm_1_predict(dict2_predi_fla_abr, coef_array_rsut, predictant='rsut', predictor=['LWP_lrm', 'rsutcs'], r = 1)[0]
+    predict_dict_abr_albedo_lL = rdlrm_2_predict(dict2_predi_fla_abr, coef_array_albedo, TR_sst, predictant='albedo', predictor=['LWP_lrm', 'albedo_cs'], r = 2)[0]
+    predict_dict_abr_rsut_lL = rdlrm_2_predict(dict2_predi_fla_abr, coef_array_rsut, TR_sst, predictant='rsut', predictor=['LWP_lrm', 'rsutcs'], r = 2)[0]
 
 
     # Save into the rawdata dict
 
     C_dict['Predict_dict_abr']  = predict_dict_abr
-    C_dict['ind_True_abr'] = ind6_abr  # C_dict['ind_Hot_abr'] = ind6_abr
-    C_dict['ind_False_abr'] = ind7_abr  # C_dict['ind_Cold_abr'] = ind7_abr
+    C_dict['ind_Hot_abr'] = ind6_abr
+    C_dict['ind_Cold_abr'] = ind7_abr
     
     C_dict['Predict_dict_abr_IWP'] = predict_dict_abr_iwp
     
@@ -258,13 +258,13 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     
     # Test performance for abrupt-4xCO2 (testing) data set
     
-    stats_dict_abr = Test_performance_1(dict2_predi_fla_abr['LWP'], YB_abr, ind6_abr, ind7_abr)
-    stats_dict_abr_iwp = Test_performance_1(dict2_predi_fla_abr['IWP'], YB_abr_iwp, ind6_abr_iwp, ind7_abr_iwp)
-    stats_dict_abr_albedo = Test_performance_1(dict2_predi_fla_abr['albedo'], YB_abr_albedo, ind6_abr, ind7_abr)
-    stats_dict_abr_rsut = Test_performance_1(dict2_predi_fla_abr['rsut'], YB_abr_rsut, ind6_abr, ind7_abr)
+    stats_dict_abr = Test_performance_2(dict2_predi_fla_abr['LWP'], YB_abr, ind6_abr, ind7_abr)
+    stats_dict_abr_iwp = Test_performance_2(dict2_predi_fla_abr['IWP'], YB_abr_iwp, ind6_abr_iwp, ind7_abr_iwp)
+    stats_dict_abr_albedo = Test_performance_2(dict2_predi_fla_abr['albedo'], YB_abr_albedo, ind6_abr, ind7_abr)
+    stats_dict_abr_rsut = Test_performance_2(dict2_predi_fla_abr['rsut'], YB_abr_rsut, ind6_abr, ind7_abr)
 
-    stats_dict_abr_albedo_lL = Test_performance_1(dict2_predi_fla_abr['albedo'], YB_abr_albedo_lL, ind6_abr, ind7_abr)
-    stats_dict_abr_rsut_lL = Test_performance_1(dict2_predi_fla_abr['rsut'], YB_abr_rsut_lL, ind6_abr, ind7_abr)
+    stats_dict_abr_albedo_lL = Test_performance_2(dict2_predi_fla_abr['albedo'], YB_abr_albedo_lL, ind6_abr, ind7_abr)
+    stats_dict_abr_rsut_lL = Test_performance_2(dict2_predi_fla_abr['rsut'], YB_abr_rsut_lL, ind6_abr, ind7_abr)
     
     
     '''
@@ -309,13 +309,13 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range):
     C_dict['stats_dict_PI_rsut_lL'] = stats_dict_PI_rsut_lL
     C_dict['stats_dict_abr_rsut_lL'] = stats_dict_abr_rsut_lL
     
-    
+
     return C_dict
 
 
 
 
-def fitLRM2(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
+def fitLRM4(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     
     # 'C_dict' is the raw data dict, 'TR_sst' accompany with 'TR_sub' are the pre-defined skin_Temperature/ 500 mb Subsidence thresholds to distinguish 4 rdlrms:
 
@@ -403,28 +403,28 @@ def fitLRM2(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
 
 
     #.. PI
-    predict_dict_PI, ind7_PI, ind8_PI, ind9_PI, ind10_PI, coef_array, shape_fla_training = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='LWP', r = 2)
-    predict_dict_PI_iwp, ind7_PI_iwp, ind8_PI_iwp, ind9_PI_iwp, ind10_PI_iwp, coef_array_iwp, shape_fla_training_iwp = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='IWP', r = 2)
+    predict_dict_PI, ind7_PI, ind8_PI, ind9_PI, ind10_PI, coef_array, shape_fla_training = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='LWP', r = 4)
+    predict_dict_PI_iwp, ind7_PI_iwp, ind8_PI_iwp, ind9_PI_iwp, ind10_PI_iwp, coef_array_iwp, shape_fla_training_iwp = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='IWP', r = 4)
     
-    predict_dict_PI_albedo, _, _, _, _, coef_array_albedo = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='albedo', predictor=['LWP', 'albedo_cs'], r = 2)[0:6]
-    predict_dict_PI_rsut, _, _, _, _, coef_array_rsut = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='rsut', predictor=['LWP', 'rsutcs'], r = 2)[0:6]
+    predict_dict_PI_albedo, _, _, _, _, coef_array_albedo = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='albedo', predictor=['LWP', 'albedo_cs'], r = 4)[0:6]
+    predict_dict_PI_rsut, _, _, _, _, coef_array_rsut = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='rsut', predictor=['LWP', 'rsutcs'], r = 4)[0:6]
     
     # Added on May 13th, 2022: for second step using LWP to predict the albedo
     
     dict2_predi_fla_PI['LWP_lrm'] = deepcopy(predict_dict_PI['value'])
     dict2_predi_nor_PI['LWP_lrm'] = (dict2_predi_fla_PI['LWP_lrm'] - nanmean(dict2_predi_fla_PI['LWP_lrm']) )/ nanstd(dict2_predi_fla_PI['LWP_lrm'])
-    predict_dict_PI_albedo_lL, _, _, _, _, coef_array_albedo_lL = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='albedo', predictor=['LWP_lrm', 'albedo_cs'], r = 2)[0:6]
-    predict_dict_PI_rsut_lL, _, _, _, _, coef_array_rsut_lL = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='rsut', predictor=['LWP_lrm', 'rsutcs'], r = 2)[0:6]
+    predict_dict_PI_albedo_lL, _, _, _, _, coef_array_albedo_lL = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='albedo', predictor=['LWP_lrm', 'albedo_cs'], r = 4)[0:6]
+    predict_dict_PI_rsut_lL, _, _, _, _, coef_array_rsut_lL = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='rsut', predictor=['LWP_lrm', 'rsutcs'], r = 4)[0:6]
     
 
     # Save into the rawdata dict
     
     C_dict['Coef_dict'] = coef_array
     C_dict['Predict_dict_PI']  = predict_dict_PI
-    C_dict['ind_Up_PI'] = ind7_PI  # C_dict['ind_Cold_Up_PI'] = ind7_PI
-    C_dict['ind_Down_PI'] = ind8_PI  # C_dict['ind_Hot_Up_PI'] = ind8_PI
-    # C_dict['ind_Cold_Down_PI'] = ind9_PI
-    # C_dict['ind_Hot_Down_PI'] = ind10_PI
+    C_dict['ind_Cold_Up_PI'] = ind7_PI
+    C_dict['ind_Hot_Up_PI'] = ind8_PI
+    C_dict['ind_Cold_Down_PI'] = ind9_PI
+    C_dict['ind_Hot_Down_PI'] = ind10_PI
     
     C_dict['Coef_dict_IWP']= coef_array_iwp
     C_dict['Predict_dict_PI_IWP']  = predict_dict_PI_iwp
@@ -456,7 +456,7 @@ def fitLRM2(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     YB_rsut = predict_dict_PI_rsut['value']
 
     YB_albedo_lL = predict_dict_PI_albedo_lL['value']
-    print("4lrm predicted mean Albedo (with cloud) using lrm LWP:", nanmean(YB_albedo_lL), " in 'piControl' ")
+    print("4lrm predicted mean Albedo_lL using lrm's LWP:", nanmean(YB_albedo_lL), " in 'piControl' ")
     YB_rsut_lL = predict_dict_PI_rsut_lL['value']
     
     
@@ -472,15 +472,14 @@ def fitLRM2(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
 
 
     #.. Test performance
+    stats_dict_PI = Test_performance_4(dict2_predi_fla_PI['LWP'], YB, ind7_PI, ind8_PI, ind9_PI, ind10_PI)
+    stats_dict_PI_iwp = Test_performance_4(dict2_predi_fla_PI['IWP'], YB_iwp, ind7_PI_iwp, ind8_PI_iwp, ind9_PI_iwp, ind10_PI_iwp)
     
-    stats_dict_PI = Test_performance_2(dict2_predi_fla_PI['LWP'], YB, ind7_PI, ind8_PI)   #  Test_performance_4(dict2_predi_fla_PI['LWP'], YB, ind7_PI, ind8_PI, ind9_PI, ind10_PI)
-    stats_dict_PI_iwp = Test_performance_2(dict2_predi_fla_PI['IWP'], YB_iwp, ind7_PI_iwp, ind8_PI_iwp)   # Test_performance_4(dict2_predi_fla_PI['IWP'], YB_iwp, ind7_PI_iwp, ind8_PI_iwp, ind9_PI_iwp, ind10_PI_iwp)
+    stats_dict_PI_albedo = Test_performance_4(dict2_predi_fla_PI['albedo'], YB_albedo, ind7_PI, ind8_PI, ind9_PI, ind10_PI)
+    stats_dict_PI_rsut = Test_performance_4(dict2_predi_fla_PI['rsut'], YB_rsut, ind7_PI, ind8_PI, ind9_PI, ind10_PI)
     
-    stats_dict_PI_albedo = Test_performance_2(dict2_predi_fla_PI['albedo'], YB_albedo, ind7_PI, ind8_PI)   # Test_performance_4(dict2_predi_fla_PI['albedo'], YB_albedo, ind7_PI, ind8_PI, ind9_PI, ind10_PI)
-    stats_dict_PI_rsut = Test_performance_2(dict2_predi_fla_PI['rsut'], YB_rsut, ind7_PI, ind8_PI)   # Test_performance_4(dict2_predi_fla_PI['rsut'], YB_rsut, ind7_PI, ind8_PI, ind9_PI, ind10_PI)
-    
-    stats_dict_PI_albedo_lL = Test_performance_2(dict2_predi_fla_PI['albedo'], YB_albedo_lL, ind7_PI, ind8_PI)   # Test_performance_4(dict2_predi_fla_PI['albedo'], YB_albedo_lL, ind7_PI, ind8_PI, ind9_PI, ind10_PI)
-    stats_dict_PI_rsut_lL = Test_performance_2(dict2_predi_fla_PI['rsut'], YB_rsut_lL, ind7_PI, ind8_PI)   # Test_performance_4(dict2_predi_fla_PI['rsut'], YB_rsut_lL, ind7_PI, ind8_PI, ind9_PI, ind10_PI)
+    stats_dict_PI_albedo_lL = Test_performance_4(dict2_predi_fla_PI['albedo'], YB_albedo_lL, ind7_PI, ind8_PI, ind9_PI, ind10_PI)
+    stats_dict_PI_rsut_lL = Test_performance_4(dict2_predi_fla_PI['rsut'], YB_rsut_lL, ind7_PI, ind8_PI, ind9_PI, ind10_PI)
 
     print(" Mean of report & predicted albedo_lL for 'piControl' (all) exp: ", nanmean(dict2_predi_fla_PI['albedo']), '& ', nanmean(YB_albedo_lL))
     # print(" Mean of report & predicted albedo_lL for 'piControl' of Hot, Up regime: " , nanmean(dict2_predi_fla_PI['albedo'][ind8_PI]), '& ', nanmean(YB_albedo_lL[ind8_PI]))
@@ -490,24 +489,24 @@ def fitLRM2(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     #.. ABR
     #.. Predicting module (4lrm)
 
-    predict_dict_abr, ind7_abr, ind8_abr, ind9_abr, ind10_abr, shape_fla_testing = rdlrm_4_predict(dict2_predi_fla_abr, coef_array, TR_sst, TR_sub, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 2)
-    predict_dict_abr_iwp, ind7_abr_iwp, ind8_abr_iwp, ind9_abr_iwp, ind10_abr_iwp, shape_fla_testing_iwp = rdlrm_4_predict(dict2_predi_fla_abr, coef_array, TR_sst, TR_sub, predictant = 'IWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 2)
+    predict_dict_abr, ind7_abr, ind8_abr, ind9_abr, ind10_abr, shape_fla_testing = rdlrm_4_predict(dict2_predi_fla_abr, coef_array, TR_sst, TR_sub, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 4)
+    predict_dict_abr_iwp, ind7_abr_iwp, ind8_abr_iwp, ind9_abr_iwp, ind10_abr_iwp, shape_fla_testing_iwp = rdlrm_4_predict(dict2_predi_fla_abr, coef_array, TR_sst, TR_sub, predictant = 'IWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 4)
     
-    predict_dict_abr_albedo = rdlrm_4_predict(dict2_predi_fla_abr, coef_array_albedo, TR_sst, TR_sub, predictant = 'albedo', predictor = ['LWP', 'albedo_cs'], r = 2)[0]
-    predict_dict_abr_rsut = rdlrm_4_predict(dict2_predi_fla_abr, coef_array_rsut, TR_sst, TR_sub, predictant = 'rsut', predictor= ['LWP', 'rsutcs'], r = 2)[0]
+    predict_dict_abr_albedo = rdlrm_4_predict(dict2_predi_fla_abr, coef_array_albedo, TR_sst, TR_sub, predictant = 'albedo', predictor = ['LWP', 'albedo_cs'], r = 4)[0]
+    predict_dict_abr_rsut = rdlrm_4_predict(dict2_predi_fla_abr, coef_array_rsut, TR_sst, TR_sub, predictant = 'rsut', predictor= ['LWP', 'rsutcs'], r = 4)[0]
     
     # Added on May 14th, 2022: for second step using LWP to predict the albedo
     dict2_predi_fla_abr['LWP_lrm'] = deepcopy(predict_dict_abr['value'])
     dict2_predi_nor_abr['LWP_lrm'] = (dict2_predi_fla_abr['LWP_lrm'] - nanmean(dict2_predi_fla_abr['LWP_lrm']) )/ nanstd(dict2_predi_fla_abr['LWP_lrm'])
-    predict_dict_abr_albedo_lL = rdlrm_4_predict(dict2_predi_fla_abr, coef_array_albedo, TR_sst, TR_sub, predictant='albedo', predictor=['LWP_lrm', 'albedo_cs'], r = 2)[0]
-    predict_dict_abr_rsut_lL = rdlrm_4_predict(dict2_predi_fla_abr, coef_array_rsut, TR_sst, TR_sub, predictant='rsut', predictor=['LWP_lrm', 'rsutcs'], r = 2)[0]
+    predict_dict_abr_albedo_lL = rdlrm_4_predict(dict2_predi_fla_abr, coef_array_albedo, TR_sst, TR_sub, predictant='albedo', predictor=['LWP_lrm', 'albedo_cs'], r = 4)[0]
+    predict_dict_abr_rsut_lL = rdlrm_4_predict(dict2_predi_fla_abr, coef_array_rsut, TR_sst, TR_sub, predictant='rsut', predictor=['LWP_lrm', 'rsutcs'], r = 4)[0]
 
     # Save into the rawdata dict
     C_dict['Predict_dict_abr']  = predict_dict_abr
-    C_dict['ind_Up_abr'] = ind7_abr  # C_dict['ind_Cold_Up_abr'] = ind7_abr
-    C_dict['ind_Down_abr'] = ind8_abr  # C_dict['ind_Hot_Up_abr'] = ind8_abr
-    # C_dict['ind_Cold_Down_abr'] = ind9_abr
-    # C_dict['ind_Hot_Down_abr'] = ind10_abr
+    C_dict['ind_Cold_Up_abr'] = ind7_abr
+    C_dict['ind_Hot_Up_abr'] = ind8_abr
+    C_dict['ind_Cold_Down_abr'] = ind9_abr
+    C_dict['ind_Hot_Down_abr'] = ind10_abr
     
     C_dict['Predict_dict_abr_IWP']  = predict_dict_abr_iwp
     
@@ -516,7 +515,7 @@ def fitLRM2(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     
     C_dict['Predict_dict_abr_albedo_lL'] = predict_dict_abr_albedo_lL
     C_dict['Predict_dict_abr_rsut_lL'] = predict_dict_abr_rsut_lL
-    
+
 
     # 'YB_abr' is the predicted value of LWP in 'abrupt-4xCO2' experiment
     YB_abr = predict_dict_abr['value']
@@ -530,7 +529,7 @@ def fitLRM2(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     YB_abr_rsut = predict_dict_abr_rsut['value']
     
     YB_abr_albedo_lL = predict_dict_abr_albedo_lL['value']
-    print("4lrm predicted mean Albedo (with cloud) using lrm's LWP", nanmean(YB_abr_albedo_lL), " in 'abrupt-4xCO2' ")
+    print("4lrm predicted mean Albedo_lL using lrm's LWP", nanmean(YB_abr_albedo_lL), " in 'abrupt-4xCO2' ")
     
     YB_abr_rsut_lL = predict_dict_abr_rsut_lL['value']
 
@@ -552,14 +551,14 @@ def fitLRM2(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
 
     # Test performance for abrupt-4xCO2 (testing) data set
     
-    stats_dict_abr = Test_performance_2(dict2_predi_fla_abr['LWP'], YB_abr, ind7_abr, ind8_abr)  # Test_performance_4(dict2_predi_fla_abr['LWP'], YB_abr, ind7_abr, ind8_abr, ind9_abr, ind10_abr)
-    stats_dict_abr_iwp = Test_performance_2(dict2_predi_fla_abr['IWP'], YB_abr_iwp, ind7_abr_iwp, ind8_abr_iwp)  # Test_performance_4(dict2_predi_fla_abr['IWP'], YB_abr_iwp, ind7_abr_iwp, ind8_abr_iwp, ind9_abr_iwp, ind10_abr_iwp)
+    stats_dict_abr = Test_performance_4(dict2_predi_fla_abr['LWP'], YB_abr, ind7_abr, ind8_abr, ind9_abr, ind10_abr)
+    stats_dict_abr_iwp = Test_performance_4(dict2_predi_fla_abr['IWP'], YB_abr_iwp, ind7_abr_iwp, ind8_abr_iwp, ind9_abr_iwp, ind10_abr_iwp)
     
-    stats_dict_abr_albedo = Test_performance_2(dict2_predi_fla_abr['albedo'], YB_abr_albedo, ind7_abr, ind8_abr)  # Test_performance_4(dict2_predi_fla_abr['albedo'], YB_abr_albedo, ind7_abr, ind8_abr, ind9_abr, ind10_abr)
-    stats_dict_abr_rsut = Test_performance_2(dict2_predi_fla_abr['rsut'], YB_abr_rsut, ind7_abr, ind8_abr)  # Test_performance_4(dict2_predi_fla_abr['rsut'], YB_abr_rsut, ind7_abr, ind8_abr, ind9_abr, ind10_abr)
+    stats_dict_abr_albedo = Test_performance_4(dict2_predi_fla_abr['albedo'], YB_abr_albedo, ind7_abr, ind8_abr, ind9_abr, ind10_abr)
+    stats_dict_abr_rsut = Test_performance_4(dict2_predi_fla_abr['rsut'], YB_abr_rsut, ind7_abr, ind8_abr, ind9_abr, ind10_abr)
     
-    stats_dict_abr_albedo_lL = Test_performance_2(dict2_predi_fla_abr['albedo'], YB_abr_albedo_lL, ind7_abr, ind8_abr)  # Test_performance_4(dict2_predi_fla_abr['albedo'], YB_abr_albedo_lL, ind7_abr, ind8_abr, ind9_abr, ind10_abr)
-    stats_dict_abr_rsut_lL = Test_performance_2(dict2_predi_fla_abr['rsut'], YB_abr_rsut_lL, ind7_abr, ind8_abr)  # Test_performance_4(dict2_predi_fla_abr['rsut'], YB_abr_rsut_lL, ind7_abr, ind8_abr, ind9_abr, ind10_abr)
+    stats_dict_abr_albedo_lL = Test_performance_4(dict2_predi_fla_abr['albedo'], YB_abr_albedo_lL, ind7_abr, ind8_abr, ind9_abr, ind10_abr)
+    stats_dict_abr_rsut_lL = Test_performance_4(dict2_predi_fla_abr['rsut'], YB_abr_rsut_lL, ind7_abr, ind8_abr, ind9_abr, ind10_abr)
 
     print(" Mean of report & predicted albedo_lL for 'abrupt-4xCO2' (all): ", nanmean(dict2_predi_fla_abr['albedo']), '& ', nanmean(YB_abr_albedo_lL))
     # print(" Mean of report & predicted albedo_lL for 'abrupt-4xCO2' of Cold, Down regime: ", nanmean(dict2_predi_fla_abr['albedo'][ind9_abr]), '& ', nanmean(YB_abr_albedo_lL[ind9_abr]))
