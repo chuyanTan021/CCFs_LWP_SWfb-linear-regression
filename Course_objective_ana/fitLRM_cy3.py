@@ -315,14 +315,14 @@ def fitLRM31(C_dict, TR_sst, s_range, y_range, x_range):
     stats_dict_abr_albedo_lL = Test_performance_2(dict2_predi_fla_abr['albedo'], YB_abr_albedo_lL, ind6_abr, ind7_abr)
     stats_dict_abr_rsut_lL = Test_performance_2(dict2_predi_fla_abr['rsut'], YB_abr_rsut_lL, ind6_abr, ind7_abr)
 
-    stats_dict_abr_alpha_cre = Test_performance_1(dict2_predi_fla_abr_raw['alpha_cre'], YB_abr_albedo, ind_True_abr_raw, ind_False_abr_raw)
-    stats_dict_abr_alpha_cre_lL = Test_performance_1(dict2_predi_fla_abr['alpha_cre'], YB_abr_albedo_lL, ind_True_abr, ind_False_abr)
+    stats_dict_abr_alpha_cre = Test_performance_1(dict2_predi_fla_abr_raw['alpha_cre'], YB_abr_alpha_cre, ind_True_abr_raw, ind_False_abr_raw)
+    stats_dict_abr_alpha_cre_lL = Test_performance_1(dict2_predi_fla_abr['alpha_cre'], YB_abr_alpha_cre_lL, ind_True_abr, ind_False_abr)
 
     
     # calc D(CCFs) to DGMT and save into 'Dx/DtG' ARRAY
     # 'LWP'/ SST, p_e, LTS, SUB.. variables are Jan value, so no need to calc annually mean:
-    LWP_abr_mon = area_mean(dict1_mon_bin_PI['LWP_mon_bin'], y_range, x_range)
-    IWP_abr_mon = area_mean(dict1_mon_bin_PI['IWP_mon_bin'], y_range, x_range)
+    LWP_abr_mon = area_mean(dict1_mon_bin_abr['LWP_mon_bin'], y_range, x_range)
+    IWP_abr_mon = area_mean(dict1_mon_bin_abr['IWP_mon_bin'], y_range, x_range)
     regr3 = linear_model.LinearRegression()
     re_LWP= regr3.fit(GMT_abr_mon.reshape(-1,1), LWP_abr_mon)
     print("d(LWP)/d(GMT) = ", re_LWP.coef_, " + b :", re_LWP.intercept_)
@@ -330,10 +330,10 @@ def fitLRM31(C_dict, TR_sst, s_range, y_range, x_range):
     regr4 = linear_model.LinearRegression()
     re_IWP= regr4.fit(GMT_abr_mon.reshape(-1,1), IWP_abr_mon)
     
-    SST_abr_mon = area_mean(dict1_mon_bin_PI['SST_mon_bin'], y_range, x_range)
-    p_e_abr_mon = area_mean(dict1_mon_bin_PI['p_e_mon_bin'], y_range, x_range)
-    LTS_abr_mon = area_mean(dict1_mon_bin_PI['LTS_mon_bin'], y_range, x_range)
-    SUB_abr_mon = area_mean(dict1_mon_bin_PI['SUB_mon_bin'], y_range, x_range)
+    SST_abr_mon = area_mean(dict1_mon_bin_abr['SST_mon_bin'], y_range, x_range)
+    p_e_abr_mon = area_mean(dict1_mon_bin_abr['p_e_mon_bin'], y_range, x_range)
+    LTS_abr_mon = area_mean(dict1_mon_bin_abr['LTS_mon_bin'], y_range, x_range)
+    SUB_abr_mon = area_mean(dict1_mon_bin_abr['SUB_mon_bin'], y_range, x_range)
     regr5 = linear_model.LinearRegression()
     regr6 = linear_model.LinearRegression()
     regr7 = linear_model.LinearRegression()
@@ -653,8 +653,8 @@ def fitLRM41(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     stats_dict_abr_albedo_lL = Test_performance_4(dict2_predi_fla_abr['albedo'], YB_abr_albedo_lL, ind7_abr, ind8_abr, ind9_abr, ind10_abr)
     stats_dict_abr_rsut_lL = Test_performance_4(dict2_predi_fla_abr['rsut'], YB_abr_rsut_lL, ind7_abr, ind8_abr, ind9_abr, ind10_abr)
     
-    stats_dict_abr_alpha_cre = Test_performance_1(dict2_predi_fla_abr_raw['alpha_cre'], YB_abr_albedo, ind_True_abr_raw, ind_False_abr_raw)
-    stats_dict_abr_alpha_cre_lL = Test_performance_1(dict2_predi_fla_abr['alpha_cre'], YB_abr_albedo_lL, ind_True_abr, ind_False_abr)
+    stats_dict_abr_alpha_cre = Test_performance_1(dict2_predi_fla_abr_raw['alpha_cre'], YB_abr_alpha_cre, ind_True_abr_raw, ind_False_abr_raw)
+    stats_dict_abr_alpha_cre_lL = Test_performance_1(dict2_predi_fla_abr['alpha_cre'], YB_abr_alpha_cre_lL, ind_True_abr, ind_False_abr)
     
     print(" Mean of report & predicted albedo for 'abrupt-4xCO2' (All): ", nanmean(dict2_predi_fla_abr['albedo']), '&', nanmean(YB_abr_albedo_lL))
     
@@ -666,7 +666,7 @@ def fitLRM41(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     # calc D(CCFs) to DGMT and save into 'Dx/DtG' ARRAY
     # 'LWP'/ SST, p_e, LTS, SUB.. variables are Jan value, so no need to calc annually mean:
     LWP_abr_mon = area_mean(C_dict['LWP_predi_bin_abr'], y_range, x_range)
-    IWP_abr_mon = area_mean(dict1_mon_bin_PI['IWP_mon_bin'], y_range, x_range)
+    IWP_abr_mon = area_mean(dict1_mon_bin_abr['IWP_mon_bin'], y_range, x_range)
     regr3 = linear_model.LinearRegression()
     re_LWP= regr3.fit(GMT_abr_mon.reshape(-1,1), LWP_abr_mon)
     print("d(LWP)/d(GMT) = ", re_LWP.coef_, " + b :", re_LWP.intercept_)
@@ -674,10 +674,10 @@ def fitLRM41(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     regr4 = linear_model.LinearRegression()
     re_IWP= regr4.fit(GMT_abr_mon.reshape(-1,1), IWP_abr_mon)
     
-    SST_abr_mon = area_mean(dict1_mon_bin_PI['SST_mon_bin'], y_range, x_range)
-    p_e_abr_mon = area_mean(dict1_mon_bin_PI['p_e_mon_bin'], y_range, x_range)
-    LTS_abr_mon = area_mean(dict1_mon_bin_PI['LTS_mon_bin'], y_range, x_range)
-    SUB_abr_mon = area_mean(dict1_mon_bin_PI['SUB_mon_bin'], y_range, x_range)
+    SST_abr_mon = area_mean(dict1_mon_bin_abr['SST_mon_bin'], y_range, x_range)
+    p_e_abr_mon = area_mean(dict1_mon_bin_abr['p_e_mon_bin'], y_range, x_range)
+    LTS_abr_mon = area_mean(dict1_mon_bin_abr['LTS_mon_bin'], y_range, x_range)
+    SUB_abr_mon = area_mean(dict1_mon_bin_abr['SUB_mon_bin'], y_range, x_range)
     regr5 = linear_model.LinearRegression()
     regr6 = linear_model.LinearRegression()
     regr7 = linear_model.LinearRegression()
