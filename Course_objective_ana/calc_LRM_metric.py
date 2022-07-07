@@ -7,7 +7,7 @@ from numpy import *
 import matplotlib.pyplot as plt
 import xarray as xr
 
-# import PyNIO as Nio
+# import PyNIO as Nio   #  deprecated
 import pandas as pd
 import glob
 from copy import deepcopy
@@ -25,9 +25,9 @@ from read_hs_file import read_var_mod
 from get_LWPCMIP6data import *
 from fitLRM_cy1 import *
 from fitLRM_cy2 import *
-from fitLRM_cy3 import *
+# from fitLRM_cy3 import *
 from useful_func_cy import *
-
+from calc_Radiation_LRM_1 import *
 
 def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     # get variable data
@@ -38,6 +38,12 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     else:
         print('not cmip6')
     
+    # ******************************* #
+    # Radiation Change
+    coef_array_alpha_cre_pi, coef_array_albedo_pi, coef_array_alpha_cre_abr, coef_array_albedo_abr = calc_Radiation_LRM_1(inputVar_pi, inputVar_abr)
+    
+    
+    # ******************************* #
     #..get the shapes of monthly data
     shape_lat = len(inputVar_pi['lat'])
     shape_lon = len(inputVar_pi['lon'])
@@ -47,12 +53,12 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
 
     
     #..choose lat 40 -85 °S as the Southern-Ocean Regions
-    lons        = inputVar_pi['lon']
-    lats        = inputVar_pi['lat'][:]
+    lons = inputVar_pi['lon'] *1.
+    lats = inputVar_pi['lat'][:] *1.
 
-    levels      = array(inputVar_abr['pres'])
-    times_abr   = inputVar_abr['times']
-    times_pi    = inputVar_pi['times']
+    levels = array(inputVar_abr['pres'])
+    times_abr = inputVar_abr['times'] *1.
+    times_pi = inputVar_pi['times'] *1.
     
     lati0 = -40.
     latsi0= min(range(len(lats)), key = lambda i: abs(lats[i] - lati0))
@@ -65,26 +71,26 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
 
     
     #..abrupt-4xCO2 Variables: LWP, tas(gmt), SST, (MC), p-e; SW radiation metrics
-    LWP_abr  = asarray(inputVar_abr['clwvi']) - asarray(inputVar_abr['clivi'])   #..units in kg m^-2
+    LWP_abr = array(inputVar_abr['clwvi']) - array(inputVar_abr['clivi'])   #..units in kg m^-2
 
-    gmt_abr  = asarray(inputVar_abr['tas'])
+    gmt_abr = array(inputVar_abr['tas'])
 
-    SST_abr  = asarray(inputVar_abr['sfc_T'])
+    SST_abr = array(inputVar_abr['sfc_T'])
     
-    Precip_abr =  asarray(inputVar_abr['P']) * (24.*60.*60.)   #.. Precipitation. Convert the units from kg m^-2 s^-1 -> mm*day^-1
+    Precip_abr = array(inputVar_abr['P']) * (24.*60.*60.)   #.. Precipitation. Convert the units from kg m^-2 s^-1 -> mm*day^-1
     print('abr4x average Pr(mm/ day): ', nanmean(Precip_abr))   #.. IPSL/abr2.80..  CNRM ESM2 1/abr 2.69.. CESM2/abr 2.74..
-    Eva_abr    =  asarray(inputVar_abr['E']) * (24.*60.*60.)   #.. Evaporation, mm day^-1
+    Eva_abr = array(inputVar_abr['E']) * (24.*60.*60.)   #.. Evaporation, mm day^-1
     print('abr4x average Evapor(mm/ day): ', nanmean(Eva_abr))         #.. IPSL/abr2.50..  CNRM ESM2 1/abr 2.43.. CESM2/abr 2.43..
-    MC_abr  = Precip_abr - Eva_abr   #..Moisture Convergence calculated from abrupt4xCO2's P - E, Units in mm day^-1
+    MC_abr = Precip_abr - Eva_abr   #..Moisture Convergence calculated from abrupt4xCO2's P - E, Units in mm day^-1
     
-    Twp_abr  = asarray(inputVar_abr['clwvi'])
-    Iwp_abr  = asarray(inputVar_abr['clivi'])
-    prw_abr  = asarray(inputVar_abr['prw'])
+    Twp_abr = array(inputVar_abr['clwvi'])
+    Iwp_abr = array(inputVar_abr['clivi'])
+    prw_abr = array(inputVar_abr['prw'])
     
     # SW radiation metrics
-    Rsdt_abr = asarray(inputVar_abr['rsdt'])
-    Rsut_abr = asarray(inputVar_abr['rsut'])
-    Rsutcs_abr = asarray(inputVar_abr['rsutcs'])
+    Rsdt_abr = array(inputVar_abr['rsdt'])
+    Rsut_abr = array(inputVar_abr['rsut'])
+    Rsutcs_abr = array(inputVar_abr['rsutcs'])
     print("shape of data in 'abrupt-4xCO2':  ",  Rsut_abr.shape, " mean 'abrupt-4xCO2' upwelling SW radiation flux in the SO (Assume with cloud): ",  nanmean(Rsut_abr[:, latsi1:latsi0 +1,:]))
     # print("shape of data in 'abrupt-4XCO2' exp:", Eva_abr.shape, 'abr4x mean-gmt(K): ', nanmean(gmt_abr))
 
@@ -94,27 +100,27 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     Alpha_cre_abr = Albedo_abr - Albedo_cs_abr
 
     
-    #..pi-Control Variables: LWP, tas(gmt), SST, (MC), p-e ; SW radiation metrics (rsdt, rsut, rsutcs)
-    LWP  = array(inputVar_pi['clwvi']) - array(inputVar_pi['clivi'])   #..units in kg m^-2
+    #..piControl Variables: LWP, tas(gmt), SST, (MC), p-e ; SW radiation metrics (rsdt, rsut, rsutcs)
+    LWP = array(inputVar_pi['clwvi']) - array(inputVar_pi['clivi'])   #..units in kg m^-2
     
-    gmt  = asarray(inputVar_pi['tas'])
+    gmt = array(inputVar_pi['tas'])
     
-    SST  = asarray(inputVar_pi['sfc_T'])
+    SST = array(inputVar_pi['sfc_T'])
     
-    Precip =  asarray(inputVar_pi['P'])* (24.*60.*60.)    #..Precipitation. Convert the units from kg m^-2 s^-1 -> mm*day^-1
+    Precip = array(inputVar_pi['P'])* (24.*60.*60.)    #..Precipitation. Convert the units from kg m^-2 s^-1 -> mm*day^-1
     print('pi-C average Pr(mm/ day): ', nanmean(Precip))   #.. IPSL/piC 2.43..CNRM/piC 2.40.. CESM2/PIc 2.39
-    Eva    =  asarray(inputVar_pi['E']) * (24.*60.*60.)   #..evaporation, mm day^-1
+    Eva = array(inputVar_pi['E']) * (24.*60.*60.)   #..evaporation, mm day^-1
     print('pi-C average Evapor(mm/day): ', nanmean(Eva))   #.. IPSL/piC  2.21..CNRM/piC 2.20.. CESM2/PIc 2.17..
-    MC  = Precip - Eva   #..Moisture Convergence calculated from pi-Control's P - E, Units in mm day^-1
+    MC = Precip - Eva   #..Moisture Convergence calculated from pi-Control's P - E, Units in mm day^-1
     
-    Twp  = asarray(inputVar_pi['clwvi'])
-    Iwp  = asarray(inputVar_pi['clivi'])
-    prw_pi  = asarray(inputVar_pi['prw'])
+    Twp = array(inputVar_pi['clwvi'])
+    Iwp = array(inputVar_pi['clivi'])
+    prw_pi = array(inputVar_pi['prw'])
     
     # SW radiation metrics
-    Rsdt_pi = asarray(inputVar_pi['rsdt'])
-    Rsut_pi = asarray(inputVar_pi['rsut'])
-    Rsutcs_pi = asarray(inputVar_pi['rsutcs'])
+    Rsdt_pi = array(inputVar_pi['rsdt'])
+    Rsut_pi = array(inputVar_pi['rsut'])
+    Rsutcs_pi = array(inputVar_pi['rsutcs'])
     print("shape of data in 'piControl':  ", Rsut_pi.shape, " mean 'piControl' upwelling SW radiation flux in the SO (Assume with cloud): "
 , nanmean(Rsut_pi[:, latsi1:latsi0 +1,:]))
     # print("shape of data in 'piControl' data: ", Eva.shape, 'pi-C mean-gmt(K): ', nanmean(gmt))
@@ -127,29 +133,29 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     
     #..abrupt-4xCO2
     # Lower Tropospheric Stability (LTS):
-    k  = 0.286
+    k = 0.286
 
-    theta_700_abr  = array(inputVar_abr['T_700']) * (100000./70000.)**k
-    theta_skin_abr = array(inputVar_abr['sfc_T']) * (100000./asarray(inputVar_abr['sfc_P']))**k 
-    LTS_m_abr  = theta_700_abr - theta_skin_abr
+    theta_700_abr = array(inputVar_abr['T_700']) * (100000./70000.)**k
+    theta_skin_abr = array(inputVar_abr['sfc_T']) * (100000./array(inputVar_abr['sfc_P']))**k 
+    LTS_m_abr = theta_700_abr - theta_skin_abr
 
     #..Subtract the outliers in T_700 and LTS_m, 'nan' comes from missing T_700 data
-    LTS_e_abr  = ma.masked_where(theta_700_abr >= 500, LTS_m_abr)
+    LTS_e_abr = ma.masked_where(theta_700_abr >= 500, LTS_m_abr)
     
     # Meteorology Subsidence at 500 hPa, units in Pa s^-1:
-    Subsidence_abr =  array(inputVar_abr['sub'])
+    Subsidence_abr = array(inputVar_abr['sub'])
     
-    #..pi-Control
+    #.. piControl
     # Lower Tropospheric Stability (LTS):
-    theta_700  = array(inputVar_pi['T_700']) * (100000./70000.)**k
-    theta_skin = array(inputVar_pi['sfc_T']) * (100000./asarray(inputVar_pi['sfc_P']))**k
-    LTS_m  = theta_700 - theta_skin
+    theta_700 = array(inputVar_pi['T_700']) * (100000./70000.)**k
+    theta_skin = array(inputVar_pi['sfc_T']) * (100000./array(inputVar_pi['sfc_P']))**k
+    LTS_m = theta_700 - theta_skin
 
     #..Subtract the outliers in T_700 and LTS_m 
-    LTS_e  = ma.masked_where(theta_700 >= 500, LTS_m)
+    LTS_e = ma.masked_where(theta_700 >= 500, LTS_m)
     
     #..Meteological Subsidence  at 500 hPa, units in Pa s^-1:
-    Subsidence =  array(inputVar_pi['sub'])
+    Subsidence = array(inputVar_pi['sub'])
     
     # define Dictionary to store: CCFs(4), gmt, other variables :
     dict0_PI_var = {'gmt': gmt, 'LWP': LWP, 'TWP': Twp, 'IWP': Iwp,  'PRW': prw_pi, 'SST': SST, 'p_e': MC, 'LTS': LTS_e, 'SUB': Subsidence, 'rsdt': Rsdt_pi, 'rsut': Rsut_pi, 'rsutcs': Rsutcs_pi, 'albedo' : Albedo_pi, 'albedo_cs': Albedo_cs_pi, 'alpha_cre': Alpha_cre_pi, 'lat': lats, 'lon': lons, 'times': times_pi, 'pres': levels}
@@ -162,13 +168,13 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
 
     datavar_nas = ['LWP', 'TWP', 'IWP', 'PRW', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre', 'SST', 'p_e', 'LTS', 'SUB']   #..14 varisables except gmt (lon dimension diff)
 
-    dict1_PI_yr  = {}
+    dict1_PI_yr = {}
     dict1_abr_yr = {}
-    shape_yr_pi  = 99  # shape_time_pi//12
+    shape_yr_pi = shape_time_pi//12
     shape_yr_abr = shape_time_abr//12
 
     layover_yr_abr = zeros((len(datavar_nas), shape_yr_abr, shape_latSO, shape_lon))
-    layover_yr_pi  = zeros((len(datavar_nas), shape_yr_pi, shape_latSO, shape_lon))
+    layover_yr_pi = zeros((len(datavar_nas), shape_yr_pi, shape_latSO, shape_lon))
 
     layover_yr_abr_gmt = zeros((shape_yr_abr, shape_lat, shape_lon))
     layover_yr_pi_gmt = zeros((shape_yr_pi, shape_lat, shape_lon))
@@ -207,90 +213,86 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     dict0_PI_var['dict1_yr'] = dict1_PI_yr
     dict0_abr_var['dict1_yr'] = dict1_abr_yr
 
-
     
     # Calculate 5*5 bin array for variables (LWP, CCFs) in Sounthern Ocean Region:
-    
     #..set are-mean range and define functio
-    x_range  = arange(-180., 180., 5.)   #..logitude sequences edge: number: 72
-    s_range  = arange(-90., 90, 5.) + 2.5   #..global-region latitude edge: (36)
-
-    y_range  = arange(-85, -40., 5.) +2.5   #..southern-ocaen latitude edge: 9
+    x_range = arange(-180., 180., 5.)  #..logitude sequences edge: number: 72
+    s_range = arange(-90., 90., 5.) + 2.5  #..global-region latitude edge: (36)
+    y_range = arange(-85, -40., 5.) +2.5  #..southern-ocaen latitude edge: 9 
     
     # Annually variables in bin box:
 
-    lat_array = lats[latsi1:latsi0+1]
-    lon_array = lons
-    lat_array1 = lats
-    
+    lat_array = lats[latsi1:latsi0+1] *1.
+    lon_array = lons *1.
+    lat_array1 = lats *1.
+
     dict1_PI_var = {}   #..add at Dec.30th, at 2021. Purpose: shrink the output savez data dictionary: rawdata
     dict1_abr_var = {}   #..add at Dec.30th, at 2021. Purpose: shrink the output savez data dictionary: rawdata
     dict1_yr_bin_PI = {}
     dict1_yr_bin_abr = {}
-    
+
     for b in range(len(datavar_nas)):
 
         dict1_yr_bin_abr[datavar_nas[b]+'_yr_bin'] = binned_cySouthOcean5(dict1_abr_yr[datavar_nas[b]+'_yr'], lat_array, lon_array)
         dict1_yr_bin_PI[datavar_nas[b]+'_yr_bin'] = binned_cySouthOcean5(dict1_PI_yr[datavar_nas[b]+'_yr'], lat_array, lon_array)
 
-    #print(dict1_yr_bin_abr['PRW_yr_bin'].shape)
-    #print(dict1_yr_bin_abr['gmt_yr_bin'])   #..(150, 36, 73)
-    #print(dict1_yr_bin_PI['SUB_yr_bin'].shape)   #..(100, 10, 73)
+    # print(dict1_yr_bin_abr['PRW_yr_bin'].shape)
+    # print(dict1_yr_bin_abr['gmt_yr_bin'])  #..(150, 36, 73)
+    # print(dict1_yr_bin_PI['SUB_yr_bin'].shape)  #..(100, 10, 73)
     dict1_yr_bin_abr['gmt_yr_bin'] = binned_cyGlobal5(dict1_abr_yr['gmt_yr'], lat_array1, lon_array)
     dict1_yr_bin_PI['gmt_yr_bin'] = binned_cyGlobal5(dict1_PI_yr['gmt_yr'], lat_array1, lon_array)
-
     print('gmt_yr_bin')
-    
+
     dict1_abr_var['dict1_yr_bin_abr'] = dict1_yr_bin_abr
     dict1_PI_var['dict1_yr_bin_PI'] = dict1_yr_bin_PI
-
+    
     # Monthly variables (same as above):
-    dict1_mon_bin_PI  = {}
+    dict1_mon_bin_PI = {}
     dict1_mon_bin_abr = {}
-    
+
     for c in range(len(datavar_nas)):
+        dict1_mon_bin_abr[datavar_nas[c]+'_mon_bin'] = binned_cySouthOcean5(dict0_abr_var[datavar_nas[c]][0:, latsi1:latsi0+1,:], lat_array, lon_array)
+        dict1_mon_bin_PI[datavar_nas[c]+'_mon_bin'] = binned_cySouthOcean5(dict0_PI_var[datavar_nas[c]][0:, latsi1:latsi0+1,:], lat_array, lon_array)
 
-        dict1_mon_bin_abr[datavar_nas[c]+'_mon_bin'] = binned_cySouthOcean5(dict0_abr_var[datavar_nas[c]][0::12, latsi1:latsi0 +1,:], lat_array, lon_array)
-        dict1_mon_bin_PI[datavar_nas[c]+'_mon_bin'] = binned_cySouthOcean5(dict0_PI_var[datavar_nas[c]][0::12, latsi1:latsi0 +1,:], lat_array, lon_array)
+    dict1_mon_bin_abr['gmt_mon_bin'] = binned_cyGlobal5(dict0_abr_var['gmt'][0:,:,:], lat_array1, lon_array)
+    dict1_mon_bin_PI['gmt_mon_bin'] = binned_cyGlobal5(dict0_PI_var['gmt'][0:,:,:], lat_array1, lon_array)
+    print("Every month monthly data")
 
-    dict1_mon_bin_abr['gmt_mon_bin'] = binned_cyGlobal5(dict0_abr_var['gmt'][0::12,:,:], lat_array1, lon_array)
-    dict1_mon_bin_PI['gmt_mon_bin'] = binned_cyGlobal5(dict0_PI_var['gmt'][0::12,:,:], lat_array1, lon_array)
-
-    print("Monthly data: January")
-    
     dict1_abr_var['dict1_mon_bin_abr'] = dict1_mon_bin_abr
     dict1_PI_var['dict1_mon_bin_PI'] = dict1_mon_bin_PI
 
-
+    
     # input the shapes of year and month of pi&abr exper into the raw data dictionaries:
     dict1_abr_var['shape_yr'] = shape_yr_abr
     dict1_PI_var['shape_yr'] = shape_yr_pi
 
     dict1_abr_var['shape_mon'] = shape_time_abr
     dict1_PI_var['shape_mon'] = shape_time_pi
-
+    
     # Output a dict for processing function in 'calc_LRM_metrics', stored the data dicts for PI and abr, with the model name_dict
-    C_dict =  {'dict1_PI_var': dict1_PI_var, 'dict1_abr_var': dict1_abr_var, 'dict0_PI_var': dict0_PI_var, 'dict0_abr_var': dict0_abr_var, 'model_data': model_data}    #..revised in Dec.30th, at 2021,, note the name.
-    D_dict  = deepcopy(C_dict)   # 'notice for the difference between shallow copy (object.copy()) and deep copy (copy.deepcopy(object))'
-    B_dict  = deepcopy(C_dict)
+    C_dict = {'dict1_PI_var': dict1_PI_var, 'dict1_abr_var': dict1_abr_var, 'model_data': model_data, 'coef_array_alpha_cre_pi': coef_array_alpha_cre_pi, 'coef_array_albedo_pi': coef_array_albedo_pi, 'coef_array_alpha_cre_abr': coef_array_alpha_cre_abr, 'coef_array_albedo_abr': coef_array_albedo_abr}  #..revised on June 23th, 2022.
+    D_dict = deepcopy(C_dict)   # 'notice for the difference between shallow copy (object.copy()) and deep copy(copy.deepcopy(object))'
+    B_dict = deepcopy(C_dict)
 
 
     ###..Put data into 'fitLRM' FUNCTION to get predicted LWP splitted by 'Tr_sst'/'Tr_sub' infos_models:
-    TR_sst   = THRESHOLD_sst    ###.. Important line
-    TR_sub   = THRESHOLD_sub   ###.threshold of 500 mb Subsidences
+    TR_sst = THRESHOLD_sst   ###.. Important line
+    TR_sub = THRESHOLD_sub   ###.threshold of 500 mb Subsidences
     WD = '/glade/work/chuyan/Research/Cloud_CCFs_RMs/Course_objective_ana/data_file/'
-
-
-    rawdata_dict1 = fitLRM31(TR_sst=TR_sst, s_range=s_range, y_range=y_range, x_range=x_range, C_dict = B_dict)
+    
+    
+    rawdata_dict1 = fitLRM3(C_dict = B_dict, TR_sst=TR_sst, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)
     rawdata_dict3 = p4plot1(s_range=s_range, y_range=y_range, x_range=x_range, shape_yr_pi=shape_yr_pi, shape_yr_abr=shape_yr_abr, rawdata_dict=rawdata_dict1)
 
     rawdata_dict3['TR_sst'] = THRESHOLD_sst
 
     savez(WD+C_dict['model_data']['modn']+'_r2r1_hotcold(Jan)_(largestpiR2)_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
+    
     #.. best fit save_2lrm command:
     # savez(WD+C_dict['model_data']['modn']+'_best(test5)fit_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
-
-    rawdata_dict2 = fitLRM41(TR_sst=TR_sst, TR_sub=TR_sub, s_range=s_range, y_range=y_range, x_range=x_range, C_dict = D_dict)
+    
+    
+    rawdata_dict2 = fitLRM4(C_dict = D_dict, TR_sst=TR_sst, TR_sub=TR_sub, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)
     rawdata_dict4 = p4plot1(s_range=s_range, y_range=y_range, x_range=x_range, shape_yr_pi=shape_yr_pi, shape_yr_abr=shape_yr_abr, rawdata_dict=rawdata_dict2)
 
     rawdata_dict4['TR_sst'] = THRESHOLD_sst
@@ -303,6 +305,5 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
 
     
     return None
-
 
 
