@@ -4,7 +4,7 @@ import netCDF4
 from numpy import *
 import matplotlib.pyplot as plt
 import xarray as xr
-import PyNIO as Nio
+# import PyNIO as Nio # deprecated
 import pandas as pd
 import glob
 from scipy.stats import *
@@ -52,7 +52,7 @@ def get_LWPCMIP6(modn='IPSL-CM6A-LR', consort='IPSL', cmip='cmip6', exper='', en
     print("retrieve time: ", time1, time2)
         
         
-    sfc_T_abr       = read_var_mod(modn=modn, consort=consort, varnm='ts', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= time1, time2= time2)[0]
+    sfc_T_abr        = read_var_mod(modn=modn, consort=consort, varnm='ts', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= time1, time2= time2)[0]
 
     T_700_alevs_abr,Pres_abr,lat_abr,lon_abr,times_abr = read_var_mod(modn=modn, consort=consort, varnm='ta', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=True, time1= time1, time2= time2)
     T_700_abr = T_700_alevs_abr[:, 3,:,:]   #..700 hPa levels
@@ -109,8 +109,8 @@ def get_LWPCMIP6(modn='IPSL-CM6A-LR', consort='IPSL', cmip='cmip6', exper='', en
     sfc_P_pi       = read_var_mod(modn= modn, consort= consort, varnm='ps', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= timep1, time2= timep2)[0]   
     #..sea surface Pressure, Units in Pa
 
-    sub_alevs    = read_var_mod(modn= modn, consort= consort, varnm='wap', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=True, time1= timep1, time2= timep2)[0]
-    sub_pi          =  sub_alevs[:, 5,:,:]
+    sub_alevs      = read_var_mod(modn= modn, consort= consort, varnm='wap', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=True, time1= timep1, time2= timep2)[0]
+    sub_pi         =  sub_alevs[:, 5,:,:]
     #..500mb downward motion
 
     clivi_pi       = read_var_mod(modn= modn, consort= consort, varnm='clivi', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= timep1, time2= timep2)[0]
@@ -125,11 +125,11 @@ def get_LWPCMIP6(modn='IPSL-CM6A-LR', consort='IPSL', cmip='cmip6', exper='', en
     E_pi           = read_var_mod(modn= modn, consort= consort, varnm='evspsbl', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= timep1, time2= timep2)[0]
     #..Evaporations, Units also in kg m^-2 s^-1 = mm *s^-1
     
-    prw_pi      =read_var_mod(modn= modn, consort= consort, varnm='prw', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= timep1, time2= timep2)[0]
+    prw_pi         = read_var_mod(modn= modn, consort= consort, varnm='prw', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= timep1, time2= timep2)[0]
 
     rsdt_pi        = read_var_mod(modn=modn, consort=consort, varnm='rsdt', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= timep1, time2= timep2)[0]
     rsut_pi        = read_var_mod(modn=modn, consort=consort, varnm='rsut', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= timep1, time2= timep2)[0]
-    rsutcs_pi     = read_var_mod(modn=modn, consort=consort, varnm='rsutcs', cmip= cmip, exper=exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1 = timep1, time2= timep2)[0]
+    rsutcs_pi      = read_var_mod(modn=modn, consort=consort, varnm='rsutcs', cmip= cmip, exper=exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1 = timep1, time2= timep2)[0]
     # print(sfc_T_pi.shape)
     #..6000 months =99 yrs for CESM2 piControl experiment
     
