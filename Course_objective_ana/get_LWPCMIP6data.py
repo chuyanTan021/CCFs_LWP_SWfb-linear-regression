@@ -18,7 +18,7 @@ from binned_cyFunctions5 import *
 from read_hs_file import read_var_mod
 
 
-def get_LWPCMIP6(modn='IPSL-CM6A-LR', consort='IPSL', cmip='cmip6', exper='', ensmem='r1i1p1f1', gg='gr', typevar='Amon'):
+def get_LWPCMIP6(modn='', consort='', cmip='', exper='', ensmem='', gg='', typevar='Amon'):
     #if exper == 'historical':
     #    amip = False
     #else:
@@ -38,16 +38,23 @@ def get_LWPCMIP6(modn='IPSL-CM6A-LR', consort='IPSL', cmip='cmip6', exper='', en
     
     if modn == 'HadGEM3-GC31-LL':
         ensmem = 'r1i1p1f3'
-    
-        TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='pr',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,15],time2=[ 3349, 12, 15])[-1]
+
+        TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='pr',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,15], time2=[3349, 12, 15])[-1]
         time1=[int(min(TEST1_time[:,0])),1,15]
-        time2=[int(min(TEST1_time[:,0]))+299, 12, 15]
-        
-    else:
-        
-        TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='pr',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1],time2=[ 3349, 12, 31])[-1]
+        time2=[int(min(TEST1_time[:,0]))+149, 12, 15]
+    
+    elif modn == 'EC-Earth3':
+        ensmem = 'r3i1p1f1'
+
+        TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='pr',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1], time2=[3349, 12, 31])[-1]
         time1=[int(min(TEST1_time[:,0])),1,1]
-        time2=[int(min(TEST1_time[:,0]))+299, 12, 31]
+        time2=[int(min(TEST1_time[:,0]))+149, 12, 31]
+    
+    else:
+
+        TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='pr',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1],time2=[3349, 12, 31])[-1]
+        time1=[int(min(TEST1_time[:,0])),1,1]
+        time2=[int(min(TEST1_time[:,0]))+149, 12, 31]
         
     print("retrieve time: ", time1, time2)
         
@@ -89,16 +96,34 @@ def get_LWPCMIP6(modn='IPSL-CM6A-LR', consort='IPSL', cmip='cmip6', exper='', en
     
     if modn == 'HadGEM3-GC31-LL':
         ensmem = 'r1i1p1f1'
-        TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,15], time2=[8000,12,15])[-1]
-        timep1=[int(min(TEST2_time[:,0])), 1,15]   #..max-799
-        timep2=[int(min(TEST2_time[:,0]))+98, 12, 15]  #..max-750
-        
+        TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip, exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,15], time2=[8000,12,15])[-1]
+        timep1=[int(min(TEST2_time[:,0])), 1,15]   #.. max-799
+        timep2=[int(min(TEST2_time[:,0]))+98, 12, 15]  #.. max-750
+
+    elif modn == 'EC-Earth3':
+        ensmem = 'r1i1p1f1'
+        TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip, exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1], time2=[8000,12,31])[-1]
+        timep1=[int(min(TEST2_time[:,0])), 1, 1]   #.. max-799
+        timep2=[int(min(TEST2_time[:,0]))+98, 12, 31]  #.. max-750
+
+    elif modn == 'NESM3':
+        ensmem = 'r1i1p1f1'
+        TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ta',cmip=cmip, exper=exper,ensmem=ensmem,gg=gg,typevar=typevar, read_p= True, time1=[1,1,1], time2=[8000,12,31])[-1]
+        timep1=[int(min(TEST2_time[:,0])), 1, 1]   #.. max-799
+        timep2=[int(min(TEST2_time[:,0]))+98, 12, 31]  #.. max-750
+    
+    elif modn == 'CNRM-CM6-1':
+        ensmem = 'r1i1p1f2'
+        TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='evspsbl',cmip=cmip, exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1], time2=[8000,12,31])[-1]
+        timep1=[int(min(TEST2_time[:,0])), 1, 1]   #.. max-799
+        timep2=[int(min(TEST2_time[:,0]))+98, 12, 31]  #.. max-750
+
     else:
-        
-        TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1], time2=[8000, 12,31])[-1]
-        timep1=[int(min(TEST2_time[:,0])),1,1]   #..max-799
-        timep2=[int(min(TEST2_time[:,0]))+98, 12,31]  #..max-750
-        
+
+        TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip, exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1], time2=[8000,12,31])[-1]
+        timep1=[int(min(TEST2_time[:,0])),1,1]   #.. max-799
+        timep2=[int(min(TEST2_time[:,0]))+98, 12, 31]  #.. max-750
+    
     print ("retrieve time: ", timep1, timep2)
     
     sfc_T_pi       = read_var_mod(modn= modn, consort= consort, varnm='ts', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= timep1, time2= timep2)[0]

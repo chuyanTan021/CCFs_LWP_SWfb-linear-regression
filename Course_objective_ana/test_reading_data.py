@@ -1,3 +1,4 @@
+### This file was intended to read all required data for traing a(many) LRM;  loop through N1*N2 numbers of diff cut-off and calc statistic metrics(e.g abs bias, RMSE, R^2, r ,..)of the performance for each cut-off set of LRM, and storeage the metrics for a bin plot .. Jan 27th 2022
 import os
 import subprocess
 
@@ -8,13 +9,34 @@ import glob
 
 from calc_LRM_metric import *
 import sys
+import netCDF4
+from numpy import *
+import matplotlib.pyplot as plt
+import xarray as xr
+# import PyNIO as Nio ##..deprecated
+import pandas as pd
+import glob
+from scipy.stats import *
+from scipy.stats.stats import pearsonr
+from sklearn import linear_model
+from sklearn.metrics import mean_squared_error, r2_score
+from matplotlib.ticker import MaxNLocator
+from matplotlib.colors import BoundaryNorm
 
-def main():
-    Number_of_models = int(sys.argv[1])
-    h = run_single_model(N_of_model = Number_of_models)
+
+from area_mean import *
+from binned_cyFunctions5 import *
+from read_hs_file import read_var_mod
 
 
-def run_single_model(N_of_model):
+from get_LWPCMIP6data import *
+from get_annual_so import *
+# from fitLRM_cy import *
+from useful_func_cy import *
+
+
+def test_reading_data(name_j):
+    # testing read code from : 'get_CMIP6data' <-- 'read_hs_file', 'name_j' is an integer indicates the index of model.
     exp = 'piControl'
     
     AWICM11MR = {'modn': 'AWI-CM-1-1-MR', 'consort': 'AWI', 'cmip': 'cmip6',
@@ -85,39 +107,34 @@ def run_single_model(N_of_model):
     TaiESM1 = {'modn': 'TaiESM1', 'consort': 'AS-RCEC', 'cmip': 'cmip6', 
                      'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'}
     
-    deck = [BCCESM1, CanESM5, CESM2, CESM2FV2, CESM2WACCM, CNRMESM21, GISSE21G, GISSE21H, IPSLCM6ALR, MRIESM20, MIROC6, SAM0, E3SM10, FGOALSg3, GFDLCM4, CAMSCSM1, INM_CM48, MPIESM12LR, AWICM11MR, BCCCSMCM2MR, CMCCCM2SR5, CESM2WACCMFV2, CNRMCM61, CNRMCM61HR, ECEarth3, ECEarth3Veg, GISSE22G, MIROCES2L, NESM3, NorESM2MM, TaiESM1]   #..current # 18 + 13(12)
-    deck_nas = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1']   #..current # 18 + 13(12: 19)
+    deck = [BCCESM1, CanESM5, CESM2, CESM2FV2, CESM2WACCM, CNRMESM21, GISSE21G, GISSE21H, IPSLCM6ALR, MRIESM20, MIROC6, SAM0, E3SM10, FGOALSg3, GFDLCM4, CAMSCSM1, INM_CM48, MPIESM12LR, AWICM11MR, BCCCSMCM2MR, CMCCCM2SR5, CESM2WACCMFV2, CNRMCM61, CNRMCM61HR, ECEarth3, ECEarth3Veg, GISSE22G, MIROCES2L, NESM3, NorESM2MM, TaiESM1]   #..current # 18 + 13
+    deck_nas = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1']   #..current # 18 + 13
 
-    WD = '/glade/scratch/chuyan/CMIP6_output/'
-
-    folder =  glob.glob(WD+ deck_nas[N_of_model]+'__'+ 'STAT_pi+abr_'+'22x_31y'+'.npz')
-    # print(folder)
-    output_ARRAY =  np.load(folder[0], allow_pickle=True)  # str(TR_sst)
-    TR_sst1 = output_ARRAY['TR_minabias_SST']
-    TR_sub1 = output_ARRAY['TR_minabias_SUB']
-    TR_sst2 = output_ARRAY['TR_maxR2_SST']
-    TR_sub2 = output_ARRAY['TR_maxR2_SUB']
-
-    # print("TR_min_abs(bias): " , TR_sst1, '  K ', TR_sub1 , ' Pa/s ')
-    # print("TR_large_pi_R_2: ", TR_sst2, '  K ', TR_sub2 , ' Pa/s ')
-
-    calc_LRM_metrics(float(TR_sst2), float(TR_sub2), **deck[N_of_model])
-    # calc_LRM_metrics(float(0.0), float(0.0), **deck[N_of_model])
+    try:
+        inputVar_pi, inputVar_abr = get_LWPCMIP6(**deck[name_j])
+        print("Successfullynextstep.")
+    except:
+        print("Reading DATA failed!!!")
     return 0
 
-    
+
+def main():
+    name_j = int(sys.argv[1])
+    h = test_reading_data(name_j = name_j)
+
+
 if __name__== "__main__":
     main()
 
-if __name__== "shell_job1":
-    ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1']   #..current # 18 + 13(12: '19')
+if __name__== "test_reading_data":
+    deck_nas = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROC6ES2L', 'NESM3', 'NorESM2MM', 'TaiESM1']  # current 31
     
     print("the runable models are: \n", deck_nas, " \n Are those models right? Input y/N")
     a = input()
     if str(a)=="y":
         print(" Please input the index of the model: (start from 0) ")
-        Number_of_models = input()
-        h = run_single_model(N_of_model = int(Number_of_models))
+        name_j = input()
+        h = test_reading_data(name_j = int(name_j))
 
     else:
         sys.exit(0)

@@ -6,7 +6,7 @@ import netCDF4
 from numpy import *
 import matplotlib.pyplot as plt
 import xarray as xr
-import PyNIO as Nio
+# import PyNIO as Nio  # deprecated
 import pandas as pd
 import glob
 from scipy.stats import *
@@ -23,7 +23,7 @@ from get_annual_so import *
 
 
 
-def fitLRM31(C_dict, TR_sst, s_range, y_range, x_range):
+def fitLRM31(C_dict, TR_sst, s_range, y_range, x_range, lats, lons):
     # 'C_dict' is the raw data dict, 'TR_sst' is the pre-defined skin_Temperature Threshold to distinguish two Multi-Linear Regression Models
 
     # 's_range , 'y_range', 'x_range' used to do area mean for repeat gmt ARRAY
@@ -38,15 +38,22 @@ def fitLRM31(C_dict, TR_sst, s_range, y_range, x_range):
 
     datavar_nas = ['LWP', 'TWP', 'IWP', 'PRW', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre', 'SST', 'p_e', 'LTS', 'SUB']   #..14 varisables except gmt (lon dimension  diff)
 
-    # load annually-mean bin data.
+    # load annually-mean bin data
     dict1_yr_bin_PI = dict1_PI_var['dict1_yr_bin_PI']
     dict1_yr_bin_abr = dict1_abr_var['dict1_yr_bin_abr']
     # print(dict1_yr_bin_PI['LWP_yr_bin'].shape)
     
-    # load monthly bin data.
+    # load monthly bin data
     dict1_mon_bin_PI = dict1_PI_var['dict1_mon_bin_PI']
     dict1_mon_bin_abr = dict1_abr_var['dict1_mon_bin_abr']
-
+    
+    #..choose lat 40 -85 °S as the Southern-Ocean Regions
+    lati1 = -40.
+    latsi1 = min(range(len(lats)), key = lambda i: abs(lats[i] - lati1))
+    lati0 = -85.
+    latsi0 = min(range(len(lats)), key = lambda i: abs(lats[i] - lati0))
+    # print('lat index for 40.s; 85.s', latsi0, latsi1)
+    
     # data array in which shapes?
     shape_yr_PI = dict1_yr_bin_PI['LWP_yr_bin'].shape
     shape_yr_abr = dict1_yr_bin_abr['LWP_yr_bin'].shape
@@ -60,8 +67,8 @@ def fitLRM31(C_dict, TR_sst, s_range, y_range, x_range):
     shape_mon_PI_gmt = dict1_mon_bin_PI['gmt_mon_bin'].shape
     shape_mon_abr_gmt = dict1_mon_bin_abr['gmt_mon_bin'].shape
 
-    shape_mon_PI_raw = dict0_PI_var['LWP'].shape
-    shape_mon_abr_raw = dict0_abr_var['LWP'].shape
+    shape_mon_PI_raw = dict0_PI_var['LWP'][0::12, latsi0:latsi1 +1,:].shape   # January data, Southern Ocean Region
+    shape_mon_abr_raw = dict0_abr_var['LWP'][0::12, latsi0:latsi1 +1,:].shape   # January data, Southern Ocean Region
 
     
     #.. archieve the 'shape' infos: 3-D
@@ -74,6 +81,8 @@ def fitLRM31(C_dict, TR_sst, s_range, y_range, x_range):
     C_dict['shape_mon_abr_3'] = shape_mon_abr
     C_dict['shape_mon_PI_gmt_3']  = shape_mon_PI_gmt
     C_dict['shape_mon_abr_gmt_3']  = shape_mon_abr_gmt
+
+
     
     # flattened array for training and predicting:
     dict2_predi_fla_abr_raw = {}
@@ -93,8 +102,8 @@ def fitLRM31(C_dict, TR_sst, s_range, y_range, x_range):
         dict2_predi_fla_PI[datavar_nas[d]] = dict1_mon_bin_PI[datavar_nas[d]+'_mon_bin'].flatten()
         dict2_predi_fla_abr[datavar_nas[d]] = dict1_mon_bin_abr[datavar_nas[d]+'_mon_bin'].flatten()
 
-        dict2_predi_fla_PI_raw[datavar_nas[d]] = dict0_PI_var[datavar_nas[d]].flatten()
-        dict2_predi_fla_abr_raw[datavar_nas[d]] = dict0_abr_var[datavar_nas[d]].flatten()
+        dict2_predi_fla_PI_raw[datavar_nas[d]] = dict0_PI_var[datavar_nas[d]][0::12, latsi0:latsi1+1,:].flatten()    # January, Southern Ocean Flattened raw array
+        dict2_predi_fla_abr_raw[datavar_nas[d]] = dict0_abr_var[datavar_nas[d]][0::12, latsi0:latsi1+1,:].flatten()    # January, Southern Ocean Flattened raw array
         
         # normalized the predict array
         dict2_predi_nor_PI[datavar_nas[d]] = (dict2_predi_fla_PI[datavar_nas[d]] - nanmean(dict2_predi_fla_PI[datavar_nas[d]]))/ nanstd(dict2_predi_fla_PI[datavar_nas[d]])
@@ -102,8 +111,8 @@ def fitLRM31(C_dict, TR_sst, s_range, y_range, x_range):
 
         dict2_predi_nor_PI_raw[datavar_nas[d]] = (dict2_predi_fla_PI_raw[datavar_nas[d]] - nanmean(dict2_predi_fla_PI_raw[datavar_nas[d]]))/ nanstd(dict2_predi_fla_PI_raw[datavar_nas[d]])
         dict2_predi_nor_abr_raw[datavar_nas[d]] = (dict2_predi_fla_abr_raw[datavar_nas[d]] - nanmean(dict2_predi_fla_abr_raw[datavar_nas[d]]))/ nanstd(dict2_predi_fla_abr_raw[datavar_nas[d]])
-        
 
+    
     #..Use area_mean method, 'np.repeat' and 'np.tile' to reproduce gmt area-mean Array as the same shape as other flattened variables
     GMT_pi_mon = area_mean(dict1_mon_bin_PI['gmt_mon_bin'], s_range, x_range)   #..ALL in shape : shape_yr_abr(single dimension)
     ## dict2_predi_fla_PI['gmt']  = GMT_pi.repeat(730)   # something wrong when calc dX_dTg(dCCFS_dgmt)
@@ -137,7 +146,7 @@ def fitLRM31(C_dict, TR_sst, s_range, y_range, x_range):
     predict_dict_PI_albedo, _, _, coef_array_albedo = rdlrm_2_training(dict2_predi_fla_PI, TR_sst, predictant='albedo', predictor=['LWP', 'albedo_cs'], r = 2)[0:4]
     predict_dict_PI_rsut, _, _, coef_array_rsut = rdlrm_2_training(dict2_predi_fla_PI, TR_sst, predictant='rsut', predictor=['LWP', 'rsutcs'], r = 2)[0:4]
 
-    predict_dict_PI_alpha_cre, ind_True_PI_raw, ind_False_PI_raw, coef_array_alpha_cre, shape_fla_training_alpha_cre = rdlrm_1_training(dict2_predi_fla_PI_raw, predictant = 'alpha_cre', predictor = ['LWP'], r = 1)
+    predict_dict_PI_alpha_cre, ind_True_PI_raw, ind_False_PI_raw, coef_array_alpha_cre, shape_fla_training_alpha_cre = rdlrm_1_training_raw(dict2_predi_fla_PI_raw, predictant = 'alpha_cre', predictor = ['LWP'], r = 1)
     
     # Added on May 13th, 2022: for second step using LWP to predict the albedo
     dict2_predi_fla_PI['LWP_lrm'] = deepcopy(predict_dict_PI['value'])
@@ -145,7 +154,7 @@ def fitLRM31(C_dict, TR_sst, s_range, y_range, x_range):
     
     predict_dict_PI_albedo_lL, _, _, coef_array_albedo_lL = rdlrm_2_training(dict2_predi_fla_PI, TR_sst, predictant='albedo', predictor=['LWP_lrm', 'albedo_cs'], r = 2)[0:4]
     predict_dict_PI_rsut_lL, _, _, coef_array_rsut_lL = rdlrm_2_training(dict2_predi_fla_PI, TR_sst, predictant='rsut', predictor=['LWP_lrm', 'rsutcs'], r = 2)[0:4]
-    predict_dict_PI_alpha_cre_lL, ind_True_PI, ind_False_PI, coef_array_alpha_cre_lL = rdlrm_1_training(dict2_predi_fla_PI, predictant = 'alpha_cre', predictor = ['LWP_lrm'], r = 1)[0:4]
+    predict_dict_PI_alpha_cre_lL, ind_True_PI, ind_False_PI, coef_array_alpha_cre_lL = rdlrm_1_training_raw(dict2_predi_fla_PI, predictant = 'alpha_cre', predictor = ['LWP_lrm'], r = 1)[0:4]
     
     # Save into the rawdata dict
     C_dict['Coef_dict'] = coef_array
@@ -240,7 +249,7 @@ def fitLRM31(C_dict, TR_sst, s_range, y_range, x_range):
     predict_dict_abr_albedo = rdlrm_2_predict(dict2_predi_fla_abr, coef_array_albedo, TR_sst, predictant = 'albedo', predictor = ['LWP', 'albedo_cs'], r = 2)[0]
     predict_dict_abr_rsut = rdlrm_2_predict(dict2_predi_fla_abr, coef_array_rsut, TR_sst, predictant = 'rsut', predictor= ['LWP', 'rsutcs'], r = 2)[0]
     
-    predict_dict_abr_alpha_cre, ind_True_abr_raw, ind_False_abr_raw, shape_fla_testing_alpha_cre = rdlrm_1_predict(dict2_predi_fla_abr_raw, coef_array_alpha_cre, predictant = 'alpha_cre', predictor = ['LWP'], r = 1)
+    # predict_dict_abr_alpha_cre, ind_True_abr_raw, ind_False_abr_raw, shape_fla_testing_alpha_cre = rdlrm_1_predict_raw(dict2_predi_fla_abr_raw, coef_array_alpha_cre, predictant = 'alpha_cre', predictor = ['LWP'], r = 1)
     
     # Added on May 13th, 2022: for second step using LWP to predict the albedo
     dict2_predi_fla_abr['LWP_lrm'] = deepcopy(predict_dict_abr['value'])
@@ -249,7 +258,7 @@ def fitLRM31(C_dict, TR_sst, s_range, y_range, x_range):
     predict_dict_abr_albedo_lL = rdlrm_2_predict(dict2_predi_fla_abr, coef_array_albedo, TR_sst, predictant='albedo', predictor=['LWP_lrm', 'albedo_cs'], r = 2)[0]
     predict_dict_abr_rsut_lL = rdlrm_2_predict(dict2_predi_fla_abr, coef_array_rsut, TR_sst, predictant='rsut', predictor=['LWP_lrm', 'rsutcs'], r = 2)[0]
 
-    predict_dict_abr_alpha_cre_lL, ind_True_abr, ind_False_abr = rdlrm_1_predict(dict2_predi_fla_abr, coef_array_alpha_cre_lL, predictant='alpha_cre', predictor=['LWP_lrm'], r = 1)[0:3]
+    # predict_dict_abr_alpha_cre_lL, ind_True_abr, ind_False_abr = rdlrm_1_predict_raw(dict2_predi_fla_abr, coef_array_alpha_cre_lL, predictant='alpha_cre', predictor=['LWP_lrm'], r = 1)[0:3]
     
     # Save into the rawdata dict
 
@@ -380,7 +389,7 @@ def fitLRM31(C_dict, TR_sst, s_range, y_range, x_range):
 
 
 
-def fitLRM41(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
+def fitLRM41(C_dict, TR_sst, TR_sub, s_range, y_range, x_range, lats, lons):
 
     # 'C_dict' is the raw data dict, 'TR_sst' is the pre-defined skin_Temperature Threshold to distinguish two Multi-Linear Regression Models
 
@@ -396,15 +405,22 @@ def fitLRM41(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
 
     datavar_nas = ['LWP', 'TWP', 'IWP', 'PRW', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs' 'alpha_cre', 'SST', 'p_e', 'LTS', 'SUB']   #..14 varisables except gmt (lon dimension diff)
 
-    # load annually-mean bin data.
+    # load annually-mean bin data
     dict1_yr_bin_PI = dict1_PI_var['dict1_yr_bin_PI']
     dict1_yr_bin_abr = dict1_abr_var['dict1_yr_bin_abr']
     # print(dict1_yr_bin_PI['LWP_yr_bin'].shape)
     
-    # load monthly bin data.
+    # load monthly bin data
     dict1_mon_bin_PI = dict1_PI_var['dict1_mon_bin_PI']
     dict1_mon_bin_abr = dict1_abr_var['dict1_mon_bin_abr']
-
+    
+    #..choose lat 40 -85 °S as the Southern-Ocean Regions
+    lati1 = -40.
+    latsi1 = min(range(len(lats)), key = lambda i: abs(lats[i] - lati1))
+    lati0 = -85.
+    latsi0 = min(range(len(lats)), key = lambda i: abs(lats[i] - lati0))
+    # print('lat index for 40.s; 85.s', latsi0, latsi1)
+    
     # data array in which shapes?
     shape_yr_PI = dict1_yr_bin_PI['LWP_yr_bin'].shape
     shape_yr_abr = dict1_yr_bin_abr['LWP_yr_bin'].shape
@@ -418,8 +434,8 @@ def fitLRM41(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     shape_mon_PI_gmt = dict1_mon_bin_PI['gmt_mon_bin'].shape
     shape_mon_abr_gmt = dict1_mon_bin_abr['gmt_mon_bin'].shape
 
-    shape_mon_PI_raw = dict0_PI_var['LWP'].shape
-    shape_mon_abr_raw = dict0_abr_var['LWP'].shape
+    shape_mon_PI_raw = dict0_PI_var['LWP'][0::12, latsi0:latsi1 +1,:].shape   # January data, Southern Ocean Region
+    shape_mon_abr_raw = dict0_abr_var['LWP'][0::12, latsi0:latsi1 +1,:].shape   # January data, Southern Ocean Region
     
     #.. archieve the 'shape' infos: 3-D
     C_dict['shape_yr_PI_3'] = shape_yr_PI
@@ -432,8 +448,17 @@ def fitLRM41(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     C_dict['shape_mon_PI_gmt_3'] = shape_mon_PI_gmt
     C_dict['shape_mon_abr_gmt_3'] = shape_mon_abr_gmt
 
+
+    
+    # flattened array for training and predicting:
+    dict2_predi_fla_abr_raw = {}
+    dict2_predi_fla_PI_raw = {}
+
     dict2_predi_fla_PI = {}
     dict2_predi_fla_abr = {}
+
+    dict2_predi_nor_PI_raw = {}
+    dict2_predi_nor_abr_raw = {}
 
     dict2_predi_nor_PI = {}
     dict2_predi_nor_abr = {}
@@ -443,8 +468,8 @@ def fitLRM41(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
         dict2_predi_fla_PI[datavar_nas[d]] = dict1_mon_bin_PI[datavar_nas[d]+'_mon_bin'].flatten()
         dict2_predi_fla_abr[datavar_nas[d]] = dict1_mon_bin_abr[datavar_nas[d]+'_mon_bin'].flatten()
 
-        dict2_predi_fla_PI_raw[datavar_nas[d]] = dict0_PI_var[datavar_nas[d]].flatten()
-        dict2_predi_fla_abr_raw[datavar_nas[d]] = dict0_abr_var[datavar_nas[d]].flatten()
+        dict2_predi_fla_PI_raw[datavar_nas[d]] = dict0_PI_var[datavar_nas[d]][0::12, latsi0:latsi1 +1,:].flatten()      # January, Southern Ocean Flatten raw array
+        dict2_predi_fla_abr_raw[datavar_nas[d]] = dict0_abr_var[datavar_nas[d]][0::12, latsi0:latsi1 +1,:].flatten()      # January, Southern Ocean Flatten raw array
         
         # normalized the predict array
         dict2_predi_nor_PI[datavar_nas[d]] = (dict2_predi_fla_PI[datavar_nas[d]] - nanmean(dict2_predi_fla_PI[datavar_nas[d]]))/ nanstd(dict2_predi_fla_PI[datavar_nas[d]])
@@ -452,7 +477,8 @@ def fitLRM41(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
 
         dict2_predi_nor_PI_raw[datavar_nas[d]] = (dict2_predi_fla_PI_raw[datavar_nas[d]] - nanmean(dict2_predi_fla_PI_raw[datavar_nas[d]]))/ nanstd(dict2_predi_fla_PI_raw[datavar_nas[d]])
         dict2_predi_nor_abr_raw[datavar_nas[d]] = (dict2_predi_fla_abr_raw[datavar_nas[d]] - nanmean(dict2_predi_fla_abr_raw[datavar_nas[d]]))/ nanstd(dict2_predi_fla_abr_raw[datavar_nas[d]])
-        
+
+    
     #..Use area_mean method, 'np.repeat' and 'np.tile' to reproduce gmt area-mean Array as the same shape as other flattened variables:
     GMT_pi_mon  = area_mean(dict1_mon_bin_PI['gmt_mon_bin'], s_range, x_range)   #..ALL in shape : shape_yr(mon)_abr(single dimension)
     ##  dict2_predi_fla_PI['gmt']  = GMT_pi.repeat(730)
@@ -482,7 +508,7 @@ def fitLRM41(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
 
     predict_dict_PI_albedo, _, _, _, _, coef_array_albedo = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='albedo', predictor=['LWP', 'albedo_cs'], r = 4)[0:6]
     predict_dict_PI_rsut, _, _, _, _, coef_array_rsut = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='rsut', predictor=['LWP', 'rsutcs'], r = 4)[0:6]
-    predict_dict_PI_alpha_cre, ind_True_PI_raw, ind_False_PI_raw, coef_array_alpha_cre, shape_fla_training_alpha_cre = rdlrm_1_training(dict2_predi_fla_PI_raw, predictant = 'alpha_cre', predictor = ['LWP'], r = 1)
+    predict_dict_PI_alpha_cre, ind_True_PI_raw, ind_False_PI_raw, coef_array_alpha_cre, shape_fla_training_alpha_cre = rdlrm_1_training_raw(dict2_predi_fla_PI_raw, predictant = 'alpha_cre', predictor = ['LWP'], r = 1)
     
     # Added on May 13th, 2022: for second step using LWP to predict the albedo
     
@@ -491,7 +517,7 @@ def fitLRM41(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     
     predict_dict_PI_albedo_lL, _, _, _, _, coef_array_albedo_lL = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='albedo', predictor=['LWP_lrm', 'albedo_cs'], r = 4)[0:6]
     predict_dict_PI_rsut_lL, _, _, _, _, coef_array_rsut_lL = rdlrm_4_training(dict2_predi_fla_PI, TR_sst, TR_sub, predictant='rsut', predictor=['LWP_lrm', 'rsutcs'], r = 4)[0:6]
-    predict_dict_PI_alpha_cre_lL, ind_True_PI, ind_False_PI, coef_array_alpha_cre_lL = rdlrm_1_training(dict2_predi_fla_PI, predictant = 'alpha_cre', predictor = ['LWP_lrm'], r = 1)[0:4]
+    predict_dict_PI_alpha_cre_lL, ind_True_PI, ind_False_PI, coef_array_alpha_cre_lL = rdlrm_1_training_raw(dict2_predi_fla_PI, predictant = 'alpha_cre', predictor = ['LWP_lrm'], r = 1)[0:4]
     
     # Save into the rawdata dict
     
@@ -579,7 +605,7 @@ def fitLRM41(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     predict_dict_abr_iwp, ind7_abr_iwp, ind8_abr_iwp, ind9_abr_iwp, ind10_abr_iwp, shape_fla_testing_iwp = rdlrm_4_predict(dict2_predi_fla_abr, coef_array, TR_sst, TR_sub, predictant = 'IWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 4)
     predict_dict_abr_albedo = rdlrm_4_predict(dict2_predi_fla_abr, coef_array_albedo, TR_sst, TR_sub, predictant = 'albedo', predictor = ['LWP', 'albedo_cs'], r = 4)[0]
     predict_dict_abr_rsut = rdlrm_4_predict(dict2_predi_fla_abr, coef_array_rsut, TR_sst, TR_sub, predictant = 'rsut', predictor= ['LWP', 'rsutcs'], r = 4)[0]
-    predict_dict_abr_alpha_cre, ind_True_abr_raw, ind_False_abr_raw, shape_fla_testing_alpha_cre = rdlrm_1_predict(dict2_predi_fla_abr_raw, coef_array_alpha_cre, predictant = 'alpha_cre', predictor = ['LWP'], r = 1)
+    predict_dict_abr_alpha_cre, ind_True_abr_raw, ind_False_abr_raw, shape_fla_testing_alpha_cre = rdlrm_1_predict_raw(dict2_predi_fla_abr_raw, coef_array_alpha_cre, predictant = 'alpha_cre', predictor = ['LWP'], r = 1)
     
     # Added on May 14th, 2022: for second step using LWP to predict the albedo
     
@@ -589,7 +615,7 @@ def fitLRM41(C_dict, TR_sst, TR_sub, s_range, y_range, x_range):
     predict_dict_abr_albedo_lL = rdlrm_4_predict(dict2_predi_fla_abr, coef_array_albedo, TR_sst, TR_sub, predictant='albedo', predictor=['LWP_lrm', 'albedo_cs'], r = 4)[0]
     predict_dict_abr_rsut_lL = rdlrm_4_predict(dict2_predi_fla_abr, coef_array_rsut, TR_sst, TR_sub, predictant='rsut', predictor=['LWP_lrm', 'rsutcs'], r = 4)[0]
 
-    predict_dict_abr_alpha_cre_lL, ind_True_abr, ind_False_abr = rdlrm_1_predict(dict2_predi_fla_abr, coef_array_alpha_cre_lL, predictant='alpha_cre', predictor=['LWP_lrm'], r = 1)[0:3]
+    predict_dict_abr_alpha_cre_lL, ind_True_abr, ind_False_abr = rdlrm_1_predict_raw(dict2_predi_fla_abr, coef_array_alpha_cre_lL, predictant='alpha_cre', predictor=['LWP_lrm'], r = 1)[0:3]
     
     # Save into the rawdata dict
     C_dict['Predict_dict_abr']  = predict_dict_abr
@@ -728,9 +754,11 @@ def p4plot1(s_range, y_range, x_range, shape_yr_pi, shape_yr_abr, rawdata_dict):
 
     ### 's_range , 'y_range', 'x_range' used to do area mean for repeat gmt ARRAY
 
-    # retriving datas from big dict...
-    dict0_abr_var = rawdata_dict['dict1_abr_var']
-    dict0_PI_var  = rawdata_dict['dict1_PI_var']
+    # retriving datas from big dict..
+    dict0_abr_var = rawdata_dict['dict0_abr_var']
+    dict0_PI_var = rawdata_dict['dict0_PI_var']
+    dict1_abr_var = rawdata_dict['dict1_abr_var']
+    dict1_PI_var  = rawdata_dict['dict1_PI_var']
     
     shape_yr_PI_3  = rawdata_dict['shape_yr_PI_3']
     shape_yr_abr_3  = rawdata_dict['shape_yr_abr_3']
@@ -743,12 +771,12 @@ def p4plot1(s_range, y_range, x_range, shape_yr_pi, shape_yr_abr, rawdata_dict):
     datavar_nas = ['LWP', 'TWP', 'IWP', 'PRW', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre', 'SST', 'p_e', 'LTS', 'SUB']   #..14 varisables except gmt (lon dimension diff)
 
     # load annually-mean bin data:
-    dict1_yr_bin_PI  = dict0_PI_var['dict1_yr_bin_PI']
-    dict1_yr_bin_abr  = dict0_abr_var['dict1_yr_bin_abr']
+    dict1_yr_bin_PI  = dict1_PI_var['dict1_yr_bin_PI']
+    dict1_yr_bin_abr  = dict1_abr_var['dict1_yr_bin_abr']
 
     # load monthly bin data:
-    dict1_mon_bin_PI = dict0_PI_var['dict1_mon_bin_PI']
-    dict1_mon_bin_abr= dict0_abr_var['dict1_mon_bin_abr']
+    dict1_mon_bin_PI = dict1_PI_var['dict1_mon_bin_PI']
+    dict1_mon_bin_abr= dict1_abr_var['dict1_mon_bin_abr']
 
     # Calc area-mean ARRAY for annually variables on 'abr' /'pi' exp:
     areamean_dict_PI = {}
@@ -793,10 +821,23 @@ def p4plot1(s_range, y_range, x_range, shape_yr_pi, shape_yr_abr, rawdata_dict):
 
     ###  Calc area_mean of predicted LWP, IWP and SW radiation metrics
     
+    #..choose lat 40 -85 °S as the Southern-Ocean Regions
+    lons = dict0_abr_var['lon']
+    lats = dict0_abr_var['lat'][:]
+    lati1 = -40.
+    latsi1 = min(range(len(lats)), key = lambda i: abs(lats[i] - lati1))
+    lati0 = -85.
+    latsi0 = min(range(len(lats)), key = lambda i: abs(lats[i] - lati0))
+    # print('lat index for 40.s; 85.s', latsi0, latsi1)
+
     for g in range(len(datapredi_nas)):
 
-        areamean_dict_predi[datapredi_nas[g]+'_area_yr_pi'] = area_mean(areamean_dict_predi[datapredi_nas[g]+'_predi_yr_bin_pi'],  y_range, x_range)
-        areamean_dict_predi[datapredi_nas[g]+'_area_yr_abr'] = area_mean(areamean_dict_predi[datapredi_nas[g]+'_predi_yr_bin_abr'],  y_range, x_range)
+        if datapredi_nas[g] != ('alpha_cre'):
+            areamean_dict_predi[datapredi_nas[g]+'_area_yr_pi'] = area_mean(areamean_dict_predi[datapredi_nas[g]+'_predi_yr_bin_pi'], y_range, x_range)
+            areamean_dict_predi[datapredi_nas[g]+'_area_yr_abr'] = area_mean(areamean_dict_predi[datapredi_nas[g]+'_predi_yr_bin_abr'], y_range, x_range)
+        elif datapredi_nas[g]== ('alpha_cre'):
+            areamean_dict_predi[datapredi_nas[g]+'_area_yr_pi'] = area_mean(binned_cySouthOcean5(areamean_dict_predi[datapredi_nas[g]+'_predi_yr_bin_pi'], lats[latsi0:latsi1 +1], lons), y_range, x_range)
+            areamean_dict_predi[datapredi_nas[g]+'_area_yr_abr'] = area_mean(binned_cySouthOcean5(areamean_dict_predi[datapredi_nas[g]+'_predi_yr_bin_abr'], lats[latsi0:latsi1 +1], lons), y_range, x_range)
 
     
     # print("Annually area_mean predicted  albedo (with cloud) in 'piControl' run: ",areamean_dict_predi['albedo_lL_area_yr_pi'], r'$w m^{-2}$')  # r'$ kg m^{-2}$' 

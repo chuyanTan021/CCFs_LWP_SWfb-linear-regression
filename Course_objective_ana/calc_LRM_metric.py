@@ -40,7 +40,7 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     
     # ******************************* #
     # Radiation Change
-    coef_array_alpha_cre_pi, coef_array_albedo_pi, coef_array_alpha_cre_abr, coef_array_albedo_abr = calc_Radiation_LRM_1(inputVar_pi, inputVar_abr)
+    coef_array_alpha_cre_pi, coef_array_albedo_pi, coef_array_alpha_cre_abr, coef_array_albedo_abr = calc_Radiation_LRM_1(inputVar_pi, inputVar_abr, TR_albedo = 0.15)
     
     
     # ******************************* #
@@ -92,7 +92,7 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     Rsut_abr = array(inputVar_abr['rsut'])
     Rsutcs_abr = array(inputVar_abr['rsutcs'])
     print("shape of data in 'abrupt-4xCO2':  ",  Rsut_abr.shape, " mean 'abrupt-4xCO2' upwelling SW radiation flux in the SO (Assume with cloud): ",  nanmean(Rsut_abr[:, latsi1:latsi0 +1,:]))
-    # print("shape of data in 'abrupt-4XCO2' exp:", Eva_abr.shape, 'abr4x mean-gmt(K): ', nanmean(gmt_abr))
+    print("shape of data in 'abrupt-4XCO2' exp:", Eva_abr.shape, 'abr4x mean-gmt(K): ', nanmean(gmt_abr))
 
     # albedo, albedo_clear sky, albedo_cre: all-sky - clear-sky
     Albedo_abr = Rsut_abr / Rsdt_abr
@@ -123,7 +123,7 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     Rsutcs_pi = array(inputVar_pi['rsutcs'])
     print("shape of data in 'piControl':  ", Rsut_pi.shape, " mean 'piControl' upwelling SW radiation flux in the SO (Assume with cloud): "
 , nanmean(Rsut_pi[:, latsi1:latsi0 +1,:]))
-    # print("shape of data in 'piControl' data: ", Eva.shape, 'pi-C mean-gmt(K): ', nanmean(gmt))
+    print("shape of data in 'piControl' data: ", Eva.shape, 'pi-C mean-gmt(K): ', nanmean(gmt))
 
     # albedo, albedo_clear sky; albedo(alpha)_cre: all-sky - clear-sky
     Albedo_pi = Rsut_pi / Rsdt_pi
@@ -278,7 +278,7 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     ###..Put data into 'fitLRM' FUNCTION to get predicted LWP splitted by 'Tr_sst'/'Tr_sub' infos_models:
     TR_sst = THRESHOLD_sst   ###.. Important line
     TR_sub = THRESHOLD_sub   ###.threshold of 500 mb Subsidences
-    WD = '/glade/work/chuyan/Research/Cloud_CCFs_RMs/Course_objective_ana/data_file/'
+    WD = '/glade/scratch/chuyan/CMIP6_output/CMIP6_lrm_RESULT/'
     
     
     rawdata_dict1 = fitLRM3(C_dict = B_dict, TR_sst=TR_sst, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)

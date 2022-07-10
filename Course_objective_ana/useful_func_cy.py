@@ -8,7 +8,7 @@ from numpy import *
 import matplotlib.pyplot as plt
 import matplotlib as mpl 
 import xarray as xr
-# import PyNIO as Nio
+# import PyNIO as Nio # deprecated
 import pandas as pd
 import glob
 from scipy.stats import *
@@ -31,14 +31,14 @@ def get_annually_metric(data, shape_m0, shape_1, shape_2):
     ###..'data' is the origin data array for 3D variable(i.e., (times, lat, lon)), 
     ###. 'shape_m0' was the shape of dimension_times, should be in 'mon' before converting to 'yr'
     
-    shape_yr  = shape_m0//12   #.. times dimension shapes in annually
+    shape_yr = shape_m0//12   #.. times dimension shapes in annually
     ##. 'layover_yr' is the data array for storing the 2-d data array for annually-eman:
-    layover_yr  = zeros((shape_yr, shape_1, shape_2))
+    layover_yr = zeros((shape_yr, shape_1, shape_2))
     
         
     for i in range(shape_yr):
 
-        layover_yr[ i, :, :]  =  nanmean(data[i*12:(i+1)*12, :,:], axis=0)
+        layover_yr[i, :, :] = nanmean(data[i*12:(i+1)*12,:,:], axis=0)
     
     return layover_yr
 
@@ -123,10 +123,10 @@ def rdlrm_1_training(X_dict, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS
     
 
     # Detecting nan values in the CCFs metrics
-    Z  = X_dict['LTS'] * 1.
+    Z = X_dict['LTS'] * 1.
 
     for j in range(len(predictor)):
-        Z  =  Z * (Predictors[j, :]* 1.)
+        Z = Z * (Predictors[j, :]* 1.)
     Z = Z * (X_dict[predictant]* 1.)
 
     ind_false = isnan(Z)
@@ -139,7 +139,7 @@ def rdlrm_1_training(X_dict, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS
     predict_value_LWP[ind_false] = nan
 
     # print Totol # of regimes
-    Regimes  = [ind_false]
+    Regimes = [ind_false]
     print(' Total # of regime', len(Regimes))
 
     # Multiple linear regression of the predictant to the predictor(s) :
@@ -163,7 +163,6 @@ def rdlrm_1_training(X_dict, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS
 
     predict_dict['label'] =  predict_label_LWP
     predict_dict['value'] =  predict_value_LWP
-    
     
     return predict_dict, ind_true, ind_false, coef_array, shape_fla_training
 
@@ -333,8 +332,8 @@ def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', predictor = ['SST', '
     predict_value_LWP[ind6] = dot(aeffi.reshape(1, -1), Predictors[:][0:len(predictor), ind6]).flatten() +aintp  #..larger or equal than Tr_SST
     predict_value_LWP[ind7] = dot(beffi.reshape(1, -1), Predictors[:][0:len(predictor), ind7]).flatten() +bintp  #..less than Tr_SST
 
-    predict_dict['label'] =  predict_label_LWP
-    predict_dict['value'] =  predict_value_LWP
+    predict_dict['label'] = predict_label_LWP
+    predict_dict['value'] = predict_value_LWP
     
     
     return predict_dict, ind6, ind7, coef_array, shape_fla_training
@@ -502,10 +501,10 @@ def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', predictor =
 
         ind7 = ind_true & ind_cold & ind_up
         ind8 = ind_true & ind_hot & ind_up
-        print('shape7 and 8: ', asarray(nonzero(ind7 ==True)), ' and ', asarray(nonzero(ind8 ==True)))
+        print('shape7 and 8: ', asarray(nonzero(ind7 ==True)).shape, ' and ', asarray(nonzero(ind8 ==True)).shape)
         ind9 = ind_true & ind_cold & ind_down
         ind10 = ind_true & ind_hot & ind_down
-        print('shape9 and 10: ', asarray(nonzero(ind9 ==True)), ' and ', asarray(nonzero(ind10 ==True)))
+        print('shape9 and 10: ', asarray(nonzero(ind9 ==True)).shape, ' and ', asarray(nonzero(ind10 ==True)).shape)
 
         Regimes  = [ind7, ind8, ind9, ind10]
         print(' Total # of regime', len(Regimes))
@@ -847,3 +846,136 @@ def rdlrm_4_predict_individual(X_dict, coef_array, cut_off1, cut_off2 , CCFs = 4
     
 
     return predict_dict
+
+
+def rdlrm_1_training_raw(X_dict, lats, lons, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 1, Filter_LandIce = False):
+    # single regime model: training the model from 'piControl' variable to get a single set of Coef
+    # 'predict_dict' is a dictionary to store the 'predict_label_LWP' and 'predict_value_LWP'
+    # 'X_dict' in this case is in raw resolution, and global, 12 month data with weird 'nan'/'inf' values in some models, handle them carefully.
+
+    # restrict to January data, and 40~85 O^S region
+    
+    # define predict_dict:
+    predict_dict  = {}
+    # 'predict_label_LWP' is an array to store the regimes_label
+    predict_label_LWP = zeros((X_dict[predictant].shape[0]))
+    # 'predict_value_LWP' is an array to store the predicted LWP
+    predict_value_LWP = zeros((X_dict[predictant].shape[0]))
+    
+    # 'predictors' is an array that has the need predictors in flatten format;
+    Predictors = []
+
+    for i in range(len(predictor)):
+        Predictors.append(X_dict[predictor[i]] *1.)
+    Predictors = asarray(Predictors)
+    # print("predictors metrix shape: ", Predictors.shape)  # (4, ..)
+    
+    # shape of 'Predictant' or ' Predictor' variable:
+    shape_fla_training = X_dict[predictant].shape
+    print("shape1: ", shape_fla_training)   # shape1
+    
+    # Detecting nan values in the CCFs metrics:
+    Z = X_dict['LTS'] * 1.
+
+    for j in range(len(predictor)):
+        Z = Z * (Predictors[j, :]* 1.)
+    Z = Z * (X_dict[predictant]* 1.)
+
+    ind_false = isnan(Z)
+    ind_true = logical_not(ind_false)
+
+    print("shape2: ", asarray(nonzero(ind_true ==True)).shape)
+
+    # Replace '0'/'nan' value in right place:
+    predict_label_LWP[ind_false] = 0
+    predict_value_LWP[ind_false] = nan
+    
+    # print Totol # of regimes
+    Regimes = [ind_false]
+    print(' Total # of regime', len(Regimes))
+
+    # Multiple linear regression of the predictant to the predictor(s) :
+    regr0 = linear_model.LinearRegression()
+    result0 = regr0.fit(Predictors[:][0:len(predictor), ind_true].T,  X_dict[predictant][ind_true])
+    #..Save the coef and intp
+    aeffi = result0.coef_
+    aintp = result0.intercept_
+
+
+    # '1' for valid_data indeing; '0' for invalid_data ('nan') points' indexing
+    predict_label_LWP[ind_true] = 1
+
+    
+    # Save coefs and intps
+    coef_array = asarray([aeffi, aintp])
+    # print(asarray(coef_array).shape)
+    
+    # Save predicted Value, and save values and labels into predict_dict
+    predict_value_LWP[ind_true] = dot(aeffi.reshape(1, -1), Predictors[:][0:len(predictor), ind_true]).flatten() + aintp  #.. valid data points
+
+    predict_dict['label'] =  predict_label_LWP
+    predict_dict['value'] =  predict_value_LWP
+    
+    return predict_dict, ind_true, ind_false, coef_array, shape_fla_training
+
+
+
+def stats_metrics_Visualization(modn = 'IPSLCM6ALR'):
+    
+    
+    
+    WD = '/glade/scratch/chuyan/CMIP6_output/'
+    WD_plot = '/glade/work/chuyan/Research/Cloud_CCFs_RMs/Course_objective_ana/plot_file/plots_July9_CFMIP/'
+    
+    folder =  glob.glob(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y'+'.npz')
+    print(folder)
+    
+    output_ARRAY  =  load(folder[0], allow_pickle=True)  # str(TR_sst)
+    x_gcm =  array(output_ARRAY['bound_x'])
+    y_gcm =  array(output_ARRAY['bound_y'])
+    output_stat1   = output_ARRAY['stats_2']
+    output_stat2   = output_ARRAY['stats_5']
+
+    fig3, ax3  = plt.subplots(1, 2, figsize = (19.8, 9.8))  #(16.2, 9.3))
+
+    #..defined a proper LWP ticks within its range
+    p10_valuespace1 = nanpercentile(output_stat1, 25.) - nanpercentile(output_stat1, 15.)
+    levels_value1 = linspace(nanpercentile(output_stat1, 1.5)-p10_valuespace1, nanpercentile(output_stat1, 99.5)+p10_valuespace1, 164)# arange(0.368, 0.534, 0.002) 
+    # print(levels_value1)
+    p10_valuespace2 = nanpercentile(output_stat2, 25.) - nanpercentile(output_stat2, 15.)
+    # levels_value2  = linspace(nanpercentile(output_stat2, 1.5)-p10_valuespace2, nanpercentile(output_stat2, 99.5)+p10_valuespace2, 164)
+    levels_value2 = linspace(0.5, 1., 164)  # start - end - num
+    # print(levels_value2)
+    
+    #..print(linspace(nanpercentile(output_stat, 1.5), nanpercentile(output_stat, 99.5), 164))
+    #..pick the desired colormap
+    cmap  = plt.get_cmap('YlOrRd') 
+    cmap_2 = plt.get_cmap('viridis_r')   # 'YlOrRd'
+    norm1 = BoundaryNorm(levels_value1, ncolors= cmap.N, extend='both')
+    norm2 = BoundaryNorm(levels_value2, ncolors= cmap_2.N, extend='both')
+
+    im1  = ax3[0].pcolormesh(x_gcm, y_gcm, array(output_stat1), cmap=cmap, norm= norm1)   #..anmean_LWP_bin_Tskew_wvp..LWP_bin_Tskin_sub
+    ax3[0].set_xlabel(r'$\TR_{\omega_{500}},\ Pa s^{-1}$', fontsize= 19)
+    ax3[0].set_ylabel(r'$\TR_{Ts},\ K$', fontsize= 19)
+    ax3[0].set_title(r"$(a)\ ABS\_bias:(deltaLWP_{pred} - deltaLWP_{GCM})$", loc='left', fontsize = 11)
+    
+    im2  = ax3[1].pcolormesh(x_gcm, y_gcm, array(output_stat2), cmap=cmap_2, norm= norm2)
+    ax3[1].set_xlabel(r'$\TR_{\omega_{500}},\ Pa s^{-1}$', fontsize= 19)
+    ax3[1].set_ylabel(r'$\TR_{Ts},\ K$', fontsize= 19)
+    # ax3[1].set_title(r"$(b)\ R^{2}(PI\ predict\ with\ PI\ true LWP)$", loc='left', fontsize = 11)
+    ax3[1].set_title(modn+" ", loc='left', fontsize = 18)
+    
+    fig3.colorbar(im1, ax = ax3[0], label= r"$(kg\ m^{-2})$")
+    fig3.colorbar(im2, ax = ax3[1], label= r"$ Coefficient of Determination$")
+
+    
+    # plt.xlabel('SUB at 500mb, '+ r'$Pa s^{-1}$', fontsize= 15)
+    # plt.ylabel('SST, ' + 'K', fontsize= 15)
+    plt.suptitle( modn+ " Bias Metrics for USING piControl data Predict abr4xCO2 LWP", fontsize =18)
+
+    # plt.legend(loc='upper right',  fontsize= 12)
+
+    # plt.savefig(WD_plot+'model_bias_' + modn)
+    
+    
+    return None 

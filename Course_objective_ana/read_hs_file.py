@@ -5,11 +5,12 @@ from six.moves import range
 import numpy.ma as ma
 
 pp_path_cisl='/glade/collections/cmip/'
-# ON JASMIN /badc/cmip6/data/CMIP6/CMIP/CNRM-CERFACS/CNRM-CM6-1/historical/r1i1p1f2/Amon/clw/gr/latest/
-# ON CISL /glade/collections/cmip/CMIP6/CMIP/CNRM-CERFACS/CNRM-CM6-1/historical/r1i1p1f2/Amon/clw/gr/v20180917/clw/
-# ON CISL:NCAR MODEL /glade/collections/cdg/data/CMIP6/CMIP/NCAR/CESM2/piControl/r1i1p1f1/Amon/evspsbl/gn/v20190320/
+# ON my Scratch: 
+# ON JASMIN: /badc/cmip6/data/CMIP6/CMIP/CNRM-CERFACS/CNRM-CM6-1/historical/r1i1p1f2/Amon/clw/gr/latest/
+# ON CISL: /glade/collections/cmip/CMIP6/CMIP/CNRM-CERFACS/CNRM-CM6-1/historical/r1i1p1f2/Amon/clw/gr/v20180917/clw/
+# ON CISL:NCAR MODEL: /glade/collections/cdg/data/CMIP6/CMIP/NCAR/CESM2/piControl/r1i1p1f1/Amon/evspsbl/gn/v20190320/
 
-def read_var_mod(modn='CNRM-CM6-1', consort='CNRM-CERFACS', varnm='clwvi', cmip='cmip6', exper='historical', ensmem='r1i1p1f2', typevar='Amon', gg='gr', read_p=False, time1=[1850, 1, 15], time2=[2149, 12, 31]):
+def read_var_mod(modn='CNRM-CM6-1', consort='CNRM-CERFACS', varnm='clwvi', cmip='cmip6', exper='historical', ensmem='r1i1p1f2', typevar='Amon', gg='gr', read_p=False, time1=[1, 1, 15], time2=[8000, 12, 31]):
     ### ------------------
     # Reads in data from named GCM for specified time range
     # For 3D data read_p=True.
@@ -19,12 +20,12 @@ def read_var_mod(modn='CNRM-CM6-1', consort='CNRM-CERFACS', varnm='clwvi', cmip=
 
     if cmip == 'cmip6':
         MIP = 'CMIP'
-        if 'ssp' in exper:
-            MIP = 'ScenarioMIP'
-        if exper=='amip-p4K':
-            MIP = 'CFMIP'
+        # if 'ssp' in exper:
+        #     MIP = 'ScenarioMIP'
+        # if exper=='amip-p4K':
+        #     MIP = 'CFMIP'
         pth = pp_path_cisl+'CMIP6/'+MIP+'/'+consort+'/'+modn + \
-            '/'+exper+'/'+ensmem+'/'+typevar+'/'+varnm+'/'+gg+'/'
+            '/'+ exper+'/'+ensmem +'/'+ typevar+'/'+varnm+'/'+gg+ '/'
         #if consort == 'NACR':
         #    pth = '/glade/collections/cdg/data/'+'/CMIP6/'+'CMIP'+'/'+consort+'/'+modn + \
         #        '/'+exper+'/'+ensmem+'/'+typevar+'/'+varnm+'/'+gg+'/latest/'
@@ -34,15 +35,22 @@ def read_var_mod(modn='CNRM-CM6-1', consort='CNRM-CERFACS', varnm='clwvi', cmip=
         if typevar == 'OImon':
             pth = pp_path_cisl+cmip+'/data/cmip5/'+output+'/'+consort+'/'+modn + \
                 '/'+exper+'/mon/seaIce/'+typevar+'/'+ensmem+'/latest/'+varnm+'/'
-
-    
+    # data_source flag
+    ds_flag = 2
     try:
-    data, P, lat, lon, time = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2)
+        data, P, lat, lon, time = read_hs('/glade/scratch/chuyan/CMIP6data/', varnm, 
+                read_p=read_p, modnm=modn, exper=exper, ensmem=ensmem, typevar=typevar, time1=time1, time2=time2, ds_flag = ds_flag)
+        
     except UnboundLocalError:
-#        print('TRYING LOCAL FILES')
-#        data, P, lat, lon, time = read_hs('/gws/nopw/j04/asci/dtmccoy/CMIP/'+cmip+'/', varnm,
-#                                          read_p=read_p, modnm=modn, exper=exper, ensmem=ensmem, typevar=typevar, time1=time1, time2=time2)
-
+        ds_flag = 1
+        print('TRYING CISL FILES')
+        data, P, lat, lon, time = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
+        
+    except IndexError:
+        ds_flag = 1
+        print('LOCAL FILES Indexing Error')
+        data, P, lat, lon, time = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
+    
     if read_p:
         if len(P[0].shape) > 2:
             P = concatenate(P, axis=0)
@@ -58,7 +66,7 @@ def read_var_mod(modn='CNRM-CM6-1', consort='CNRM-CERFACS', varnm='clwvi', cmip=
     lon2 = lon2[ind]
     timeo = concatenate(time, axis=0)
     dataOUT, time = get_unique_time(dataOUT, timeo)
-    print(dataOUT.shape)                                                                                       #5
+    print(dataOUT.shape)                                                                                       # 5
     return dataOUT.filled(fill_value=NaN), P, lat[:].filled(fill_value=NaN), lon2.filled(fill_value=NaN), time  # concatenate(time,axis=0)
 # concatenate(P,axis=0),lat,lon
 
@@ -70,36 +78,46 @@ def get_unique_time(data, time):
 
 
 # ex:time1,time2, atual value above in Parameters of 'read_var_mod':
-def read_hs(wd, varnm, read_p=False, modnm='', exper='', ensmem='', typevar='', time1=[2000, 1, 15], time2=[2005, 12, 31]):
+def read_hs(wd, varnm, read_p=False, modnm='', exper='', ensmem='', typevar='', time1=[2000, 1, 15], time2=[2005, 12, 31], ds_flag =0):
     import glob
-    folder=glob.glob(wd+'*/*/')
-    print(modnm)                                                                                          #1
-    if modnm== 'MIROC6' or modnm =='SAM0-UNICON':
-        fn = glob.glob(folder[0]+'/*'+varnm+'_*'+typevar+'*' +modnm+'_'+exper+'*'+ensmem+'*nc*')
-        print('1')
-    elif modnm =='CESM2':
-        folder=glob.glob(wd+ '*/')
-        #..print(folder)
-        fn = glob.glob(folder[-1]+'/*'+varnm+'_*'+typevar+'*' +modnm+'_'+exper+'*'+ensmem+'*nc*')
-        print('2')
-    elif modnm =='FGOALS-g3':
-        fn = glob.glob(folder[-1]+'/*'+varnm+'_*'+typevar+'*' +modnm+'_'+exper+'*'+ensmem+'*nc*')
-        for i in range(len(fn)):
-            if fn[i] == '/glade/collections/cmip/CMIP6/CMIP/CAS/FGOALS-g3/piControl/r1i1p1f1/Amon/ta/gn/v20190818/ta/ta_Amon_FGOALS-g3_piControl_r1i1p1f1_gn_055001-055912.nc':
-                fn[i] = '/glade/work/chuyan/Research/Cloud_CCFs_RMs/Plots_proposal/ta_Amon_FGOALS-g3_piControl_r1i1p1f1_gn_055001-055912.nc'        
-        print('4')
     
-    else:
-        fn = glob.glob(folder[-1]+'/*'+varnm+'_*'+typevar+'*' +modnm+'_'+exper+'*'+ensmem+'*nc*')
-        print('3')                                                                                           #2
-    print(folder)                                                                                               #3
-    #print(fn)                 #..folder[0]+'/*'+varnm+'*'+typevar+'*'+modnm+'_'+exper+'*'+ensmem+'*nc*'          #3'  
+    if ds_flag == 2:
+        folder = wd
+        print(modnm)
+        fn = glob.glob(folder+ '*' +varnm+'_*'+typevar+'*' +modnm+'_'+exper+'*'+ensmem+'*nc*')
+    
+    elif ds_flag == 1:
+        folder=glob.glob(wd+'*/*/')
+        print(modnm)                                                                                          # 1
+        if modnm== 'MIROC6' or modnm =='SAM0-UNICON':
+            fn = glob.glob(folder[0]+'/*'+varnm+'_*'+typevar+'*' +modnm+'_'+exper+'*'+ensmem+'*nc*')
+            print('1')
+        elif modnm =='CESM2':
+            folder=glob.glob(wd+ '*/')
+            #..print(folder)
+            fn = glob.glob(folder[-1]+'/*'+varnm+'_*'+typevar+'*' +modnm+'_'+exper+'*'+ensmem+'*nc*')
+            print('2')
+        elif modnm =='FGOALS-g3':
+            fn = glob.glob(folder[-1]+'/*'+varnm+'_*'+typevar+'*' +modnm+'_'+exper+'*'+ensmem+'*nc*')
+            for i in range(len(fn)):
+                if fn[i] == '/glade/collections/cmip/CMIP6/CMIP/CAS/FGOALS-g3/piControl/r1i1p1f1/Amon/ta/gn/v20190818/ta/ta_Amon_FGOALS-g3_piControl_r1i1p1f1_gn_055001-055912.nc':
+                    fn[i] = '/glade/work/chuyan/Research/Cloud_CCFs_RMs/Plots_proposal/ta_Amon_FGOALS-g3_piControl_r1i1p1f1_gn_055001-055912.nc'        
+            print('4')
+        else:
+            fn = glob.glob(folder[-1]+'/*'+varnm+'_*'+typevar+'*' +modnm+'_'+exper+'*'+ensmem+'*nc*')
+            print('3')                                                                                           #2'
+
+    print(folder)                                                                                                # 2
+    # print(fn)                 #..folder[0]+'/*'+varnm+'*'+typevar+'*'+modnm+'_'+exper+'*'+ensmem+'*nc*'          # 3'
     
     data = []
     P = []
     timeo = []
+    # filter out the data file with times too larger
+    print(" Variable", varnm, ' ', exper)                                                                          # 3
     for i in range(len(fn)):
-        print(fn[i])                                                                                           #4
+        
+        # print(fn[i])                                                                                  # 3'
         tt = read_hs_file(fn[i], varnm, read_p=read_p,
                           time1=time1, time2=time2)
         if len(tt['data']) > 0:
@@ -113,11 +131,12 @@ def read_hs(wd, varnm, read_p=False, modnm='', exper='', ensmem='', typevar='', 
 
 
 
-def read_hs_file(fn, varnm, time1=[2000, 1, 15], time2=[2005, 12, 31], read_p=False):
+def read_hs_file(fn, varnm, time1, time2, read_p=False):
     # fn='clw_Amon_CNRM-CM6-1_historical_r1i1p1f2_gr_195001-201412.nc'
     # varnm='clw'
     import netCDF4 as nc
     from datetime import datetime
+    
     f = nc.Dataset(fn, 'r')
     latvar = 'lat'
     lonvar = 'lon'
@@ -140,6 +159,7 @@ def read_hs_file(fn, varnm, time1=[2000, 1, 15], time2=[2005, 12, 31], read_p=Fa
     ind = arange(ind1, ind2+1)
     data = []
     P = []
+    
     if ind1 != ind2:
         data = f.variables[varnm][ind]
         P = None
