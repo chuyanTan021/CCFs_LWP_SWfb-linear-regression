@@ -21,13 +21,14 @@ from area_mean import *
 from binned_cyFunctions5 import *
 from read_hs_file import read_var_mod
 
-
+from get_LWPCMIP5data import *
 from get_LWPCMIP6data import *
 from fitLRM_cy1 import *
 from fitLRM_cy2 import *
-# from fitLRM_cy3 import *
+from fitLRM_cy4 import *
 from useful_func_cy import *
 from calc_Radiation_LRM_1 import *
+from calc_Radiation_LRM_2 import *
 
 def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     # get variable data
@@ -35,13 +36,16 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
 
         inputVar_pi, inputVar_abr = get_LWPCMIP6(**model_data)
 
+    elif model_data['cmip'] == 'cmip5':
+        
+        inputVar_pi, inputVar_abr = get_LWPCMIP5(**model_data)
     else:
-        print('not cmip6')
+        print('not cmip6 & cmip5 data.')
     
     # ******************************* #
     # Radiation Change
-    coef_array_alpha_cre_pi, coef_array_albedo_pi, coef_array_alpha_cre_abr, coef_array_albedo_abr = calc_Radiation_LRM_1(inputVar_pi, inputVar_abr, TR_albedo = 0.15)
-    
+    # coef_array_alpha_cre_pi, coef_array_albedo_pi, coef_array_alpha_cre_abr, coef_array_albedo_abr = calc_Radiation_LRM_1(inputVar_pi, inputVar_abr, TR_albedo = 0.25)
+    coef_array_alpha_cre_pi, coef_array_albedo_pi, coef_array_alpha_cre_abr, coef_array_albedo_abr = calc_Radiation_LRM_2(inputVar_pi, inputVar_abr)
     
     # ******************************* #
     #..get the shapes of monthly data
@@ -85,7 +89,6 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     
     Twp_abr = array(inputVar_abr['clwvi'])
     Iwp_abr = array(inputVar_abr['clivi'])
-    prw_abr = array(inputVar_abr['prw'])
     
     # SW radiation metrics
     Rsdt_abr = array(inputVar_abr['rsdt'])
@@ -99,6 +102,9 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     Albedo_cs_abr = Rsutcs_abr / Rsdt_abr
     Alpha_cre_abr = Albedo_abr - Albedo_cs_abr
 
+    if np.min(LWP_abr)<0:
+        LWP_abr = Twp_abr
+        print('clwvi mislabeled')
     
     #..piControl Variables: LWP, tas(gmt), SST, (MC), p-e ; SW radiation metrics (rsdt, rsut, rsutcs)
     LWP = array(inputVar_pi['clwvi']) - array(inputVar_pi['clivi'])   #..units in kg m^-2
@@ -115,7 +121,7 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     
     Twp = array(inputVar_pi['clwvi'])
     Iwp = array(inputVar_pi['clivi'])
-    prw_pi = array(inputVar_pi['prw'])
+
     
     # SW radiation metrics
     Rsdt_pi = array(inputVar_pi['rsdt'])
@@ -130,7 +136,10 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     Albedo_cs_pi = Rsutcs_pi / Rsdt_pi
     Alpha_cre_pi = Albedo_pi - Albedo_cs_pi
 
-    
+    if np.min(LWP)<0:
+        LWP = Twp
+        print('clwvi mislabeled')
+
     #..abrupt-4xCO2
     # Lower Tropospheric Stability (LTS):
     k = 0.286
@@ -158,15 +167,15 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     Subsidence = array(inputVar_pi['sub'])
     
     # define Dictionary to store: CCFs(4), gmt, other variables :
-    dict0_PI_var = {'gmt': gmt, 'LWP': LWP, 'TWP': Twp, 'IWP': Iwp,  'PRW': prw_pi, 'SST': SST, 'p_e': MC, 'LTS': LTS_e, 'SUB': Subsidence, 'rsdt': Rsdt_pi, 'rsut': Rsut_pi, 'rsutcs': Rsutcs_pi, 'albedo' : Albedo_pi, 'albedo_cs': Albedo_cs_pi, 'alpha_cre': Alpha_cre_pi, 'lat': lats, 'lon': lons, 'times': times_pi, 'pres': levels}
+    dict0_PI_var = {'gmt': gmt, 'LWP': LWP, 'TWP': Twp, 'IWP': Iwp, 'SST': SST, 'p_e': MC, 'LTS': LTS_e, 'SUB': Subsidence, 'rsdt': Rsdt_pi, 'rsut': Rsut_pi, 'rsutcs': Rsutcs_pi, 'albedo' : Albedo_pi, 'albedo_cs': Albedo_cs_pi, 'alpha_cre': Alpha_cre_pi, 'lat': lats, 'lon': lons, 'times': times_pi, 'pres': levels}
 
-    dict0_abr_var = {'gmt': gmt_abr, 'LWP': LWP_abr, 'TWP': Twp_abr, 'IWP': Iwp_abr,  'PRW': prw_abr, 'SST': SST_abr, 'p_e': MC_abr, 'LTS': LTS_e_abr ,'SUB': Subsidence_abr, 'rsdt': Rsdt_abr, 'rsut': Rsut_abr, 'rsutcs': Rsutcs_abr, 'albedo': Albedo_abr, 'albedo_cs': Albedo_cs_abr, 'alpha_cre': Alpha_cre_abr, 'lat': lats, 'lon': lons, 'times': times_abr, 'pres': levels}
+    dict0_abr_var = {'gmt': gmt_abr, 'LWP': LWP_abr, 'TWP': Twp_abr, 'IWP': Iwp_abr, 'SST': SST_abr, 'p_e': MC_abr, 'LTS': LTS_e_abr ,'SUB': Subsidence_abr, 'rsdt': Rsdt_abr, 'rsut': Rsut_abr, 'rsutcs': Rsutcs_abr, 'albedo': Albedo_abr, 'albedo_cs': Albedo_cs_abr, 'alpha_cre': Alpha_cre_abr, 'lat': lats, 'lon': lons, 'times': times_abr, 'pres': levels}
 
 
     
     # get the Annual-mean, Southern-Ocean region arrays
 
-    datavar_nas = ['LWP', 'TWP', 'IWP', 'PRW', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre', 'SST', 'p_e', 'LTS', 'SUB']   #..14 varisables except gmt (lon dimension diff)
+    datavar_nas = ['LWP', 'TWP', 'IWP', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre', 'SST', 'p_e', 'LTS', 'SUB']   #..13 varisables except gmt (lon dimension diff)
 
     dict1_PI_yr = {}
     dict1_abr_yr = {}
@@ -216,8 +225,8 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     
     # Calculate 5*5 bin array for variables (LWP, CCFs) in Sounthern Ocean Region:
     #..set are-mean range and define functio
-    x_range = arange(-180., 180., 5.)  #..logitude sequences edge: number: 72
     s_range = arange(-90., 90., 5.) + 2.5  #..global-region latitude edge: (36)
+    x_range = arange(-180., 180., 5.)  #..logitude sequences edge: number: 72
     y_range = arange(-85, -40., 5.) +2.5  #..southern-ocaen latitude edge: 9 
     
     # Annually variables in bin box:
@@ -278,7 +287,7 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     ###..Put data into 'fitLRM' FUNCTION to get predicted LWP splitted by 'Tr_sst'/'Tr_sub' infos_models:
     TR_sst = THRESHOLD_sst   ###.. Important line
     TR_sub = THRESHOLD_sub   ###.threshold of 500 mb Subsidences
-    WD = '/glade/scratch/chuyan/CMIP6_output/CMIP6_lrm_RESULT/'
+    WD = '/glade/scratch/chuyan/CMIP_output/CMIP_lrm_RESULT/'
     
     
     rawdata_dict1 = fitLRM3(C_dict = B_dict, TR_sst=TR_sst, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)
@@ -286,10 +295,10 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
 
     rawdata_dict3['TR_sst'] = THRESHOLD_sst
 
-    savez(WD+C_dict['model_data']['modn']+'_r2r1_hotcold(Jan)_(largestpiR2)_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
+    savez(WD+C_dict['model_data']['modn']+'_r2r1_hotcold(Jan)_(largestpiR2)_July14th_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
     
     #.. best fit save_2lrm command:
-    # savez(WD+C_dict['model_data']['modn']+'_best(test5)fit_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
+    # savez(WD+C_dict['model_data']['modn']+'_r1r1_(Jan)_(largestpiR2)_July28th_'+'0.0K'+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
     
     
     rawdata_dict2 = fitLRM4(C_dict = D_dict, TR_sst=TR_sst, TR_sub=TR_sub, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)
@@ -298,12 +307,11 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     rawdata_dict4['TR_sst'] = THRESHOLD_sst
     rawdata_dict4['TR_sub'] = THRESHOLD_sub
 
-    savez(WD+C_dict['model_data']['modn']+'_r4r1(Jan)_(largestpiR2)_'+str(round(TR_sst, 2))+'K_'+'ud'+str(round(TR_sub*100, 2))+'_dats', model_data =  C_dict['model_data'],rawdata_dict = rawdata_dict4)
+    savez(WD+C_dict['model_data']['modn']+'_r4r1(Jan)_(largestpiR2)_July14th_'+str(round(TR_sst, 2))+'K_'+'ud'+str(round(TR_sub*100, 2))+'_dats', model_data =  C_dict['model_data'], rawdata_dict = rawdata_dict4)
     
     #.. best fit save_4lrm command:
-    # savez(WD+C_dict['model_data']['modn']+'_best(test5)fit_'+str(round(TR_sst, 2))+'K_'+ 'ud'+str(round(TR_sub*100, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict4)
+    # savez(WD+C_dict['model_data']['modn']+'_r2r1_updown(Jan)_(largestpiR2)_July28th_'+ '0.0K_ud'+str(round(TR_sub*100, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict4)
 
     
     return None
-
-
+    

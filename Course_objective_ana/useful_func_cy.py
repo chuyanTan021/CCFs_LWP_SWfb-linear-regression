@@ -26,6 +26,50 @@ import cartopy.feature as cfeat
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter   #..x,y --> lon, lat
 
 
+def annually_mean(data, times, label = 'mon'):
+    # This function is for converting finer time scale data to annually mean data;
+    # ..currently can only process: monthly data;
+    # The default data shape is: (time, lat, lon).
+    
+    if label == 'mon':
+        shape_yr = np.asarray(times).shape[0]// 12
+        annually_array = np.zeros((shape_yr, np.asarray(data).shape[1], np.asarray(data).shape[2]))
+        
+        # Is the first month of data be 'January'? 
+        if times[0, 1]== 1.0:  # start at January
+            for i in range(shape_yr):
+                annually_array[i,:,:] = np.nanmean(data[i*12:(i+1)*12, :,:], axis = 0)
+        elif any(times[0,1]== x for x in [2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.]):  # not start at Jan
+            for i in range(shape_yr):
+                annually_array[i,:,:] = np.nanmean(data[i*12+(13-int(times[0,1])):(i+1)*12+(13-int(times[0,1])),:,:], axis = 0)
+        else:
+            print('wrong month value.')
+    
+    return annually_array
+
+
+def area_mean(data, lats, lons):
+    # This function is for processing the latitudinal weighting of 3-D array.
+    '''..3D (time, lat, lon) would reduce to 1D (time)..
+    '''
+    Time_series = np.zeros(data.shape[0])
+    for i in np.arange(data.shape[0]):
+        
+        S_time_step = data[i,:,:]
+        # remove the NaN value within the 2-D array and squeeze to 1-D (indexing):
+        ind1 = np.isnan(S_time_step)==False
+        # weighted by cosine(lat):
+        xlon, ylat = np.meshgrid(lons, lats)
+
+        weighted_metrix1 = np.cos(np.deg2rad(ylat))  # lat matrix
+        toc1 = np.sum(weighted_metrix1[ind1])   # total of cos(lat matrix) for the defined region of lat X lon
+
+        S_weighted = S_time_step[ind1] * weighted_metrix1[ind1] / toc1
+        
+        Time_series[i] = np.sum(S_weighted)
+
+    return Time_series
+
 
 def get_annually_metric(data, shape_m0, shape_1, shape_2):
     ###..'data' is the origin data array for 3D variable(i.e., (times, lat, lon)), 
@@ -41,7 +85,6 @@ def get_annually_metric(data, shape_m0, shape_1, shape_2):
         layover_yr[i, :, :] = nanmean(data[i*12:(i+1)*12,:,:], axis=0)
     
     return layover_yr
-
 
 
 def get_annually_dict_so(dict_rawdata, dict_names, shape_time, lat_si0, lat_si1, shape_lon):
@@ -149,7 +192,7 @@ def rdlrm_1_training(X_dict, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS
     aeffi = result0.coef_
     aintp = result0.intercept_
 
-
+    
     # '1' for valid_data indeing; '0' for invalid_data ('nan') points' indexing
     predict_label_LWP[ind_true] = 1
 

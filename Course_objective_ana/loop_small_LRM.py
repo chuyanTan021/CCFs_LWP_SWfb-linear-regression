@@ -28,15 +28,17 @@ from area_mean import *
 from binned_cyFunctions5 import *
 from read_hs_file import read_var_mod
 
-
+from get_LWPCMIP5data import *
 from get_LWPCMIP6data import *
 from get_annual_so import *
 # from fitLRM_cy import *
 from useful_func_cy import *
 
 def main():
-    deck_nas = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1']
-    
+    # cmip6 model list
+    # deck_nas = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1']
+    # cmip5 model list
+    deck_nas = ['BNUESM', 'FGOALSg2', 'GISSE2H', 'GISSE2R']  # 'CCSM4', 'CNRMCM5', 'CSIRO_Mk360', 'CanESM2', 'FGOALSs2', 'GFDLCM3', 'IPSLCM5ALR', 'MIROC5', 'MPIESMMR', 'NorESM1M'
     Number_of_models = int(sys.argv[1])
     print("Number of models : ", Number_of_models)
     h = loop_LRM_simple(modn = deck_nas[Number_of_models], type_analysis= 'forecasting')
@@ -44,9 +46,11 @@ def main():
     
     return None
 
+
 def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     exp = 'piControl'
     
+    # CMIP6: 31
     AWICM11MR = {'modn': 'AWI-CM-1-1-MR', 'consort': 'AWI', 'cmip': 'cmip6',
                 'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'}
     BCCCSMCM2MR = {'modn': 'BCC-CSM2-MR', 'consort': 'BCC', 'cmip': 'cmip6',
@@ -95,7 +99,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     # HADGEM3 = {'modn': 'HadGEM3-GC31-LL', 'consort': 'MOHC', 'cmip': 'cmip6',
     #             'exper': 'piControl', 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'}   #..missing 'wap' in 'piControl' exp(Daniel says that HadGEM3-GC31 not using p-level, so doesn't have variables on p-level
     INM_CM48 = {'modn': 'INM-CM4-8', 'consort': 'INM', 'cmip': 'cmip6', 
-                    'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gr1', "typevar": 'Amon'}  #..data not available again 
+                    'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gr1', "typevar": 'Amon'}
     IPSLCM6ALR = {'modn': 'IPSL-CM6A-LR', 'consort': 'IPSL', 'cmip': 'cmip6',
                       'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gr', "typevar": 'Amon'}
     MIROCES2L = {'modn': 'MIROC-ES2L', 'consort': 'MIROC', 'cmip': 'cmip6',
@@ -114,25 +118,62 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
                 'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'}
     TaiESM1 = {'modn': 'TaiESM1', 'consort': 'AS-RCEC', 'cmip': 'cmip6', 
                      'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'}
+    # CMIP5: 11
+    ACCESS10 = {'modn': 'ACCESS1-0', 'consort': 'CSIRO-BOM', 'cmip': 'cmip5',   # 2-d (145) and 3-d (146) variables have different lat shape
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    ACCESS13 = {'modn': 'ACCESS1-3', 'consort': 'CSIRO-BOM', 'cmip': 'cmip5',   # 2-d (145) and 3-d (146) variables have different lat shape
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    BNUESM = {'modn': 'BNU-ESM', 'consort': 'BNU', 'cmip': 'cmip5',
+              'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
     
-    deck2 = [BCCESM1, CanESM5, CESM2, CESM2FV2, CESM2WACCM, CNRMESM21, GISSE21G, GISSE21H, IPSLCM6ALR, MRIESM20, MIROC6, SAM0, E3SM10, FGOALSg3, GFDLCM4, CAMSCSM1, INM_CM48, MPIESM12LR, AWICM11MR, BCCCSMCM2MR, CMCCCM2SR5, CESM2WACCMFV2, CNRMCM61, CNRMCM61HR, ECEarth3, ECEarth3Veg, GISSE22G, MIROCES2L, NESM3, NorESM2MM, TaiESM1]   #..current # 18 + 13
-    deck_nas2 = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1']   #..current # 18 + 13
+    CCSM4 = {'modn': 'CCSM4', 'consort': 'NCAR', 'cmip': 'cmip5',
+                 'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    CNRMCM5 = {'modn': 'CNRM-CM5', 'consort': 'CNRM-CERFACS', 'cmip': 'cmip5',
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    CSIRO_Mk360 = {'modn': 'CSIRO-Mk3-6-0', 'consort': 'CSIRO-QCCCE', 'cmip': 'cmip5',
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    CanESM2 = {'modn': 'CanESM2', 'consort': 'CCCma', 'cmip': 'cmip5',
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    FGOALSg2 = {'modn': 'FGOALS-g2', 'consort': 'LASG-CESS', 'cmip': 'cmip5',   # missing 'prw' in piControl
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    FGOALSs2 = {'modn': 'FGOALS-s2', 'consort': 'LASG-IAP', 'cmip': 'cmip5',
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    GFDLCM3 = {'modn': 'GFDL-CM3', 'consort': 'NOAA-GFDL', 'cmip': 'cmip5',
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    GISSE2H = {'modn': 'GISS-E2-H', 'consort': 'NASA-GISS', 'cmip': 'cmip5',
+               'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    GISSE2R = {'modn': 'GISS-E2-R', 'consort': 'NASA-GISS', 'cmip': 'cmip5',
+               'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    IPSLCM5ALR = {'modn': 'IPSL-CM5A-LR', 'consort': 'IPSL', 'cmip': 'cmip5',
+                   'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    MIROC5 = {'modn': 'MIROC5', 'consort': 'MIROC', 'cmip': 'cmip5',
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    MPIESMMR = {'modn': 'MPI-ESM-MR', 'consort': 'MPI-M', 'cmip': 'cmip5',
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    NorESM1M = {'modn': 'NorESM1-M', 'consort': 'NCC', 'cmip': 'cmip5',
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    # deck2 = [BCCESM1, CanESM5, CESM2, CESM2FV2, CESM2WACCM, CNRMESM21, GISSE21G, GISSE21H, IPSLCM6ALR, MRIESM20, MIROC6, SAM0, E3SM10, FGOALSg3, GFDLCM4, CAMSCSM1, INM_CM48, MPIESM12LR, AWICM11MR, BCCCSMCM2MR, CMCCCM2SR5, CESM2WACCMFV2, CNRMCM61, CNRMCM61HR, ECEarth3, ECEarth3Veg, GISSE22G, MIROCES2L, NESM3, NorESM2MM, TaiESM1]   #..current # 18 + 13
+    deck2 = [BNUESM, CCSM4, CNRMCM5, CSIRO_Mk360, CanESM2, FGOALSg2, FGOALSs2, GFDLCM3, GISSE2H, GISSE2R, IPSLCM5ALR, MIROC5, MPIESMMR, NorESM1M]   # current # 14
 
-    
+    # deck_nas2 = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1']   #..current # 18 + 13
+    deck_nas2 = ['BNUESM', 'CCSM4', 'CNRMCM5', 'CSIRO_Mk360', 'CanESM2', 'FGOALSg2', 'FGOALSs2', 'GFDLCM3', 'GISSE2H', 'GISSE2R', 'IPSLCM5ALR', 'MIROC5', 'MPIESMMR', 'NorESM1M']   # current # 14
+
     
     # get cmip6 data:
     name_j = 0
     while name_j < len(deck_nas2):
         
         if modn == deck_nas2[name_j]:
-            if type_analysis == 'forecasting':
+            if (deck2[name_j]['cmip']=='cmip6') & (type_analysis == 'forecasting'):
                 inputVar_pi, inputVar_abr = get_LWPCMIP6(**deck2[name_j])
-            else:                    # port for historical analysis
-                print('not cmip6')
+            elif (deck2[name_j]['cmip']=='cmip5') & (type_analysis == 'forecasting'):
+                inputVar_pi, inputVar_abr = get_LWPCMIP5(**deck2[name_j])
+            else:       # port for historical analysis
+                print('not existing data within cmip5 and cmip6 storage in scratch.')
             break
-        
+        print("Number of models: ", name_j)
         name_j += 1
-        print("Number of models: ", name_j+1)
+    
     #if name_j== len(deck_nas2) -1:
     #   print("Don't have this model right now !")
 
@@ -154,7 +195,6 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     levels      = array(inputVar_abr['pres'])
     times_abr   = inputVar_abr['times']
     times_pi    = inputVar_pi['times']
-
 
     lati0 = -40.
     latsi0= min(range(len(lats)), key = lambda i: abs(lats[i] - lati0))
@@ -181,8 +221,10 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
 
     Twp_abr  = array(inputVar_abr['clwvi'])
     Iwp_abr  = array(inputVar_abr['clivi'])
-    prw_abr  = array(inputVar_abr['prw'])
-
+    
+    if np.min(LWP_abr)<-1e-5:
+        LWP_abr = Twp_abr
+        print('clwvi mislabeled')
     print('Abr simple global-mean-gmt(K): ', nanmean(gmt_abr))
 
     #..pi-Control Variables: LWP, tas(gmt), SST, p-e, LTS, subsidence
@@ -199,10 +241,11 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
 
     Twp  = array(inputVar_pi['clwvi'])
     Iwp  = array(inputVar_pi['clivi'])
-    prw_pi =  array(inputVar_pi['prw'])
 
     print('pi-C simple global mean-gmt(K): ', nanmean(gmt))
-
+    if np.min(LWP)<-1e-5:
+        LWP = Twp
+        print('clwvi mislabeled')
 
     #..abrupt4xCO2
     # Lower Tropospheric Stability:
@@ -234,17 +277,17 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
 
 
     # define Dictionary to store: CCFs(4), gmt, other variables:
-    dict0_PI_var = {'gmt': gmt, 'LWP': LWP, 'TWP': Twp, 'IWP': Iwp,  'PRW': prw_pi, 'SST': SST, 'p_e': MC, 'LTS': LTS_e, 'SUB': Subsidence
+    dict0_PI_var = {'gmt': gmt, 'LWP': LWP, 'TWP': Twp, 'IWP': Iwp, 'SST': SST, 'p_e': MC, 'LTS': LTS_e, 'SUB': Subsidence
                      ,'lat':lats, 'lon':lons, 'times': times_pi, 'pres':levels}
 
-    dict0_abr_var = {'gmt': gmt_abr, 'LWP': LWP_abr, 'TWP': Twp_abr, 'IWP': Iwp_abr,  'PRW': prw_abr, 'SST': SST_abr, 'p_e': MC_abr, 'LTS': LTS_e_abr 
+    dict0_abr_var = {'gmt': gmt_abr, 'LWP': LWP_abr, 'TWP': Twp_abr, 'IWP': Iwp_abr, 'SST': SST_abr, 'p_e': MC_abr, 'LTS': LTS_e_abr 
                      ,'SUB': Subsidence_abr, 'lat':lats, 'lon':lons, 'times': times_abr, 'pres':levels}
 
 
 
     # get the Annual-mean, Southern-Ocean region arrays
 
-    datavar_nas = ['LWP', 'TWP', 'IWP', 'PRW', 'SST', 'p_e', 'LTS', 'SUB']   #..8 varisables except gmt (lon dimension diff)
+    datavar_nas = ['LWP', 'TWP', 'IWP', 'SST', 'p_e', 'LTS', 'SUB']   #..7 varisables except gmt (lon dimension diff)
 
     dict1_PI_yr  = {}
     dict1_abr_yr = {}
@@ -272,7 +315,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
 
         dict1_PI_yr[datavar_nas[a]+'_yr'] =  layover_yr_pi[a,:]
 
-        print(datavar_nas[a], " finish calculating annually-mean array")    
+        print(datavar_nas[a], " finish calculating annually-mean array")   
 
 
 
@@ -402,8 +445,8 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     dict2_predi_fla_abr['gmt'] = dict1_mon_bin_abr['gmt_mon_bin'][:,1:11,:].flatten()
 
     #  shape of flattened array:
-    shape_fla_PI   =   dict2_predi_fla_PI['LWP'].shape
-    shape_fla_abr   =   dict2_predi_fla_abr['LWP'].shape
+    shape_fla_PI = dict2_predi_fla_PI['LWP'].shape
+    shape_fla_abr = dict2_predi_fla_abr['LWP'].shape
 
     
     # For pluging in different sets of cut-off(TR_sst & TR_sub) into LRM(s):
@@ -472,9 +515,10 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     
     
     # Storage data into .npz file for each GCMs
-    WD = '/glade/scratch/chuyan/CMIP6_output/'
+    WD = '/glade/scratch/chuyan/CMIP_output/'
     
-    savez(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y', bound_y = y_gcm,bound_x = x_gcm, stats_1 = s1, stats_2 = s2, stats_3 = s3, stats_4 = s4, stats_5 = s5, cut_off1=cut_off1, cut_off2=cut_off2, TR_minabias_SST=TR_minabias_SST, TR_minabias_SUB=TR_minabias_SUB, TR_maxR2_SST=TR_maxR2_SST, TR_maxR2_SUB=TR_maxR2_SUB,  coef_a = coefa, coef_b = coefb, coef_c = coefc, coefd = coefd)
+    savez(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y_July14th', bound_y = y_gcm,bound_x = x_gcm, stats_1 = s1, stats_2 = s2, stats_3 = s3, stats_4 = s4, stats_5 = s5, cut_off1=cut_off1, cut_off2=cut_off2, TR_minabias_SST=TR_minabias_SST, TR_minabias_SUB=TR_minabias_SUB, TR_maxR2_SST=TR_maxR2_SST, TR_maxR2_SUB=TR_maxR2_SUB,  coef_a = coefa, coef_b = coefb, coef_c = coefc, coefd = coefd)
+    return None
 
 
 
@@ -694,10 +738,10 @@ def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_train
     
     
     #..save the coefficients:
-    coef_a = array([aeffi, aint])
-    coef_b = array([beffi, bint])
-    coef_c = array([ceffi, cint])
-    coef_d = array([deffi, dint])
+    coef_a = asarray(aeffi, aint)
+    coef_b = asarray(beffi, bint)
+    coef_c = asarray(ceffi, cint)
+    coef_d = asarray(deffi, dint)
     
     print('aeffi(up, cold): ', aeffi,  'aint: ', aint)
     print('beffi(up, warm): ', beffi,  'bint: ', bint)
@@ -788,7 +832,7 @@ def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_train
     YB_abr[ind_false_abr] = predict_data['LWP'][ind_false_abr]   #..LWP single-column array with no LTS points as original values, with has LTS value points as 0.0. 
     
     YB_abr_iwp   =  full((shape_fla_predict),  0.0)   
-    YB_abr_iwp[ind_false_abr] = predict_data['IWP'][ind_false_abr]   #..IWP 
+    YB_abr_iwp[ind_false_abr] = predict_data['IWP'][ind_false_abr]   #..IWP
 
 
     
@@ -849,7 +893,7 @@ def stats_matrics_Visualization(modn = 'IPSLCM6ALR'):
     
     WD = '/glade/scratch/chuyan/CMIP6_output/'
     
-    folder =  glob.glob(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y'+'.npz')
+    folder =  glob.glob(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y_July14th'+'.npz')
     print(folder)
     
     output_ARRAY  =  load(folder[0], allow_pickle=True)  # str(TR_sst)

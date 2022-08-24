@@ -78,8 +78,7 @@ def get_LWPCMIP6(modn='', consort='', cmip='', exper='', ensmem='', gg='', typev
     P_abr           = read_var_mod(modn=modn, consort=consort, varnm='pr', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= time1, time2= time2)[0]
 
     E_abr           = read_var_mod(modn=modn, consort=consort, varnm='evspsbl', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= time1, time2= time2)[0]
-    
-    prw_abr         = read_var_mod(modn=modn, consort=consort, varnm='prw', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= time1, time2= time2)[0]
+
     
     rsdt_abr        = read_var_mod(modn=modn, consort=consort, varnm='rsdt', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= time1, time2= time2)[0]
     rsut_abr        = read_var_mod(modn=modn, consort=consort, varnm='rsut', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= time1, time2= time2)[0]
@@ -87,7 +86,7 @@ def get_LWPCMIP6(modn='', consort='', cmip='', exper='', ensmem='', gg='', typev
     # print(sfc_T_abr.shape)
     #.. 1800 months =150 yrs for CESM2: abrupt-4xCO2 experiemnt
     inputVar_abr = {'sfc_T': sfc_T_abr, 'T_700': T_700_abr, 'sfc_P': sfc_P_abr, 'sub': sub_abr, 'clivi': clivi_abr, 'clwvi':clwvi_abr, 'tas': tas_abr, 
-                    'P': P_abr, 'E': E_abr, 'prw': prw_abr, 'rsdt': rsdt_abr, 'rsut': rsut_abr, 'rsutcs': rsutcs_abr, 'pres': Pres_abr, 'lat':lat_abr, 'lon':lon_abr, 'times':times_abr}
+                    'P': P_abr, 'E': E_abr, 'rsdt': rsdt_abr, 'rsut': rsut_abr, 'rsutcs': rsutcs_abr, 'pres': Pres_abr, 'lat':lat_abr, 'lon':lon_abr, 'times':times_abr}
     
     
     
@@ -149,9 +148,8 @@ def get_LWPCMIP6(modn='', consort='', cmip='', exper='', ensmem='', gg='', typev
     #..Precipitation, Units in kg m^-2 s^-1 = mm *s^-1
     E_pi           = read_var_mod(modn= modn, consort= consort, varnm='evspsbl', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= timep1, time2= timep2)[0]
     #..Evaporations, Units also in kg m^-2 s^-1 = mm *s^-1
-    
-    prw_pi         = read_var_mod(modn= modn, consort= consort, varnm='prw', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= timep1, time2= timep2)[0]
 
+    
     rsdt_pi        = read_var_mod(modn=modn, consort=consort, varnm='rsdt', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= timep1, time2= timep2)[0]
     rsut_pi        = read_var_mod(modn=modn, consort=consort, varnm='rsut', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1= timep1, time2= timep2)[0]
     rsutcs_pi      = read_var_mod(modn=modn, consort=consort, varnm='rsutcs', cmip= cmip, exper=exper, ensmem=ensmem, typevar=typevar, gg=gg, read_p=False, time1 = timep1, time2= timep2)[0]
@@ -159,7 +157,7 @@ def get_LWPCMIP6(modn='', consort='', cmip='', exper='', ensmem='', gg='', typev
     #..6000 months =99 yrs for CESM2 piControl experiment
     
     inputVar_pi = {'sfc_T': sfc_T_pi, 'T_700': T_700_pi, 'sfc_P': sfc_P_pi, 'sub': sub_pi, 'clivi': clivi_pi, 'clwvi': clwvi_pi, 'tas': tas_pi, 
-                   'P': P_pi, 'E': E_pi, 'prw': prw_pi, 'rsdt': rsdt_pi, 'rsut': rsut_pi, 'rsutcs': rsutcs_pi, 'pres':Pres_pi, 'lat':lat_pi, 'lon':lon_pi, 'times': times_pi}
+                   'P': P_pi, 'E': E_pi, 'rsdt': rsdt_pi, 'rsut': rsut_pi, 'rsutcs': rsutcs_pi, 'pres':Pres_pi, 'lat':lat_pi, 'lon':lon_pi, 'times': times_pi}
     '''
     TS = read_var_mod(modn=modn,consort=consort,varnm='ts',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=time1,time2=time2)
     '''

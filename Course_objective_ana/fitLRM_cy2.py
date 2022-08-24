@@ -37,7 +37,7 @@ def fitLRM3(C_dict, TR_sst, s_range, y_range, x_range, lats, lons):
 
     model = C_dict['model_data']   #.. type in dict
 
-    datavar_nas = ['LWP', 'TWP', 'IWP', 'PRW', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'SST', 'p_e', 'LTS', 'SUB']   #..13 varisables except gmt (lon dimension  diff)
+    datavar_nas = ['LWP', 'TWP', 'IWP', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'SST', 'p_e', 'LTS', 'SUB']   #..12 varisables except gmt (lon dimension  diff)
 
     # load annually-mean bin data.
     dict1_yr_bin_PI = dict1_PI_var['dict1_yr_bin_PI']
@@ -321,7 +321,7 @@ def fitLRM4(C_dict, TR_sst, TR_sub, s_range, y_range, x_range, lats, lons):
     
     model = C_dict['model_data']  #.. type in dict
     
-    datavar_nas = ['LWP', 'TWP', 'IWP', 'PRW', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'SST', 'p_e', 'LTS', 'SUB']   #..13 varisables except gmt (lon dimension diff)
+    datavar_nas = ['LWP', 'TWP', 'IWP', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'SST', 'p_e', 'LTS', 'SUB']  #..12 varisables except gmt (lon dimension diff)
     
     # load annually-mean bin data
     dict1_yr_bin_PI = dict1_PI_var['dict1_yr_bin_PI']
@@ -611,7 +611,7 @@ def p4plot1(s_range, y_range, x_range, shape_yr_pi, shape_yr_abr, rawdata_dict):
     model = rawdata_dict['model_data']   #.. type in dict
 
 
-    datavar_nas = ['LWP', 'TWP', 'IWP', 'PRW', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'SST', 'p_e', 'LTS', 'SUB']   #..13 varisables except gmt (lon dimension diff)
+    datavar_nas = ['LWP', 'TWP', 'IWP', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'SST', 'p_e', 'LTS', 'SUB']   #..12 varisables except gmt (lon dimension diff)
 
     # load annually-mean bin data:
     dict1_yr_bin_PI  = dict0_PI_var['dict1_yr_bin_PI']
