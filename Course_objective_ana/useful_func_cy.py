@@ -26,49 +26,86 @@ import cartopy.feature as cfeat
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter   #..x,y --> lon, lat
 
 
+
+def region_cropping(dict_raw, variable_nas, lats, lons, lat_range = [-85., -40.], lon_range = [-180., 180.]):
+    # This function is for cropping the raw data maps (save in dictipnary) to be a defined rectangle region map.
+    # 'dict_raw' is the dictionary which saved all variable(s).
+    # 'variable_nas' is the list of variable(s) we wants to crop, e.g., variable_nas = ['SST', 'p_e', 'LTS', 'SUB'].
+    # 'lat_range[lati1, lati2]' defines the south and north bounds of the cropping map; 'lon_range[lonj1, lonj2]' defines the west and east bounds.
+    
+    dict_crop = deepcopy(dict_raw)
+    
+    ind_i = (lats >= min(lat_range)) & (lats <= max(lat_range))
+    lats_crop = lats[ind_i]
+    ind_j = (lons >= min(lon_range)) & (lons <= max(lon_range))
+    lons_crop = lons[ind_j]
+    # print(lats_crop, lons_crop)
+    
+    for v in range(len(variable_nas)):
+        
+        if dict_crop[variable_nas[v]].ndim == 3:
+            dict_crop[variable_nas[v]] = dict_crop[variable_nas[v]][:, ind_i, :]
+            dict_crop[variable_nas[v]] = dict_crop[variable_nas[v]][:,:, ind_j]  # variable in dictionary is in 3-D shape
+        elif dict_crop[variable_nas[v]].ndim == 2:
+            dict_crop[variable_nas[v]] = dict_crop[variable_nas[v]][ind_i, :]
+            dict_crop[variable_nas[v]] = dict_crop[variable_nas[v]][:, ind_j]  # variable in dictionary is in 2-D shape
+        
+        else:
+            print(' A not valid dimension value for this variable: ', variable_nas[v])
+            continue
+    
+    print(' ended cropping ')
+    return dict_crop, lats_crop, lons_crop
+
+
+
+def region_cropping_var(data, lats, lons, lat_range = [-85., -40.], lon_range = [-180., 180.]):
+    # This function is for cropping the raw data map to be a defined rectangle region map.
+    # 'data' is the data variable (only one) which need to crop.
+    # 'lat'/ 'lon' is the 1-D latitude/ longitude array.
+    # 'lat_range[lati1, lati2]' defines the south and north bounds of the cropping map; 'lon_range[lonj1, lonj2]' defines the west and east bounds.
+    S = data *1.
+    
+    ind_i = (lats >= min(lat_range)) & (lats <= max(lat_range))
+    lats_crop = lats[ind_i]
+    ind_j = (lons >= min(lon_range)) & (lons <= max(lon_range))
+    lons_crop = lons[ind_j]
+    # print(lats_crop, lons_crop)
+    
+    if S.ndim == 3:
+        S = data[:, ind_i, :]
+        S = S[:,:, ind_j]  # variable in dictionary is in 3-D shape
+    elif S.ndim == 2:
+        S = data[ind_i, :]
+        S = S[:, ind_j]  # variable in dictionary is in 2-D shape
+
+    # print(' ended cropping ')
+    return S, lats_crop, lons_crop
+
+
+
 def annually_mean(data, times, label = 'mon'):
     # This function is for converting finer time scale data to annually mean data;
     # ..currently can only process: monthly data;
-    # The default data shape is: (time, lat, lon).
+    # The default data shape is: (time, lat, lon);
+    # 'times' is the time array of data, which in shape of (length_of_time, 3) for storing (year, month, day) information.
     
     if label == 'mon':
-        shape_yr = np.asarray(times).shape[0]// 12
-        annually_array = np.zeros((shape_yr, np.asarray(data).shape[1], np.asarray(data).shape[2]))
+        shape_yr = asarray(times).shape[0]// 12
+        annually_array = zeros((shape_yr, asarray(data).shape[1], asarray(data).shape[2]))
         
         # Is the first month of data be 'January'? 
         if times[0, 1]== 1.0:  # start at January
             for i in range(shape_yr):
-                annually_array[i,:,:] = np.nanmean(data[i*12:(i+1)*12, :,:], axis = 0)
+                annually_array[i,:,:] = nanmean(data[i*12:(i+1)*12, :,:], axis = 0)
         elif any(times[0,1]== x for x in [2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.]):  # not start at Jan
             for i in range(shape_yr):
-                annually_array[i,:,:] = np.nanmean(data[i*12+(13-int(times[0,1])):(i+1)*12+(13-int(times[0,1])),:,:], axis = 0)
+                annually_array[i,:,:] = nanmean(data[i*12+(13-int(times[0,1])):(i+1)*12+(13-int(times[0,1])),:,:], axis = 0)
         else:
             print('wrong month value.')
     
     return annually_array
 
-
-def area_mean(data, lats, lons):
-    # This function is for processing the latitudinal weighting of 3-D array.
-    '''..3D (time, lat, lon) would reduce to 1D (time)..
-    '''
-    Time_series = np.zeros(data.shape[0])
-    for i in np.arange(data.shape[0]):
-        
-        S_time_step = data[i,:,:]
-        # remove the NaN value within the 2-D array and squeeze to 1-D (indexing):
-        ind1 = np.isnan(S_time_step)==False
-        # weighted by cosine(lat):
-        xlon, ylat = np.meshgrid(lons, lats)
-
-        weighted_metrix1 = np.cos(np.deg2rad(ylat))  # lat matrix
-        toc1 = np.sum(weighted_metrix1[ind1])   # total of cos(lat matrix) for the defined region of lat X lon
-
-        S_weighted = S_time_step[ind1] * weighted_metrix1[ind1] / toc1
-        
-        Time_series[i] = np.sum(S_weighted)
-
-    return Time_series
 
 
 def get_annually_metric(data, shape_m0, shape_1, shape_2):
@@ -85,6 +122,7 @@ def get_annually_metric(data, shape_m0, shape_1, shape_2):
         layover_yr[i, :, :] = nanmean(data[i*12:(i+1)*12,:,:], axis=0)
     
     return layover_yr
+
 
 
 def get_annually_dict_so(dict_rawdata, dict_names, shape_time, lat_si0, lat_si1, shape_lon):
@@ -116,29 +154,84 @@ def get_annually_dict_so(dict_rawdata, dict_names, shape_time, lat_si0, lat_si1,
 
 
 
-def get_annually_dict(dict_rawdata, dict_names, shape_time, shape_lat, shape_lon):
-    #.. 'dict_rawdat' : originally in monthly data, all variables are 3D(times, lat, lon) data in the same shape;
-    #.. 'shape_time' : # of Months, which as the 1st dimension in each variables INSIDE 'dict_rawdata';
-    #.. 'dict_names' : the name string list (or a dict) of each variables In the 'dict_rawdata' and you wanted to calc the annually-mean;
-
-    dict_yr  = {}
-
-    layover_yr  = zeros((len(dict_names), shape_time//12, shape_lat_so, shape_lon))   #tips: dictionary didn't really copy each changeable value of 'layover_yr', but more like an ‘indicator' who points to the address of 'layover_yr'.
-
-
-    for a in range(len(dict_names)):
-        a_array = dict_rawdata[dict_names[a]]
+def get_annually_dict(dict_rawdata, variable_nas, times, label = 'mon'):
+    #.. This function is for converting finer time scale data in the dict to be annually data, and save into another dict.
+    #.. currently can only handle 'monthly' data;
+    #.. 'dict_rawdata' : the data dictionary save all the variables, the default shape is: (times, lat, lon);
+    #.. 'variable_nas' : the string list of variable(s) that we wanted to calc the annually-mean;
+    #.. 'times' : is the time array of data, which in shape of (length_of_time, 3) for storing (year, month, day) information.
     
-        for i in range(shape_time//12):
-            #.. '//' representing 'int' division operation
-            
-            layover_yr[a, i, :, :] = nanmean(a_array[i*12:(i+1)*12, :, :], axis=0)
+    dict_annually_mean = deepcopy(dict_rawdata)
+    
+    if label == 'mon':
+        shape_yr = asarray(times).shape[0]// 12
         
-        dict_yr[dict_names[a]+'_yr'] =  layover_yr[a,:,:,:]
-        print(dict_names[a], " annually data done")
+        for v in range(len(variable_nas)):
+            annually_array = zeros((shape_yr, asarray(dict_annually_mean[variable_nas[v]]).shape[1], asarray(dict_annually_mean[variable_nas[v]]).shape[2]))
+            
+            # Is the first month of data be 'January'? 
+            if times[0, 1]== 1.0:  # start at January
+                for i in range(shape_yr):
+                    annually_array[i,:,:] = nanmean(dict_annually_mean[variable_nas[v]][i*12:(i+1)*12, :,:], axis = 0)
+            elif any(times[0,1]== x for x in [2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.]):  # not start at Jan
+                for i in range(shape_yr):
+                    annually_array[i,:,:] = nanmean(dict_annually_mean[variable_nas[v]][i*12+(13-int(times[0,1])):(i+1)*12+(13-int(times[0,1])),:,:], axis = 0)
+            else:
+                print('wrong month value.')
+
+            dict_annually_mean[variable_nas[v]] = annually_array
+
+    
+    return dict_annually_mean
 
 
-    return dict_yr
+
+def area_mean(data, lats, lons):
+    # This function is for processing the latitudinal weighting of 3-D array.
+    '''..3D (time, lat, lon) would reduce to 1D (time)..
+    '''
+    Time_series = zeros(data.shape[0])
+    for i in arange(data.shape[0]):
+        
+        S_time_step = data[i,:,:]
+        # remove the NaN value within the 2-D array and squeeze to 1-D (indexing):
+        ind1 = isnan(S_time_step)==False
+        # weighted by cosine(lat):
+        xlon, ylat = meshgrid(lons, lats)
+
+        weighted_metrix1 = cos(deg2rad(ylat))  # lat matrix
+        toc1 = sum(weighted_metrix1[ind1])   # total of cos(lat matrix) for the defined region of lat X lon
+
+        S_weighted = S_time_step[ind1] * weighted_metrix1[ind1] / toc1
+        
+        Time_series[i] = sum(S_weighted)
+
+    return Time_series
+
+
+
+def latitude_mean(X, lats, lons, lat_range=[-85., -40.]):
+    """
+    Calculate the area(latitudinal)-mean of a 3-d metrics.
+    """
+    #### X  in shape: time (models), lat, lon
+    
+    S = zeros(X.shape[0])
+    for i in arange(X.shape[0]):
+        
+        X_time_step = X[i,:,:]
+        xx = nanmean(X_time_step, axis=(1)) ## now a vector in latitude- no weights in time or longitude.
+        ind1 = (lats<max(lat_range)) & (lats>min(lat_range))
+        # Remove the NaN value in 1-D vector
+        ind_truevector = isnan(xx)==False
+        # Combined indexes which both satisfy the Latitude range & are not NaN
+        ind2 = logical_and(ind1, ind_truevector)
+        # area weighting:
+        latrad = cos(lats*np.pi / 180.)
+        xx_weight_mean = sum(xx[ind2]*latrad[ind2]) / sum(latrad[ind2])
+        
+        S[i] = xx_weight_mean
+    return S
 
 
 
@@ -210,6 +303,7 @@ def rdlrm_1_training(X_dict, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS
     return predict_dict, ind_true, ind_false, coef_array, shape_fla_training
 
 
+
 def rdlrm_1_predict(X_dict, coef_array, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 1):
     
     # 'predict_dict' is a dictionary to store the 'predict_label_LWP' and 'predict_value_LWP' (for CCF1, 2, 3, 4,.. and the intercept);
@@ -272,6 +366,7 @@ def rdlrm_1_predict(X_dict, coef_array, predictant = 'LWP', predictor = ['SST', 
     return predict_dict, ind_true, ind_false, shape_fla_testing
 
 
+
 def Test_performance_1(A, B, ind_True, ind_False = None):
     from sklearn.metrics import mean_squared_error, r2_score
     
@@ -284,7 +379,6 @@ def Test_performance_1(A, B, ind_True, ind_False = None):
     stats_dict = {'shape1': stats_shape1}
 
     return stats_dict
-
 
 
 
@@ -454,6 +548,7 @@ def rdlrm_2_predict(X_dict, coef_array, cut_off1, predictant = 'LWP', predictor 
     return predict_dict, ind6, ind7, shape_fla_testing
 
 
+
 def Test_performance_2(A, B, ind6, ind7):
     from sklearn.metrics import mean_squared_error, r2_score
     
@@ -486,7 +581,6 @@ def Test_performance_2(A, B, ind6, ind7):
     stats_dict = {'shape1': stats_shape1, 'shape2': stats_shape6, 'shape3': stats_shape7}
 
     return stats_dict
-
 
 
 
@@ -773,6 +867,7 @@ def rdlrm_4_predict(X_dict, coef_array, cut_off1, cut_off2, predictant = 'LWP', 
     return predict_dict, ind7, ind8, ind9, ind10, shape_fla_testing
 
 
+
 def Test_performance_4(A, B, ind7, ind8, ind9, ind10):
     
     from sklearn.metrics import mean_squared_error, r2_score
@@ -815,7 +910,6 @@ def Test_performance_4(A, B, ind7, ind8, ind9, ind10):
     stats_dict = {'shape1': stats_shape1, 'shape7': stats_shape7, 'shape8': stats_shape8, 'shape9': stats_shape9, 'shape10': stats_shape10}
 
     return stats_dict
-
 
 
 
@@ -889,6 +983,7 @@ def rdlrm_4_predict_individual(X_dict, coef_array, cut_off1, cut_off2 , CCFs = 4
     
 
     return predict_dict
+
 
 
 def rdlrm_1_training_raw(X_dict, lats, lons, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 1, Filter_LandIce = False):
@@ -1014,11 +1109,11 @@ def stats_metrics_Visualization(modn = 'IPSLCM6ALR'):
     
     # plt.xlabel('SUB at 500mb, '+ r'$Pa s^{-1}$', fontsize= 15)
     # plt.ylabel('SST, ' + 'K', fontsize= 15)
-    plt.suptitle( modn+ " Bias Metrics for USING piControl data Predict abr4xCO2 LWP", fontsize =18)
+    plt.suptitle( modn+ " Bias Metrics for USING piControl data Predict abr4xCO2 LWP", fontsize = 18)
 
-    # plt.legend(loc='upper right',  fontsize= 12)
+    # plt.legend(loc='upper right',  fontsize = 12)
 
     # plt.savefig(WD_plot+'model_bias_' + modn)
     
+    return None
     
-    return None 
