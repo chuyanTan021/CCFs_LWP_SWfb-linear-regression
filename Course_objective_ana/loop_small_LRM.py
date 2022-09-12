@@ -37,8 +37,9 @@ from useful_func_cy import *
 def main():
     # cmip6 model list
     # deck_nas = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1']
-    # cmip5 model list
-    deck_nas = ['BNUESM', 'FGOALSg2', 'GISSE2H', 'GISSE2R']  # 'CCSM4', 'CNRMCM5', 'CSIRO_Mk360', 'CanESM2', 'FGOALSs2', 'GFDLCM3', 'IPSLCM5ALR', 'MIROC5', 'MPIESMMR', 'NorESM1M'
+    
+    deck_nas = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1', 'BNUESM', 'CCSM4', 'CNRMCM5', 'CSIRO_Mk360', 'CanESM2', 'FGOALSg2', 'FGOALSs2', 'GFDLCM3', 'GISSE2H', 'GISSE2R', 'IPSLCM5ALR', 'MIROC5', 'MPIESMMR', 'NorESM1M']
+    
     Number_of_models = int(sys.argv[1])
     print("Number of models : ", Number_of_models)
     h = loop_LRM_simple(modn = deck_nas[Number_of_models], type_analysis= 'forecasting')
@@ -152,11 +153,11 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
                 'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
     NorESM1M = {'modn': 'NorESM1-M', 'consort': 'NCC', 'cmip': 'cmip5',
                 'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
-    # deck2 = [BCCESM1, CanESM5, CESM2, CESM2FV2, CESM2WACCM, CNRMESM21, GISSE21G, GISSE21H, IPSLCM6ALR, MRIESM20, MIROC6, SAM0, E3SM10, FGOALSg3, GFDLCM4, CAMSCSM1, INM_CM48, MPIESM12LR, AWICM11MR, BCCCSMCM2MR, CMCCCM2SR5, CESM2WACCMFV2, CNRMCM61, CNRMCM61HR, ECEarth3, ECEarth3Veg, GISSE22G, MIROCES2L, NESM3, NorESM2MM, TaiESM1]   #..current # 18 + 13
-    deck2 = [BNUESM, CCSM4, CNRMCM5, CSIRO_Mk360, CanESM2, FGOALSg2, FGOALSs2, GFDLCM3, GISSE2H, GISSE2R, IPSLCM5ALR, MIROC5, MPIESMMR, NorESM1M]   # current # 14
+    
+    deck2 = [BCCESM1, CanESM5, CESM2, CESM2FV2, CESM2WACCM, CNRMESM21, GISSE21G, GISSE21H, IPSLCM6ALR, MRIESM20, MIROC6, SAM0, E3SM10, FGOALSg3, GFDLCM4, CAMSCSM1, INM_CM48, MPIESM12LR, AWICM11MR, BCCCSMCM2MR, CMCCCM2SR5, CESM2WACCMFV2, CNRMCM61, CNRMCM61HR, ECEarth3, ECEarth3Veg, GISSE22G, MIROCES2L, NESM3, NorESM2MM, TaiESM1, BNUESM, CCSM4, CNRMCM5, CSIRO_Mk360, CanESM2, FGOALSg2, FGOALSs2, GFDLCM3, GISSE2H, GISSE2R, IPSLCM5ALR, MIROC5, MPIESMMR, NorESM1M]   # current # 31 (no.19) + 14 = 45
 
-    # deck_nas2 = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1']   #..current # 18 + 13
-    deck_nas2 = ['BNUESM', 'CCSM4', 'CNRMCM5', 'CSIRO_Mk360', 'CanESM2', 'FGOALSg2', 'FGOALSs2', 'GFDLCM3', 'GISSE2H', 'GISSE2R', 'IPSLCM5ALR', 'MIROC5', 'MPIESMMR', 'NorESM1M']   # current # 14
+    
+    deck_nas2 = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM21', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1', 'BNUESM', 'CCSM4', 'CNRMCM5', 'CSIRO_Mk360', 'CanESM2', 'FGOALSg2', 'FGOALSs2', 'GFDLCM3', 'GISSE2H', 'GISSE2R', 'IPSLCM5ALR', 'MIROC5', 'MPIESMMR', 'NorESM1M']  # current # 31 (np.19) + 14 = 45
 
     
     # get cmip6 data:
@@ -211,14 +212,16 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     LWP_abr  = array(inputVar_abr['clwvi']) - array(inputVar_abr['clivi'])   #..units in kg m^-2
 
     gmt_abr  = array(inputVar_abr['tas'])
-
     SST_abr  = array(inputVar_abr['sfc_T'])
 
-    Precip_abr =  array(inputVar_abr['P']) * (24.*60.*60.)   #..Precipitation. Convert the units from kg m^-2 s^-1 -> mm*day^-1
-    Eva_abr    =  array(inputVar_abr['E']) * (24.*60.*60.)   #..evaporation, mm day^-1
-
-    MC_abr  = Precip_abr - Eva_abr   #..Moisture Convergence calculated from abrupt4xCO2's P - E, Units in mm day^-1
-
+    Precip_abr = array(inputVar_abr['P']) * (24.*60.*60.)   #.. Precipitation. Convert the units from kg m^-2 s^-1 -> mm*day^-1
+    
+    lh_vaporization_abr = (2.501 - (2.361 * 10**-3) * (SST_abr - 273.15)) * 1e6  # the latent heat of vaporization at the surface Temperature
+    # Eva_abr2 = array(inputVar_abr['E']) * (24. * 60 * 60)
+    Eva_abr1 = array(inputVar_abr['E']) / lh_vaporization_abr * (24. * 60 * 60)  #.. Evaporation, mm day^-1
+    
+    MC_abr = Precip_abr - Eva_abr1   #..Moisture Convergence calculated from abrupt4xCO2's P - E, Units in mm day^-1
+    
     Twp_abr  = array(inputVar_abr['clwvi'])
     Iwp_abr  = array(inputVar_abr['clivi'])
     
@@ -228,17 +231,19 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     print('Abr simple global-mean-gmt(K): ', nanmean(gmt_abr))
 
     #..pi-Control Variables: LWP, tas(gmt), SST, p-e, LTS, subsidence
-    LWP  = array(inputVar_pi['clwvi']) - array(inputVar_pi['clivi'])   #..units in kg m^-2
+    LWP  = array(inputVar_pi['clwvi']) - array(inputVar_pi['clivi'])  #..units in kg m^-2
 
     gmt  = array(inputVar_pi['tas'])
-
     SST  = array(inputVar_pi['sfc_T'])
 
-    Precip =  array(inputVar_pi['P'])* (24.*60.*60.)    #..Precipitation. Convert the units from kg m^-2 s^-1 -> mm*day^-1
-    Eva    =  array(inputVar_pi['E']) * (24.*60.*60.)   #..evaporation, mm day^-1
-
-    MC  = Precip - Eva   #..Moisture Convergence calculated from pi-Control's P - E, Units in mm day^-1
-
+    Precip = array(inputVar_pi['P'])* (24.*60.*60.)    #..Precipitation. Convert the units from kg m^-2 s^-1 -> mm*day^-1
+    
+    lh_vaporization = (2.501 - (2.361 * 10**-3) * (SST - 273.15)) * 1e6  # the latent heat of vaporization at the surface Temperature
+    Eva1 = array(inputVar_pi['E']) / lh_vaporization * (24. * 60 * 60)
+    # Eva2 = array(inputVar_pi['E']) * (24.*60.*60.)   #..evaporation, mm day^-1
+    
+    MC = Precip - Eva1   #..Moisture Convergence calculated from pi-Control's P - E, Units in mm day^-1
+    
     Twp  = array(inputVar_pi['clwvi'])
     Iwp  = array(inputVar_pi['clivi'])
 
@@ -272,7 +277,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     LTS_e  = ma.masked_where(theta_700 >= 500, LTS_m)
 
 
-    #..Meteological Subsidence  at 500 hPa, units in Pa s^-1:
+    #..Meteological Subsidence at 500 hPa, units in Pa s^-1:
     Subsidence =  array(inputVar_pi['sub'])
 
 
@@ -335,7 +340,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
 
     # Calculate 5*5 bin array for variables (LWP, CCFs) in Southern Ocean Region:
 
-    #..set are-mean range and define function
+    #..set area-mean range and define function
     x_range  = arange(-180., 180., 5.) #..logitude sequences edge: number: 72
     s_range  = arange(-90., 90, 5.)+ 2.5 #..global-region latitude edge: (36)
     y_range  = arange(-85, -40., 5.) +2.5 #..southern-ocaen latitude edge: 9
@@ -436,7 +441,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
 
     
     #..Use area_mean method, 'np.repeat' and 'np.tile' to reproduce gmt area-mean Array as the same shape as other flattened variables
-    GMT_pi_mon  = area_mean(dict1_mon_bin_PI['gmt_mon_bin'],  s_range,  x_range)   #..ALL in shape : shape_yr_abr(single dimension)
+    GMT_pi_mon  = area_mean(dict1_mon_bin_PI['gmt_mon_bin'], s_range,  x_range)   #..ALL in shape : shape_yr_abr(single dimension)
     ## dict2_predi_fla_PI['gmt']  = GMT_pi.repeat(730)   # something wrong when calc dX_dTg(dCCFS_dgmt)
     GMT_abr_mon  = area_mean(dict1_mon_bin_abr['gmt_mon_bin'], s_range, x_range)   #..ALL in shape : shape_yr_abr(single dimension)
     ## dict2_predi_fla_abr['gmt'] = GMT_abr.repeat(730)
@@ -444,7 +449,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     dict2_predi_fla_PI['gmt'] = dict1_mon_bin_PI['gmt_mon_bin'][:,1:11,:].flatten()
     dict2_predi_fla_abr['gmt'] = dict1_mon_bin_abr['gmt_mon_bin'][:,1:11,:].flatten()
 
-    #  shape of flattened array:
+    # shape of flattened array:
     shape_fla_PI = dict2_predi_fla_PI['LWP'].shape
     shape_fla_abr = dict2_predi_fla_abr['LWP'].shape
 
@@ -464,7 +469,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     print("slice SST bound:  ", y_gcm)
 
 
-    # define cut-off
+    # define cut-off:
 
     TR_sst =  full(len(y_gcm)-1, NaN)
     TR_sub =  full(len(x_gcm) -1, NaN)
@@ -493,7 +498,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     # plug the cut-off into LRM tring function:
     for i in range(len(y_gcm)-1):
         for j in range(len(x_gcm)-1):
-            s1[i,j], s2[i,j], s3[i,j], s4[i,j], s5[i,j], cut_off1[i,j], cut_off2[i,j], coef_a, coef_b, coef_c, coef_d = train_LRM_4(TR_sst[i], TR_sub[j], dict2_predi_fla_PI, dict2_predi_fla_abr,  shape_fla_PI, shape_fla_abr)
+            s1[i,j], s2[i,j], s3[i,j], s4[i,j], s5[i,j], cut_off1[i,j], cut_off2[i,j], coef_a, coef_b, coef_c, coef_d = train_LRM_4(TR_sst[i], TR_sub[j], dict2_predi_fla_PI, dict2_predi_fla_abr, shape_fla_PI, shape_fla_abr)
     
             print('number:', i+j+ 2)
         
@@ -517,7 +522,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     # Storage data into .npz file for each GCMs
     WD = '/glade/scratch/chuyan/CMIP_output/'
     
-    savez(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y_July14th', bound_y = y_gcm,bound_x = x_gcm, stats_1 = s1, stats_2 = s2, stats_3 = s3, stats_4 = s4, stats_5 = s5, cut_off1=cut_off1, cut_off2=cut_off2, TR_minabias_SST=TR_minabias_SST, TR_minabias_SUB=TR_minabias_SUB, TR_maxR2_SST=TR_maxR2_SST, TR_maxR2_SUB=TR_maxR2_SUB,  coef_a = coefa, coef_b = coefb, coef_c = coefc, coefd = coefd)
+    savez(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y_Aug30th', bound_y = y_gcm,bound_x = x_gcm, stats_1 = s1, stats_2 = s2, stats_3 = s3, stats_4 = s4, stats_5 = s5, cut_off1=cut_off1, cut_off2=cut_off2, TR_minabias_SST=TR_minabias_SST, TR_minabias_SUB=TR_minabias_SUB, TR_maxR2_SST=TR_maxR2_SST, TR_maxR2_SUB=TR_maxR2_SUB,  coef_a = coefa, coef_b = coefb, coef_c = coefc, coefd = coefd)
     return None
 
 
@@ -585,7 +590,7 @@ def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_train
 
 
     if (len(ind7)!=0) & (len(ind8)!=0) & (len(ind9)!=0) & (len(ind10)!=0):
-        regr7=linear_model.LinearRegression()
+        regr7 = linear_model.LinearRegression()
         result7 = regr7.fit(XX_7.T, training_data['LWP'][ind7])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'up'
         aeffi  = result7.coef_
         aint   = result7.intercept_
@@ -595,7 +600,7 @@ def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_train
         aeffi_iwp =  result7_IWP.coef_
         aint_iwp  =  result7_IWP.intercept_
 
-        regr8=linear_model.LinearRegression()
+        regr8 = linear_model.LinearRegression()
         result8 = regr8.fit(XX_8.T, training_data['LWP'][ind8])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
         beffi  = result8.coef_
         bint   = result8.intercept_
@@ -605,20 +610,20 @@ def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_train
         beffi_iwp =  result8_IWP.coef_
         bint_iwp  =  result8_IWP.intercept_
 
-        regr9=linear_model.LinearRegression()
+        regr9 = linear_model.LinearRegression()
         result9 = regr9.fit(XX_9.T, training_data['LWP'][ind9])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'down'
-        ceffi  = result9.coef_
-        cint   = result9.intercept_
+        ceffi = result9.coef_
+        cint = result9.intercept_
 
         regr9_iwp = linear_model.LinearRegression()
         result9_IWP =regr9_iwp.fit(XX_9.T, training_data['IWP'][ind9])
         ceffi_iwp =  result9_IWP.coef_
         cint_iwp  =  result9_IWP.intercept_
 
-        regr10=linear_model.LinearRegression()
+        regr10 = linear_model.LinearRegression()
         result10 = regr10.fit(XX_10.T, training_data['LWP'][ind10])   #..regression for LWP WITH LTS and skin-T >= TR_sst & 'down'
-        deffi  = result10.coef_
-        dint   = result10.intercept_
+        deffi = result10.coef_
+        dint = result10.intercept_
 
         regr10_iwp = linear_model.LinearRegression()
         result10_IWP =regr10_iwp.fit(XX_10.T, training_data['IWP'][ind10])
@@ -632,21 +637,21 @@ def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_train
         aeffi_iwp =  full(4, 0.0)
         aint_iwp = 0.0
 
-        regr8=linear_model.LinearRegression()
+        regr8 = linear_model.LinearRegression()
         result8 = regr8.fit(XX_8.T, training_data['LWP'][ind8])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
-        beffi  = result8.coef_
-        bint   = result8.intercept_
+        beffi = result8.coef_
+        bint = result8.intercept_
         regr8_iwp = linear_model.LinearRegression()
         result8_IWP =regr8_iwp.fit(XX_8.T, training_data['IWP'][ind8])
-        beffi_iwp =  result8_IWP.coef_
-        bint_iwp  =  result8_IWP.intercept_
+        beffi_iwp = result8_IWP.coef_
+        bint_iwp  = result8_IWP.intercept_
 
-        ceffi  = full(4, 0.0)
-        cint   = 0.0
-        ceffi_iwp =  full(4, 0.0)
+        ceffi = full(4, 0.0)
+        cint = 0.0
+        ceffi_iwp = full(4, 0.0)
         cint_iwp = 0.0
 
-        regr10=linear_model.LinearRegression()
+        regr10 = linear_model.LinearRegression()
         result10 = regr10.fit(XX_10.T, training_data['LWP'][ind10])   #..regression for LWP WITH LTS and skin-T >= TR_sst& 'down'
         deffi  = result10.coef_
         dint   = result10.intercept_
@@ -661,88 +666,88 @@ def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_train
         aeffi_iwp =  full(4, 0.0)
         aint_iwp = 0.0
 
-        regr8=linear_model.LinearRegression()
+        regr8 = linear_model.LinearRegression()
         result8 = regr8.fit(XX_8.T, training_data['LWP'][ind8])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
-        beffi  = result8.coef_
-        bint   = result8.intercept_
+        beffi = result8.coef_
+        bint = result8.intercept_
         regr8_iwp = linear_model.LinearRegression()
         result8_IWP =regr8_iwp.fit(XX_8.T, training_data['IWP'][ind8])
-        beffi_iwp =  result8_IWP.coef_
-        bint_iwp  =  result8_IWP.intercept_
+        beffi_iwp = result8_IWP.coef_
+        bint_iwp = result8_IWP.intercept_
 
-        regr9=linear_model.LinearRegression()
+        regr9 = linear_model.LinearRegression()
         result9 = regr9.fit(XX_9.T, training_data['LWP'][ind9])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'down'
-        ceffi  = result9.coef_
-        cint   = result9.intercept_
+        ceffi = result9.coef_
+        cint = result9.intercept_
         regr9_iwp = linear_model.LinearRegression()
         result9_IWP =regr9_iwp.fit(XX_9.T, training_data['IWP'][ind9])
-        ceffi_iwp =  result9_IWP.coef_
-        cint_iwp  =  result9_IWP.intercept_
+        ceffi_iwp = result9_IWP.coef_
+        cint_iwp = result9_IWP.intercept_
 
-        regr10=linear_model.LinearRegression()
+        regr10 = linear_model.LinearRegression()
         result10 = regr10.fit(XX_10.T, training_data['LWP'][ind10])   #..regression for LWP WITH LTS and skin-T >= TR_sst& 'down'
-        deffi  = result10.coef_
-        dint   = result10.intercept_
+        deffi = result10.coef_
+        dint = result10.intercept_
         regr10_iwp = linear_model.LinearRegression()
         result10_IWP =regr10_iwp.fit(XX_10.T, training_data['IWP'][ind10])
-        deffi_iwp =  result10_IWP.coef_
-        dint_iwp  =  result10_IWP.intercept_
+        deffi_iwp = result10_IWP.coef_
+        dint_iwp  = result10_IWP.intercept_
         
     elif len(ind9)==0:
-        regr7=linear_model.LinearRegression()
+        regr7 = linear_model.LinearRegression()
         result7 = regr7.fit(XX_7.T, training_data['LWP'][ind7])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'up'
-        aeffi  = result7.coef_
-        aint   = result7.intercept_
+        aeffi = result7.coef_
+        aint = result7.intercept_
         regr7_iwp = linear_model.LinearRegression()
         result7_IWP =regr7_iwp.fit(XX_7.T, training_data['IWP'][ind7])
-        aeffi_iwp =  result7_IWP.coef_
-        aint_iwp  =  result7_IWP.intercept_
+        aeffi_iwp = result7_IWP.coef_
+        aint_iwp  = result7_IWP.intercept_
 
         
-        regr8=linear_model.LinearRegression()
+        regr8 = linear_model.LinearRegression()
         result8 = regr8.fit(XX_8.T, training_data['LWP'][ind8])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
-        beffi  = result8.coef_
-        bint   = result8.intercept_
+        beffi = result8.coef_
+        bint = result8.intercept_
         regr8_iwp = linear_model.LinearRegression()
         result8_IWP =regr8_iwp.fit(XX_8.T, training_data['IWP'][ind8])
-        beffi_iwp =  result8_IWP.coef_
-        bint_iwp  =  result8_IWP.intercept_
+        beffi_iwp = result8_IWP.coef_
+        bint_iwp = result8_IWP.intercept_
 
-        ceffi  = full(4, 0.0)
-        cint   = 0.0
+        ceffi = full(4, 0.0)
+        cint = 0.0
         ceffi_iwp =  full(4, 0.0)
         cint_iwp = 0.0
 
-        regr10=linear_model.LinearRegression()
+        regr10 = linear_model.LinearRegression()
         result10 = regr10.fit(XX_10.T, training_data['LWP'][ind10])   #..regression for LWP WITH LTS and skin-T >= TR_sst& 'down'
-        deffi  = result10.coef_
-        dint   = result10.intercept_
+        deffi = result10.coef_
+        dint = result10.intercept_
         regr10_iwp = linear_model.LinearRegression()
-        result10_IWP =regr10_iwp.fit(XX_10.T, training_data['IWP'][ind10])
-        deffi_iwp =  result10_IWP.coef_
-        dint_iwp  =  result10_IWP.intercept_
+        result10_IWP = regr10_iwp.fit(XX_10.T, training_data['IWP'][ind10])
+        deffi_iwp = result10_IWP.coef_
+        dint_iwp = result10_IWP.intercept_
         
     else:
-        aeffi = 0.0
-        beffi = 0.0
-        ceffi = 0.0
-        deffi = 0.0
-        aint = aeffi
-        bint = beffi
-        cint = ceffi
-        dint = deffi
+        aeffi = full(4, 0.0)
+        beffi = full(4, 0.0)
+        ceffi = full(4, 0.0)
+        deffi = full(4, 0.0)
+        aint = 0.0
+        bint = 0.0
+        cint = 0.0
+        dint = 0.0
         
         print('you input a non-wise value for cut-off(TR_sst, TR_sub at 500 mb')
         print('please try another cut-offs input...')
-
+    
     
     
     #..save the coefficients:
-    coef_a = asarray(aeffi, aint)
-    coef_b = asarray(beffi, bint)
-    coef_c = asarray(ceffi, cint)
-    coef_d = asarray(deffi, dint)
-    
+    coef_a = [np.array(aeffi), aint]
+    coef_b = [np.array(beffi), bint]
+    coef_c = [np.array(ceffi), cint]
+    coef_d = [np.array(deffi), dint]
+
     print('aeffi(up, cold): ', aeffi,  'aint: ', aint)
     print('beffi(up, warm): ', beffi,  'bint: ', bint)
     print('ceffi(down, cold): ', ceffi,  'cint: ', cint)
@@ -882,9 +887,9 @@ def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_train
     print(" R_2_shape1 for Predicted LWP: ", R_2_shape1_abr)
     print(" Pearsonr correlation coefficient = ", r_shape1_abr, "p_value = ", p_shape1_abr)
     
-    # metrics list: stats1: abs bias\ stats2: RMSE\ stats3: R^2,coefficient of determination\ stat4: r,correlation coefficient\ stat5: R^2 of training set
+    # metrics list: stats1: abs bias\ stats2: RMSE\ stats3: R^2,coefficient of determination\ stat4: r,correlation coefficient\ stat5: R^2 of training set 
     return abs_BIAS_abr, sqrt(MSE_shape1_abr), R_2_shape1_abr, r_shape1_abr, R_2_shape1, cut_off1, cut_off2, coef_a, coef_b, coef_c, coef_d
-
+    
 
 
     
@@ -893,23 +898,23 @@ def stats_matrics_Visualization(modn = 'IPSLCM6ALR'):
     
     WD = '/glade/scratch/chuyan/CMIP6_output/'
     
-    folder =  glob.glob(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y_July14th'+'.npz')
+    folder =  glob.glob(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y_Aug30th'+'.npz')
     print(folder)
     
-    output_ARRAY  =  load(folder[0], allow_pickle=True)  # str(TR_sst)
-    x_gcm      =   array(output_ARRAY['bound_x'])
-    y_gcm      =   array(output_ARRAY['bound_y'])
+    output_ARRAY  =  np.load(folder[0], allow_pickle=True)  # str(TR_sst)
+    x_gcm      =   np.array(output_ARRAY['bound_x'])
+    y_gcm      =   np.array(output_ARRAY['bound_y'])
     output_stat1   = output_ARRAY['stats_2']
     output_stat2   = output_ARRAY['stats_5']
 
     fig3, ax3  = plt.subplots(1, 2, figsize = (15.2, 10.4))  #(16.2, 9.3))
 
     #..defined a proper LWP ticks within its range
-    p10_valuespace1 = nanpercentile(output_stat1, 25.) - nanpercentile(output_stat1, 15.)
-    levels_value1  = linspace(nanpercentile(output_stat1, 1.5)-p10_valuespace1, nanpercentile(output_stat1, 99.5)+p10_valuespace1, 164)# arange(0.368, 0.534, 0.002) 
+    p10_valuespace1 = np.nanpercentile(output_stat1, 25.) - np.nanpercentile(output_stat1, 15.)
+    levels_value1 = np.linspace(np.nanpercentile(output_stat1, 1.5)-p10_valuespace1, np.nanpercentile(output_stat1, 99.5) + p10_valuespace1, 164)  # arange(0.368, 0.534, 0.002) 
     # print(levels_value1)
-    p10_valuespace2 = nanpercentile(output_stat2, 25.) - nanpercentile(output_stat2, 15.)
-    levels_value2  = linspace(nanpercentile(output_stat2, 1.5)-p10_valuespace2, nanpercentile(output_stat2, 99.5)+p10_valuespace2, 164)
+    p10_valuespace2 = np.nanpercentile(output_stat2, 25.) - np.nanpercentile(output_stat2, 15.)
+    levels_value2 = np.linspace(np.nanpercentile(output_stat2, 1.5)-p10_valuespace2, np.nanpercentile(output_stat2, 99.5) + p10_valuespace2, 164)
     # print(levels_value2)
     
     #..print(linspace(nanpercentile(output_stat, 1.5), nanpercentile(output_stat, 99.5), 164))
@@ -919,12 +924,12 @@ def stats_matrics_Visualization(modn = 'IPSLCM6ALR'):
     norm1 = BoundaryNorm(levels_value1, ncolors= cmap.N, extend='both')
     norm2 = BoundaryNorm(levels_value2, ncolors= cmap_2.N, extend='both')
 
-    im1  = ax3[0].pcolormesh(x_gcm, y_gcm, array(output_stat1), cmap=cmap, norm= norm1)   #..anmean_LWP_bin_Tskew_wvp..LWP_bin_Tskin_sub
+    im1  = ax3[0].pcolormesh(x_gcm, y_gcm, np.asarray(output_stat1), cmap=cmap, norm= norm1)   #..anmean_LWP_bin_Tskew_wvp..LWP_bin_Tskin_sub
     ax3[0].set_xlabel('SUB at 500mb, '+ r'$Pa s^{-1}$', fontsize= 15)
     ax3[0].set_ylabel('SST, ' + 'K', fontsize= 15)
-    ax3[0].set_title(r"$(a)\ ABS\_bias:(deltaLWP_{pred} - deltaLWP_{GCM})$", loc='left', fontsize = 11)
+    ax3[0].set_title(r"$(a)\ ABS\_bias:(deltaLWP_{pred} - deltaLWP_{GCM})$", loc= 'left', fontsize = 11)
     
-    im2  = ax3[1].pcolormesh(x_gcm, y_gcm, array(output_stat2), cmap=cmap_2, norm= norm2)
+    im2  = ax3[1].pcolormesh(x_gcm, y_gcm, np.asarray(output_stat2), cmap=cmap_2, norm= norm2)
     ax3[1].set_xlabel('SUB at 500mb, '+ r'$Pa s^{-1}$', fontsize= 15)
     ax3[1].set_ylabel('SST, ' + 'K', fontsize= 15)
     ax3[1].set_title(r"$(b)\ R^{2}(PI\ predict\ with\ PI\ true LWP)$", loc='left', fontsize = 11)
@@ -940,7 +945,7 @@ def stats_matrics_Visualization(modn = 'IPSLCM6ALR'):
 
     # plt.legend(loc='upper right',  fontsize= 12)
 
-    plt.savefig("model_bias_" + modn)
+    plt.savefig(path6 + "Observational_bias.jpg" )
     
     
     return None

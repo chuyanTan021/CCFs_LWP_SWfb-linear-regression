@@ -53,7 +53,7 @@ def read_var_obs_MERRA2(varnm, read_p = False, valid_range1 = [2002, 7, 15], val
             # print(fn)
         elif varnm in ['OMEGA', 'T']:
             fn = glob.glob(folder + '*'+ 'instM_3d_asm_Np.' + '*' + '.nc')
-            print(fn)
+            # print(fn)
 
     # 'read_hs_file' functionality:
     # loading the data files one by one through 'netCDF4' module, but in a random order of times
