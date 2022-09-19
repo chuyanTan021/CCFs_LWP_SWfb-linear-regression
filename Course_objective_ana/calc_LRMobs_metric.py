@@ -33,10 +33,38 @@ from calc_Radiation_LRM_2 import *
 
 
 
-def calc_LRMobs_metrics(test_flag = 'test2'):  # THRESHOLD_sst, THRESHOLD_sub,
+def calc_LRMobs_metrics(valid_range1=[2002, 7, 15], valid_range2=[2016, 12, 31], valid_range3=[1994, 1, 15], valid_range4=[2001, 12, 31], THRESHOLD_sst = 0.0, THRESHOLD_sub = 0.0):
+    # -----------------
+    # 'valid_range1' and 'valid_range2' give the time stamps of starting and ending times of data for training,
+    # 'valid_range3' and 'valid_range4' give the time stamps of starting and ending times of data for predicting.
+    # 'THRESHOLD_sst' is the cut-off of 'Sea surface temperature' for partitioning the 'Hot'/'Cold' LRM regimes;
+    # 'THRESHOLD_sub' is the cut-off of '500 mb Vertical Velocity (Pressure)' for partitioning 'Up'/'Down' regimes.
+    # ..
+    # ------------------
+    # Southern Ocean 5 * 5 degree bin box
+    # Using to do area_mean
+    s_range = arange(-90., 90., 5.) + 2.5  #..global-region latitude edge: (36)
+    x_range = arange(-180., 180., 5.)  #..logitude sequences edge: number: 72
+    y_range = arange(-85, -40., 5.) + 2.5  #..southern-ocaen latitude edge: 9
     
-    # get the variable:
-    inputVar_obs = get_OBSLRM(test = test_flag)
+    
+    # Function #1 loopping through variables space to find the cut-offs of LRM (Multi-Linear Regression Model).
+    dict_training, lats_Array, lons_Array, times_Array_training = Pre_processing(s_range, x_range, y_range, valid_range1 = valid_range1, valid_range2 = valid_range2)
+    # Loop_OBS_LRM(dict_training, s_range, x_range, y_range)
+    
+    
+    # Function #2 training LRM with using no cut-off, then use it to predict another historical period.
+    dict_predict, lats_Array, lons_Array, times_Array_predict = Pre_processing(s_range, x_range, y_range, valid_range1 = valid_range3, valid_range2 = valid_range4)
+    
+    predict_result_1r = fitLRMobs_1(dict_training, dict_predict, s_range, y_range, x_range, lats_Array, lons_Array)
+    
+    return None
+
+
+
+def Pre_processing(s_range, x_range, y_range, valid_range1=[2002, 7, 15], valid_range2=[2016, 12, 31]):
+    # get the variables for training:
+    inputVar_obs = get_OBSLRM(valid_range1=valid_range1, valid_range2=valid_range2)
     # ------------------------ 
     # radiation code
 
@@ -45,7 +73,7 @@ def calc_LRMobs_metrics(test_flag = 'test2'):  # THRESHOLD_sst, THRESHOLD_sub,
     # Data processing
     # --Liquid water path, Unit in kg m^-2
     LWP = inputVar_obs['lwp'] / 1000.
-    # 1-Sigma Liquid water path statistic error, Unit in Kg m^-2
+    # 1-Sigma Liquid water path statistic error, Unit in kg m^-2
     LWP_error = inputVar_obs['lwp_error'] / 1000.
     # the MaskedArray of 'MAC-LWP' dataset
     Maskarray_mac = inputVar_obs['maskarray_mac']
@@ -59,11 +87,11 @@ def calc_LRMobs_metrics(test_flag = 'test2'):  # THRESHOLD_sst, THRESHOLD_sub,
     Precip = inputVar_obs['P'] * (24. * 60 * 60)
     # Eva: Evaporation, Unit in mm day^-1 (here use the latent heat flux from the sfc, unit convert from W m^-2 --> kg m^-2 s^-1 --> mm day^-1)
     lh_vaporization = (2.501 - (2.361 * 10**-3) * (SST - 273.15)) * 1e6  # the latent heat of vaporization at the surface Temperature
-    Eva = inputVar_obs['E'] / lh_vaporization * (24. * 60 * 60)
+    Eva = inputVar_obs['E'] / lh_vaporization *(24. * 60 * 60)
 
     # MC: Moisture Convergence, represent the water vapor abundance, Unit in mm day^-1
     MC = Precip - Eva
-    print(MC)
+    # print(MC)
 
     # LTS: Lower Tropospheric Stability, Unit in K (the same as Potential Temperature):
     k = 0.286
@@ -106,7 +134,6 @@ def calc_LRMobs_metrics(test_flag = 'test2'):  # THRESHOLD_sst, THRESHOLD_sub,
 
     dict1_SO, lat_mac_so, lon_mac_so = region_cropping(dict1_SO, ['LWP', 'LWP_statistic_error', 'Maskarray_mac'], inputVar_obs['lat_mac'], inputVar_obs['lon_mac'], lat_range =[-85., -40.], lon_range = [-180., 180.])
 
-
     # Time-scale average
     # monthly mean (not changed)
     dict2_SO_mon = deepcopy(dict1_SO)
@@ -119,29 +146,30 @@ def calc_LRMobs_metrics(test_flag = 'test2'):  # THRESHOLD_sst, THRESHOLD_sub,
     # monthly data
     test_array_mon = np.ones((dict2_SO_mon['LWP'].shape))
     for i in ['SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre']:
-        
-        test_array_mon = test_array_mon * (dict2_SO_mon[i] *1.)
-    
+        if dict2_SO_mon[i].shape == dict2_SO_mon['LWP'].shape:
+            test_array_mon = test_array_mon * (1. * dict2_SO_mon[i])
+
     shape_ratio_mon = np.asarray(np.nonzero(np.isnan(test_array_mon) == True)).shape[1] / len(test_array_mon.flatten())
 
     Maskarray_all_mon = np.isnan(test_array_mon)  # store the mask positions for monthly MERRA-2, MAC-LWP, CERES data in the SO;
 
     x_array_mon = np.zeros((dict2_SO_mon['SST'].shape))  # used for count the missing points in monthly binned boxes
     x_array_mon[np.isnan(test_array_mon)] = 1.0
-    print(shape_ratio_mon, x_array_mon)
+    # print(shape_ratio_mon, x_array_mon)
 
     # Propagating the .nan into monthly mean data:
     for j in ['SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre']:
-        dict2_SO_mon[j][Maskarray_all_mon] = np.nan
+        if dict2_SO_mon[j].shape == dict2_SO_mon['LWP'].shape:
+            dict2_SO_mon[j][Maskarray_all_mon] = np.nan
 
     # annually data
     test_array_yr = np.ones((dict2_SO_yr['LWP'].shape))
     for i in ['SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre']:
-
-        test_array_yr = test_array_yr * (dict2_SO_yr[i] *1.)
+            if dict2_SO_yr[i].shape == dict2_SO_yr['LWP'].shape:
+                test_array_yr = test_array_yr * (1. * dict2_SO_yr[i])
 
     shape_ratio_yr = np.asarray(np.nonzero(np.isnan(test_array_yr) == True)).shape[1] / len(test_array_yr.flatten())
-    
+    # print(shape_ratio_yr)
     Maskarray_all_yr = np.isnan(test_array_yr)  # store the mask positions for annually mean MERRA-2, MAC-LWP, CERES data in the SO;
 
     x_array_yr = np.zeros((dict2_SO_yr['SST'].shape))  # used for count the missing points in annually mean binned boxes
@@ -149,17 +177,17 @@ def calc_LRMobs_metrics(test_flag = 'test2'):  # THRESHOLD_sst, THRESHOLD_sub,
 
     # Propagating the .nan into annually mean data:
     for j in ['SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre']:
-        dict2_SO_yr[j][Maskarray_all_yr] = np.nan
-
-    print("shape_ratio_mon:", shape_ratio_mon, "shape_ratio_yr:", shape_ratio_yr)
+        if dict2_SO_yr[j].shape == dict2_SO_yr['LWP'].shape:
+            dict2_SO_yr[j][Maskarray_all_yr] = np.nan
 
     # binned (spatial) avergae.
     # Southern Ocean 5 * 5 degree bin box
 
-    #..set area-mean range and define function
+    #..set are-mean range and define function
     s_range = arange(-90., 90., 5.) + 2.5  #..global-region latitude edge: (36)
     x_range = arange(-180., 180.5, 5.)  #..logitude sequences edge: number: 72
     y_range = arange(-85, -40., 5.) + 2.5  #..southern-ocaen latitude edge: 9
+
 
     # binned Monthly variables:
     dict3_SO_mon_bin = {}
@@ -180,21 +208,20 @@ def calc_LRMobs_metrics(test_flag = 'test2'):  # THRESHOLD_sst, THRESHOLD_sub,
     # count the ratio of values that are missing in each bin boxes:
     ratio_array = binned_cySO_count(x_array_mon, inputVar_obs['lat_ceres'], inputVar_obs['lon_ceres'])
 
-    ind_binned_omit = np.where(ratio_array > 0.5, True, False)  # ignoring bin boxes which has the ratio of np.nan points over 0.5.
+    ind_binned_omit = np.where(ratio_array >0.499, True, False)  # ignoring bin boxes which has the ratio of np.nan points over 0.5.
 
     shape_ratio_bin = np.asarray(np.nonzero(ind_binned_omit == True)).shape[1] / len(ind_binned_omit.flatten())
     # print(shape_ratio_bin)   # ratio of bin boxes that should be omited
-    
-    for k in ['SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre']:
-        dict3_SO_mon_bin[k][ind_binned_omit] = np.nan
 
-    print(dict3_SO_mon_bin)
+    for k in ['SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre']:
+        if dict3_SO_mon_bin[k].shape == dict3_SO_mon_bin['LWP'].shape:
+            dict3_SO_mon_bin[k][ind_binned_omit] = np.nan
+
+
+    # print(dict3_SO_mon_bin)
     
-    # Function 1. traning for finding the cut-offs of LRM (Linear Regression Model)
-    Loop_OBS_LRM(dict3_SO_mon_bin, s_range, x_range, y_range)
-    
-    return None
-   
+    return dict3_SO_mon_bin, np.asarray(lat_merra2_so), np.asarray(lon_merra2_so), np.asarray(inputVar_obs['times_merra2'])
+
 
 
 def Loop_OBS_LRM(data_array, s_range, x_range, y_range):
@@ -285,7 +312,7 @@ def Loop_OBS_LRM(data_array, s_range, x_range, y_range):
     # Storage data into .npz file for each GCMs
     WD = '/glade/scratch/chuyan/obs_output/'
     
-    savez(WD + 'OBS' + '__' + 'STAT_pi+abr_'+'22x_31y_Sep9th25X25', bound_y = y_gcm,bound_x = x_gcm, stats_1 = s1, stats_2 = s2, stats_3 = s3, stats_4 = s4, cut_off1 = cut_off1, cut_off2 = cut_off2, TR_minabias_SST=TR_minabias_SST, TR_minabias_SUB=TR_minabias_SUB, TR_maxR2_SST=TR_maxR2_SST, TR_maxR2_SUB=TR_maxR2_SUB,  coef_a = coefa, coef_b = coefb, coef_c = coefc, coefd = coefd)
+    # savez(WD + 'OBS' + '__' + 'STAT_pi+abr_'+'22x_31y_Sep9th25X25', bound_y = y_gcm,bound_x = x_gcm, stats_1 = s1, stats_2 = s2, stats_3 = s3, stats_4 = s4, cut_off1 = cut_off1, cut_off2 = cut_off2, TR_minabias_SST=TR_minabias_SST, TR_minabias_SUB=TR_minabias_SUB, TR_maxR2_SST=TR_maxR2_SST, TR_maxR2_SUB=TR_maxR2_SUB,  coef_a = coefa, coef_b = coefb, coef_c = coefc, coefd = coefd)
 
     return None
 
@@ -480,3 +507,101 @@ def train_LRM_4(cut_off1, cut_off2, training_data, shape_fla_training, shape_fla
     
     
     return abs_BIAS, sqrt(MSE_shape1), r_shape1, R_2_shape1, cut_off1, cut_off2, coef_a, coef_b, coef_c, coef_d
+
+
+'''
+def fitLRMobs_1(dict_training, dict_predict, s_range, y_range, x_range, lats, lons):
+    # training and predicting the historical Observational variation of LWP.
+    # dict_training is the dictionary for storing the training data (CCFs, Cloud) in an pre-processed form;
+    # dict_predict is the dictionaray for storing the predicting data (CCFs, Cloud) as the same pre-processed form of 'dict_training'.
+    # s_range, x_range, y_range are used for doing area_mean.
+    
+    datavar_obs = ['SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre']
+    
+    # shape of given variables
+    shape_training = dict_training['LWP'].shape
+    shape_predict = dict_predict['LWP'].shape
+
+    shape_training_gmt = dict_predict['gmt'].shape
+    shape_predict_gmt = dict_predict['gmt'].shape
+    
+    dict2_predi_fla_training = {}
+    dict2_predi_fla_predict = {}
+    
+    dict2_predi_ano_training = {}  # need a climatological arrays of variables
+    dict2_predi_ano_predict = {}  # need a climatological arrays of variables
+    
+    dict2_predi_nor_training = {}
+    dict2_predi_nor_predict = {}
+    
+    dict2_predi_fla = {}
+    
+    # flatten the variable array for regressing:
+    for d in range(len(datavar_obs)):
+    
+        dict2_predi_fla_training[datavar_obs[d]] = dict_training[datavar_obs[d]].flatten()
+        dict2_predi_fla_predict[datavar_obs[d]] = dict_predict[datavar_obs[d]].flatten()
+        
+        # anomalies in the raw units:
+        # dict2_predi_ano_training[datavar_obs[d]] = dict2_predi_fla_training[datavar_obs[d]] - climatological_Area_mean(t)   # Unfinished
+        # dict2_predi_ano_predict[datavar_obs[d]] = dict2_predi_fla_predict[datavar_obs[d]] - climatological_Area_mean(t)   # Unfinished
+        
+        # normalized stardard deviation in unit of './std':
+        # dict2_predi_nor_training[datavar_obs[d]] = dict2_predi_ano_training[datavar_obs[d]] / nanstd(Area_mean(climatological_period_data(t, y, x)))
+        # dict2_predi_nor_predict[datavar_obs[d]] =  dict2_predi_ano_predict[datavar_obs[d]] / nanstd(Area_mean(climatological_period_data(t, y, x)))
+    
+    
+    # Global-Mean surface air Temperature(tas):
+    # shape of 'GMT' is the length of time (t)
+    dict2_predi_fla_predict['gmt'] = area_mean(dict_predict['gmt'], s_range, x_range)
+    ## dict2_predi_fla_PI['gmt'] = GMT_pi.repeat(730)   # something wrong when calc dX_dTg(dCCFS_dgmt)
+    dict2_predi_fla_training['gmt'] = area_mean(dict_training['gmt'], s_range, x_range)
+    
+    dict2_predi_fla['gmt'] = np.append(dict2_predi_fla_predict['gmt'], dict2_predi_fla_training['gmt'])
+    shape_whole_period = np.asarray(dict2_predi_fla['gmt'].shape[0])
+    dict2_predi_ano_predict['gmt'] = dict_predict['gmt'] - np.nanmean(dict2_predi_fla['gmt'])  # shape in (t, lat, lon)
+    dict2_predi_ano_training['gmt'] = dict_training['gmt'] - np.nanmean(dict2_predi_fla['gmt'])  # shape in (t, lat, lon)
+    
+    dict2_predi_nor_predict['gmt'] = dict2_predi_ano_predict['gmt'] / np.nanstd(dict2_predi_fla['gmt'])
+    dict2_predi_nor_training['gmt'] = dict2_predi_ano_training['gmt'] / np.nanstd(dict2_predi_fla['gmt'])
+    
+    #.. Training Model (1-LRM, single regime)
+    #..
+    
+    training_LRM_result, ind_True, ind_False, coef_array_1r, shape_fla_training = rdlrm_1_training(dict2_predi_fla_training, predictant='LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 1)
+    # 'YB' is the predicted value of LWP in the 'training period':
+    YB = training_LRM_result['value']
+    
+    # Test Performance of LRM
+    stats_dict_training = Test_performance_1(dict2_predi_fla_training['LWP'], YB, ind_True, ind_False)
+    
+    # Save 'YB', and resample the shape into 3-D:
+    C_dict = {}   # as output
+    ## currently using raw value as fit/predict values
+    C_dict['LWP_actual_training'] = dict2_predi_fla_training['LWP'].reshape(shape_training)
+    C_dict['LWP_predi_training'] = np.asarray(YB).reshape(shape_training)
+    C_dict['training_LRM_result'] = training_LRM_result
+    C_dict['coef_dict'] = coef_array_1r
+    C_dict['stats_dict_training'] = stats_dict_training
+    
+    #.. Predict Model (1-LRM, single regime)
+    predict_LRM_result, ind_True_predi, ind_False_predi, shape_fla_predicting = rdlrm_1_predict(dict2_predi_fla_predict, coef_array_1r, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 1)
+    
+    # 'YB_predi' is the predicted value of LWP in the 'predict period':
+    YB_predi = predict_LRM_result['value']
+    
+    # Test Performance of LRM
+    stats_dict_predict = Test_performance_1(dict2_predi_fla_predict['LWP'], YB_predi, ind_True_predi, ind_False_predi)
+    
+    # Save 'YB', and resample the shape into 3-D:
+    ## currently using raw value as fit/predict values
+    C_dict['LWP_actual_predict'] = dict2_predi_fla_predict['LWP'].reshape(shape_predict)
+    C_dict['LWP_predi_predict'] = np.asarray(YB_predi).reshape(shape_predict)
+    C_dict['predict_LRM_result'] = predict_LRM_result
+    
+    C_dict['stats_dict_predict'] = stats_dict_predict
+    
+    
+    return C_dict
+    
+    '''
