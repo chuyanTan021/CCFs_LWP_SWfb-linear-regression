@@ -227,10 +227,12 @@ def latitude_mean(X, lats, lons, lat_range=[-85., -40.]):
         # Combined indexes which both satisfy the Latitude range & are not NaN
         ind2 = logical_and(ind1, ind_truevector)
         # area weighting:
-        latrad = cos(lats*np.pi / 180.)
+        latrad = cos(lats * pi / 180.)
         xx_weight_mean = sum(xx[ind2]*latrad[ind2]) / sum(latrad[ind2])
         
+        
         S[i] = xx_weight_mean
+    
     return S
 
 
@@ -280,7 +282,7 @@ def rdlrm_1_training(X_dict, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS
 
     # Multiple linear regression of the predictant to the predictor(s) :
     regr0 = linear_model.LinearRegression()
-    result0 = regr0.fit(Predictors[:][0:len(predictor), ind_true].T,  X_dict[predictant][ind_true])
+    result0 = regr0.fit(Predictors[:][0:len(predictor), ind_true].T, X_dict[predictant][ind_true])
     #..Save the coef and intp
     aeffi = result0.coef_
     aintp = result0.intercept_
@@ -288,7 +290,7 @@ def rdlrm_1_training(X_dict, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS
     
     # '1' for valid_data indeing; '0' for invalid_data ('nan') points' indexing
     predict_label_LWP[ind_true] = 1
-
+    
     
     # Save coefs and intps
     coef_array = asarray([aeffi, aintp])
@@ -345,17 +347,17 @@ def rdlrm_1_predict(X_dict, coef_array, predictant = 'LWP', predictor = ['SST', 
     predict_value_LWP[ind_false] = nan
 
     # print Total # of regimes
-    Regimes  = [ind_true]
+    Regimes = [ind_true]
     print(' Total # of regime', len(Regimes))
 
     for k in range(len(Regimes)):
         print('current # of regimes', k)
-        ind  = Regimes[k]
+        ind = Regimes[k]
         # labels of regimes
         predict_label_LWP[ind] = k + 1
 
         # predict values
-        predict_value_LWP[ind] = dot(coef_array[0].reshape(1, -1), Predictors[:][0:len(predictor), ind]).flatten() +coef_array[1]  #.. valid data pointt
+        predict_value_LWP[ind] = dot(coef_array[0].reshape(1, -1), Predictors[:][0:len(predictor), ind]).flatten() + coef_array[1]  #.. valid data pointt
     # print("predict_value_LWP ", predict_value_LWP)
     # print("label", predict_label_LWP)  # '1' for valid_data, '2' for invalid_data ('nan') points
 
@@ -372,8 +374,8 @@ def Test_performance_1(A, B, ind_True, ind_False = None):
     
     stats_dict = {}
 
-    MSE_shape1 =  mean_squared_error(A[ind_True].reshape(-1,1), B[ind_True].reshape(-1,1))
-    R_2_shape1  = r2_score(A[ind_True].reshape(-1, 1), B[ind_True].reshape(-1, 1))
+    MSE_shape1 = mean_squared_error(A[ind_True].reshape(-1,1), B[ind_True].reshape(-1,1))
+    R_2_shape1 = r2_score(A[ind_True].reshape(-1, 1), B[ind_True].reshape(-1, 1))
     stats_shape1 = [sqrt(MSE_shape1), R_2_shape1]
 
     stats_dict = {'shape1': stats_shape1}
@@ -540,10 +542,10 @@ def rdlrm_2_predict(X_dict, coef_array, cut_off1, predictant = 'LWP', predictor 
 
     # print("predict_value_LWP ", predict_value_LWP)
     # print("label", predict_label_LWP)  # '1' for 'Cold' regime, '2' for 'Hot' regime
-
+    
+    
     predict_dict['label'] = predict_label_LWP
     predict_dict['value'] = predict_value_LWP
-    
 
     return predict_dict, ind6, ind7, shape_fla_testing
 

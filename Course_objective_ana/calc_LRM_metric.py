@@ -1,6 +1,6 @@
-### get the data we need from read func: 'get_LWPCMIP6', and do some data-processing for building the linear regression CCFs-Clouds model; ###
-### transform data to annual-mean/ monthly-mean bin array or flattened array; ###
-### fitting the linear regression with 2&4 regimes models from pi-Control CCFs' sensitivities to the cloud properties, then do the regressions and save the data. ###
+### This module is to get the model data we need from read func: 'get_LWPCMIP6', and calculate for CCFs and the required Cloud properties; 
+## Crop regions, Transform the data to be annually mean, binned array form;
+## Create the linear regression 2 & 4 regimes models from piControl sensitivity of cloud properties to the CCFs, then do the regressions on 'abrupt4xCO2' and save the data.
 
 import netCDF4
 from numpy import *
@@ -83,19 +83,21 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     
     Precip_abr = array(inputVar_abr['P']) * (24.*60.*60.)   #.. Precipitation. Convert the units from kg m^-2 s^-1 -> mm*day^-1
     print('abr4x average Pr(mm/ day): ', nanmean(Precip_abr))   #.. IPSL/abr2.80..  CNRM ESM2 1/abr 2.69.. CESM2/abr 2.74..
-    Eva_abr = array(inputVar_abr['E']) * (24.*60.*60.)   #.. Evaporation, mm day^-1
-    print('abr4x average Evapor(mm/ day): ', nanmean(Eva_abr))         #.. IPSL/abr2.50..  CNRM ESM2 1/abr 2.43.. CESM2/abr 2.43..
-    MC_abr = Precip_abr - Eva_abr   #..Moisture Convergence calculated from abrupt4xCO2's P - E, Units in mm day^-1
+    lh_vaporization_abr = (2.501 - (2.361 * 10**-3) * (SST_abr - 273.15)) * 1e6  # the latent heat of vaporization at the surface Temperature
+    # Eva_abr2 = array(inputVar_abr['E']) * (24. * 60 * 60)
+    Eva_abr1 = array(inputVar_abr['E']) / lh_vaporization_abr * (24. * 60 * 60)  #.. Evaporation, mm day^-1
+    print('abr4x average Evapor(mm/ day): ', nanmean(Eva_abr1))         #.. IPSL/abr2.50..  CNRM ESM2 1/abr 2.43.. CESM2/abr 2.43..
+    MC_abr = Precip_abr - Eva_abr1   #..Moisture Convergence calculated from abrupt4xCO2's P - E, Units in mm day^-1
     
     Twp_abr = array(inputVar_abr['clwvi'])
     Iwp_abr = array(inputVar_abr['clivi'])
-    
+
     # SW radiation metrics
     Rsdt_abr = array(inputVar_abr['rsdt'])
     Rsut_abr = array(inputVar_abr['rsut'])
     Rsutcs_abr = array(inputVar_abr['rsutcs'])
     print("shape of data in 'abrupt-4xCO2':  ",  Rsut_abr.shape, " mean 'abrupt-4xCO2' upwelling SW radiation flux in the SO (Assume with cloud): ",  nanmean(Rsut_abr[:, latsi1:latsi0 +1,:]))
-    print("shape of data in 'abrupt-4XCO2' exp:", Eva_abr.shape, 'abr4x mean-gmt(K): ', nanmean(gmt_abr))
+    print("shape of data in 'abrupt-4XCO2' exp:", Eva_abr1.shape, 'abr4x mean-gmt(K): ', nanmean(gmt_abr))
 
     # albedo, albedo_clear sky, albedo_cre: all-sky - clear-sky
     Albedo_abr = Rsut_abr / Rsdt_abr
@@ -110,14 +112,16 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     LWP = array(inputVar_pi['clwvi']) - array(inputVar_pi['clivi'])   #..units in kg m^-2
     
     gmt = array(inputVar_pi['tas'])
-    
     SST = array(inputVar_pi['sfc_T'])
     
     Precip = array(inputVar_pi['P'])* (24.*60.*60.)    #..Precipitation. Convert the units from kg m^-2 s^-1 -> mm*day^-1
     print('pi-C average Pr(mm/ day): ', nanmean(Precip))   #.. IPSL/piC 2.43..CNRM/piC 2.40.. CESM2/PIc 2.39
-    Eva = array(inputVar_pi['E']) * (24.*60.*60.)   #..evaporation, mm day^-1
-    print('pi-C average Evapor(mm/day): ', nanmean(Eva))   #.. IPSL/piC  2.21..CNRM/piC 2.20.. CESM2/PIc 2.17..
-    MC = Precip - Eva   #..Moisture Convergence calculated from pi-Control's P - E, Units in mm day^-1
+    lh_vaporization = (2.501 - (2.361 * 10**-3) * (SST - 273.15)) * 1e6  # the latent heat of vaporization at the surface Temperature
+    Eva1 = array(inputVar_pi['E']) / lh_vaporization * (24. * 60 * 60)
+    # Eva2 = array(inputVar_pi['E']) * (24.*60.*60.)   #..evaporation, mm day^-1
+    
+    print('pi-C average Evapor(mm/day): ', nanmean(Eva1))   #.. IPSL/piC  2.21..CNRM/piC 2.20.. CESM2/PIc 2.17..
+    MC = Precip - Eva1   #..Moisture Convergence calculated from pi-Control's P - E, Units in mm day^-1
     
     Twp = array(inputVar_pi['clwvi'])
     Iwp = array(inputVar_pi['clivi'])
@@ -129,7 +133,7 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     Rsutcs_pi = array(inputVar_pi['rsutcs'])
     print("shape of data in 'piControl':  ", Rsut_pi.shape, " mean 'piControl' upwelling SW radiation flux in the SO (Assume with cloud): "
 , nanmean(Rsut_pi[:, latsi1:latsi0 +1,:]))
-    print("shape of data in 'piControl' data: ", Eva.shape, 'pi-C mean-gmt(K): ', nanmean(gmt))
+    print("shape of data in 'piControl' data: ", Eva1.shape, 'pi-C mean-gmt(K): ', nanmean(gmt))
 
     # albedo, albedo_clear sky; albedo(alpha)_cre: all-sky - clear-sky
     Albedo_pi = Rsut_pi / Rsdt_pi
@@ -224,10 +228,10 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
 
     
     # Calculate 5*5 bin array for variables (LWP, CCFs) in Sounthern Ocean Region:
-    #..set are-mean range and define functio
+    #..set are-mean range and define function
     s_range = arange(-90., 90., 5.) + 2.5  #..global-region latitude edge: (36)
     x_range = arange(-180., 180., 5.)  #..logitude sequences edge: number: 72
-    y_range = arange(-85, -40., 5.) +2.5  #..southern-ocaen latitude edge: 9 
+    y_range = arange(-85, -40., 5.) +2.5  #..southern-ocaen latitude edge: 9
     
     # Annually variables in bin box:
 
@@ -290,28 +294,28 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     WD = '/glade/scratch/chuyan/CMIP_output/CMIP_lrm_RESULT/'
     
     
-    rawdata_dict1 = fitLRM3(C_dict = B_dict, TR_sst=TR_sst, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)
+    rawdata_dict1 = fitLRM(C_dict = B_dict, TR_sst=TR_sst, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)
     rawdata_dict3 = p4plot1(s_range=s_range, y_range=y_range, x_range=x_range, shape_yr_pi=shape_yr_pi, shape_yr_abr=shape_yr_abr, rawdata_dict=rawdata_dict1)
 
     rawdata_dict3['TR_sst'] = THRESHOLD_sst
 
-    savez(WD+C_dict['model_data']['modn']+'_r2r1_hotcold(Jan)_(largestpiR2)_July14th_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
+    # savez(WD+C_dict['model_data']['modn']+'_r2r1_hotcold(Jan)_(largestpiR2)_Aug30th_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
     
     #.. best fit save_2lrm command:
-    # savez(WD+C_dict['model_data']['modn']+'_r1r1_(Jan)_(largestpiR2)_July28th_'+'0.0K'+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
+    savez(WD+C_dict['model_data']['modn']+'_r1r1_(Jan)_(largestpiR2)_Aug30th_'+'0.0K'+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
     
     
-    rawdata_dict2 = fitLRM4(C_dict = D_dict, TR_sst=TR_sst, TR_sub=TR_sub, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)
+    rawdata_dict2 = fitLRM2(C_dict = D_dict, TR_sst=TR_sst, TR_sub=TR_sub, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)
     rawdata_dict4 = p4plot1(s_range=s_range, y_range=y_range, x_range=x_range, shape_yr_pi=shape_yr_pi, shape_yr_abr=shape_yr_abr, rawdata_dict=rawdata_dict2)
 
     rawdata_dict4['TR_sst'] = THRESHOLD_sst
     rawdata_dict4['TR_sub'] = THRESHOLD_sub
 
-    savez(WD+C_dict['model_data']['modn']+'_r4r1(Jan)_(largestpiR2)_July14th_'+str(round(TR_sst, 2))+'K_'+'ud'+str(round(TR_sub*100, 2))+'_dats', model_data =  C_dict['model_data'], rawdata_dict = rawdata_dict4)
+    # savez(WD+C_dict['model_data']['modn']+'_r4r1(Jan)_(largestpiR2)_Aug30th_'+str(round(TR_sst, 2))+'K_'+'ud'+str(round(TR_sub*100, 2))+'_dats', model_data =  C_dict['model_data'], rawdata_dict = rawdata_dict4)
     
     #.. best fit save_4lrm command:
-    # savez(WD+C_dict['model_data']['modn']+'_r2r1_updown(Jan)_(largestpiR2)_July28th_'+ '0.0K_ud'+str(round(TR_sub*100, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict4)
-
+    savez(WD+C_dict['model_data']['modn']+'_r2r1_updown(Jan)_(largestpiR2)_Aug30th_'+ '0.0K_ud'+str(round(TR_sub*100, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict4)
     
+
     return None
     

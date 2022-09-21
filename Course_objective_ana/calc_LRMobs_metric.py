@@ -27,10 +27,10 @@ from get_OBSLRMdata import *
 from fitLRM_cy1 import *
 from fitLRM_cy2 import *
 from fitLRM_cy4 import *
+from fitLRMobs import *
 from useful_func_cy import *
 from calc_Radiation_LRM_1 import *
 from calc_Radiation_LRM_2 import *
-
 
 
 def calc_LRMobs_metrics(valid_range1=[2002, 7, 15], valid_range2=[2016, 12, 31], valid_range3=[1994, 1, 15], valid_range4=[2001, 12, 31], THRESHOLD_sst = 0.0, THRESHOLD_sub = 0.0):
@@ -50,13 +50,38 @@ def calc_LRMobs_metrics(valid_range1=[2002, 7, 15], valid_range2=[2016, 12, 31],
     
     # Function #1 loopping through variables space to find the cut-offs of LRM (Multi-Linear Regression Model).
     dict_training, lats_Array, lons_Array, times_Array_training = Pre_processing(s_range, x_range, y_range, valid_range1 = valid_range1, valid_range2 = valid_range2)
-    # Loop_OBS_LRM(dict_training, s_range, x_range, y_range)
+    
+    dict_predict, lats_Array, lons_Array, times_Array_predict = Pre_processing(s_range, x_range, y_range, valid_range1 = valid_range3, valid_range2 = valid_range4)
+    
+    # Loop_OBS_LRM(dict_training, dict_predict, s_range, x_range, y_range)
     
     
     # Function #2 training LRM with using no cut-off, then use it to predict another historical period.
-    dict_predict, lats_Array, lons_Array, times_Array_predict = Pre_processing(s_range, x_range, y_range, valid_range1 = valid_range3, valid_range2 = valid_range4)
-    
     predict_result_1r = fitLRMobs_1(dict_training, dict_predict, s_range, y_range, x_range, lats_Array, lons_Array)
+    
+    # Function #3,4,5 training LRM with cut_off (TR_sst &/or TR_sub)
+    
+    WD = '/glade/scratch/chuyan/obs_output/'
+    folder = glob.glob(WD + 'OBS__' + 'STAT_pi+abr_'+'22x_31y_Sep11th'+ '.npz')
+    print('cut-off folder', folder)
+
+    output_ARRAY = np.load(folder[0], allow_pickle=True)  # str(TR_sst)
+    
+    TR_sst1 = output_ARRAY['TR_minabias_SST']
+    TR_sub1 = output_ARRAY['TR_minabias_SUB']
+    TR_sst2 = output_ARRAY['TR_maxR2_SST']
+    TR_sub2 = output_ARRAY['TR_maxR2_SUB']
+
+    print("TR_min_abs(bias): " , TR_sst1, '  K ', TR_sub1 , ' Pa/s ')
+    print("TR_large_pi_R_2: ", TR_sst2, '  K ', TR_sub2 , ' Pa/s ')
+    
+    
+    predict_result_2r_updown = fitLRMobs_2_updown(dict_training, dict_predict, TR_sst2, TR_sub2, s_range, y_range, x_range, lats_Array, lons_Array)
+    predict_result_2r_hotcold = fitLRMobs_2_hotcold(dict_training, dict_predict, TR_sst2, TR_sub2, s_range, y_range, x_range, lats_Array, lons_Array)
+    
+    
+    
+    predict_result_4r = fitLRMobs_4(dict_training, dict_predict, TR_sst2, TR_sub2, s_range, y_range, x_range, lats_Array, lons_Array)
     
     return None
 
@@ -65,7 +90,7 @@ def calc_LRMobs_metrics(valid_range1=[2002, 7, 15], valid_range2=[2016, 12, 31],
 def Pre_processing(s_range, x_range, y_range, valid_range1=[2002, 7, 15], valid_range2=[2016, 12, 31]):
     # get the variables for training:
     inputVar_obs = get_OBSLRM(valid_range1=valid_range1, valid_range2=valid_range2)
-    # ------------------------ 
+    # ------------------------
     # radiation code
 
     # ------------------------
@@ -224,33 +249,56 @@ def Pre_processing(s_range, x_range, y_range, valid_range1=[2002, 7, 15], valid_
 
 
 
-def Loop_OBS_LRM(data_array, s_range, x_range, y_range):
+def Loop_OBS_LRM(data_array_training, data_array_predict, s_range, x_range, y_range):
     # This function is for looping through the entire(most) variable range of SST & SUB, to determine the statistic metrics for partition a LRM using diffferent cut-off;
     # 'data_array' is the dictionary store all the variables after pre-processing;
     
     # flatten the data array for 'training' lrm's coefficiences
     
-    dict2_predi_fla = {}
+    dict2_predi_fla_training = {}
+    dict2_predi_fla_predict = {}
+    
+    dict2_predi_ano_training = {}  # need a climatological arrays of variables
+    dict2_predi_ano_predict = {}  # need a climatological arrays of variables
+    
+    dict2_predi_nor_training = {} # standardized anomalies of variables
+    dict2_predi_nor_predict = {}
+    
     datavar_nas = ['SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre']
     
     #..Ravel binned array /Standardized data ARRAY :
     for d in range(len(datavar_nas)):
 
-        dict2_predi_fla[datavar_nas[d]] = data_array[datavar_nas[d]].flatten()
+        dict2_predi_fla_training[datavar_nas[d]] = data_array_training[datavar_nas[d]].flatten()
+        dict2_predi_fla_predict[datavar_nas[d]] = data_array_predict[datavar_nas[d]].flatten()
+        
+        # anomalies in the raw units:
+        # dict2_predi_ano_training[datavar_obs[d]] = dict2_predi_fla_training[datavar_obs[d]] - climatological_Area_mean(t)   # Unfinished
+        # dict2_predi_ano_predict[datavar_obs[d]] = dict2_predi_fla_predict[datavar_obs[d]] - climatological_Area_mean(t)   # Unfinished
+        
+        # normalized stardard deviation in unit of './std':
+        # dict2_predi_nor_training[datavar_obs[d]] = dict2_predi_ano_training[datavar_obs[d]] / nanstd(Area_mean(climatological_period_data(t, y, x)))
+        # dict2_predi_nor_predict[datavar_obs[d]] =  dict2_predi_ano_predict[datavar_obs[d]] / nanstd(Area_mean(climatological_period_data(t, y, x)))
+    
     
     #..Use area_mean method, 'np.repeat' and 'np.tile' to reproduce gmt area-mean Array as the same shape as other flattened variables
-    GMT_mon = area_mean(data_array['gmt'], s_range, x_range)
+    GMT_mon_training = area_mean(data_array_training['gmt'], s_range, x_range)
     ## dict2_predi_fla['gmt'] = GMT.repeat(730)  # something wrong when calc dX_dTg(dCCFS_dgmt)
-    shape_fla = dict2_predi_fla['LWP'].shape
-    shape_fla_nonnan = np.asarray(np.nonzero(np.isnan(dict2_predi_fla['LWP']) == False)).shape[1]
-    print("shape_fla:", shape_fla, "shape_fla_nonnan:", shape_fla_nonnan)
+    GMT_mon_predict = area_mean(data_array_predict['gmt'], s_range, x_range)
+    
+    shape_fla_training = dict2_predi_fla_training['LWP'].shape
+    shape_fla_nonnan_training = np.asarray(np.nonzero(np.isnan(dict2_predi_fla_training['LWP']) == False)).shape[1]
+    print("shape_fla_training:", shape_fla_training, "shape_fla_nonnan_training:", shape_fla_nonnan_training)
+    shape_fla_predict = dict2_predi_fla_predict['LWP'].shape
+    shape_fla_nonnan_predict = np.asarray(np.nonzero(np.isnan(dict2_predi_fla_predict['LWP']) == False)).shape[1]
     
     # For pluging in different sets of cut-off (TR_sst & TR_sub) into a bunch of LRMs:
     
+    
     ##  split cut-off: TR_sst and TR_sub for N1 and N2 slices in sort of self-defined (Mon)variable ranges
 
-    YY_ay_gcm = data_array['SST']
-    XX_ay_gcm = data_array['SUB']
+    YY_ay_gcm = data_array_training['SST']
+    XX_ay_gcm = data_array_training['SUB']
 
     y_gcm = np.linspace(np.nanpercentile(YY_ay_gcm, 0.5), np.nanpercentile(YY_ay_gcm, 99.5), 31)   #..supposed to be changed, 31
     x_gcm = np.linspace(np.nanpercentile(XX_ay_gcm, 1.0), np.nanpercentile(XX_ay_gcm, 99.5), 22)   #.., 22
@@ -289,7 +337,7 @@ def Loop_OBS_LRM(data_array, s_range, x_range, y_range):
     # plug the cut-off into LRM tring function:
     for i in range(len(y_gcm)-1):
         for j in range(len(x_gcm)-1):
-            s1[i,j], s2[i,j], s3[i,j], s4[i,j], cut_off1[i,j], cut_off2[i,j], coef_a, coef_b, coef_c, coef_d = train_LRM_4(TR_sst[i], TR_sub[j], dict2_predi_fla, shape_fla, shape_fla_nonnan)
+            s1[i,j], s2[i,j], s3[i,j], s4[i,j], cut_off1[i,j], cut_off2[i,j], coef_a, coef_b, coef_c, coef_d = train_LRM_4(TR_sst[i], TR_sub[j], dict2_predi_fla_training, dict2_predi_fla_predict, shape_fla_training, shape_fla_nonnan_training, shape_fla_predict, shape_fla_nonnan_predict)
     
             print('number: ',i + j + 1)
         
@@ -312,13 +360,13 @@ def Loop_OBS_LRM(data_array, s_range, x_range, y_range):
     # Storage data into .npz file for each GCMs
     WD = '/glade/scratch/chuyan/obs_output/'
     
-    # savez(WD + 'OBS' + '__' + 'STAT_pi+abr_'+'22x_31y_Sep9th25X25', bound_y = y_gcm,bound_x = x_gcm, stats_1 = s1, stats_2 = s2, stats_3 = s3, stats_4 = s4, cut_off1 = cut_off1, cut_off2 = cut_off2, TR_minabias_SST=TR_minabias_SST, TR_minabias_SUB=TR_minabias_SUB, TR_maxR2_SST=TR_maxR2_SST, TR_maxR2_SUB=TR_maxR2_SUB,  coef_a = coefa, coef_b = coefb, coef_c = coefc, coefd = coefd)
+    savez(WD + 'OBS' + '__' + 'STAT_pi+abr_'+'22x_31y_Sep11th', bound_y = y_gcm,bound_x = x_gcm, stats_1 = s1, stats_2 = s2, stats_3 = s3, stats_4 = s4, cut_off1 = cut_off1, cut_off2 = cut_off2, TR_minabias_SST=TR_minabias_SST, TR_minabias_SUB=TR_minabias_SUB, TR_maxR2_SST=TR_maxR2_SST, TR_maxR2_SUB=TR_maxR2_SUB,  coef_a = coefa, coef_b = coefb, coef_c = coefc, coefd = coefd)
 
     return None
 
 
 
-def train_LRM_4(cut_off1, cut_off2, training_data, shape_fla_training, shape_fla_nonnan):
+def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_training, shape_fla_nonnan_training, shape_fla_predict, shape_fla_nonnan_predict):
     
     print('4LRM: HERE TR_sst = ', cut_off1, 'K')
     print('4LRM: HERE TR_sub = ', cut_off2, 'Pa s-1')
@@ -332,7 +380,7 @@ def train_LRM_4(cut_off1, cut_off2, training_data, shape_fla_training, shape_fla
     #..Sign the the indexing into YB, or YB value will have a big changes
     ind_false = np.nonzero(ind1 == False)
     
-    # print('shape2: ', array(ind_true).shape)        # shape2
+    # print('shape of non-nan points: ', array(ind_true).shape)        # shape2
     
     
     # Split data points with skin Temperature < / >=TR_sst & Subsidence@500mb <= / > TR_sub (upward motion / downward motion): 
@@ -471,22 +519,22 @@ def train_LRM_4(cut_off1, cut_off2, training_data, shape_fla_training, shape_fla
 
     # Regression for training DATA:
     
-    sstle_uplwp_predi = np.dot(beffi.reshape(1, -1), XX_8)  + bint   #..larger or equal than Tr_SST & SUB at 500 <= TR_sub
-    sstlt_uplwp_predi = np.dot(aeffi.reshape(1, -1), XX_7)  + aint   #..less than Tr_SST & SUB at 500 <= TR_sub
-    sstlt_dwlwp_predi = np.dot(ceffi.reshape(1, -1), XX_9)  + cint   #..less than Tr_SST & SUB at 500 > TR_sub
-    sstle_dwlwp_predi = np.dot(deffi.reshape(1, -1), XX_10)  + dint   #..larger or equal than Tr_SST & SUB at 500 > TR_sub
+    sstle_uplwp_predi_training = np.dot(beffi.reshape(1, -1), XX_8) + bint   #..larger or equal than Tr_SST & SUB at 500 <= TR_sub
+    sstlt_uplwp_predi_training = np.dot(aeffi.reshape(1, -1), XX_7) + aint   #..less than Tr_SST & SUB at 500 <= TR_sub
+    sstlt_dwlwp_predi_training = np.dot(ceffi.reshape(1, -1), XX_9) + cint   #..less than Tr_SST & SUB at 500 > TR_sub
+    sstle_dwlwp_predi_training = np.dot(deffi.reshape(1, -1), XX_10) + dint   #..larger or equal than Tr_SST & SUB at 500 > TR_sub
     
     
     # emsembling into 'YB' predicted data array for Pi:
-    YB[ind7] = sstlt_uplwp_predi
-    YB[ind8] = sstle_uplwp_predi
-    YB[ind9] = sstlt_dwlwp_predi
-    YB[ind10] = sstle_dwlwp_predi
+    YB[ind7] = sstlt_uplwp_predi_training
+    YB[ind8] = sstle_uplwp_predi_training
+    YB[ind9] = sstlt_dwlwp_predi_training
+    YB[ind10] = sstle_dwlwp_predi_training
     
     
     # Test performance for training data:
     
-    abs_BIAS = np.nansum(np.abs(training_data['LWP'][ind_true] - YB[ind_true])) / shape_fla_nonnan
+    abs_BIAS = np.nansum(np.abs(training_data['LWP'][ind_true] - YB[ind_true])) / shape_fla_nonnan_training
     
     MSE_shape1 = mean_squared_error(training_data['LWP'][ind_true].reshape(-1,1), YB[ind_true].reshape(-1,1))
     # print("RMSE_shape1 for training data lwp: ", sqrt(MSE_shape1))
@@ -501,107 +549,187 @@ def train_LRM_4(cut_off1, cut_off2, training_data, shape_fla_training, shape_fla
 
     # Examine the effectiveness of regression model:
     print('examine regres-mean LWP for training shape1:', np.nanmean(training_data['LWP']), np.nanmean(YB))
-    print('examine regres-mean LWP for training shape10:', np.nanmean(training_data['LWP'][ind10]), np.nanmean(sstle_dwlwp_predi))
+    print('examine regres-mean LWP for training shape10:', np.nanmean(training_data['LWP'][ind10]), np.nanmean(sstle_dwlwp_predi_training))
 
-    #..print('examine regres-mean IWP for pi-C shape1:', mean(dict2_predi_fla_PI['IWP']) , mean(YB_iwp))
+    
+    # Process predict data
+    
+    #.. Subtract 'nan' in data, shape1 -> shape2(without 'nan' number) points and shape5('nan' number)
+    ind2 = np.isnan(predict_data['LTS']) == False 
+    ind_true_predict = np.nonzero(ind2 == True)
+    #..Sign the the indexing into YB, or YB value will have a big changes
+    ind_false_predict = np.nonzero(ind2 == False)
+    
+    # print('shape of non-nan points: ', array(ind_true_predict).shape)        # shape2
     
     
-    return abs_BIAS, sqrt(MSE_shape1), r_shape1, R_2_shape1, cut_off1, cut_off2, coef_a, coef_b, coef_c, coef_d
+    # Split data points with skin Temperature < / >=TR_sst & Subsidence@500mb <= / > TR_sub (upward motion / downward motion): 
+    # shape1 split into shape3(smaller.TR_sst & up)\shape4(larger.equal.TR_sst & up)\shape5(smaller.TR_sst & down)\shape6(larger.equal.TR_sst & down)
+    ind_sstlt_up_predict = np.nonzero((predict_data['SST'] < cut_off1) & (predict_data['SUB'] <= cut_off2))
+    ind_sstle_up_predict = np.nonzero((predict_data['SST'] >= cut_off1) & (predict_data['SUB'] <= cut_off2))
+    ind_sstlt_dw_predict = np.nonzero((predict_data['SST'] < cut_off1) & (predict_data['SUB'] > cut_off2))
+    ind_sstle_dw_predict = np.nonzero((predict_data['SST'] >= cut_off1) & (predict_data['SUB'] > cut_off2))
+
+    # shape7:the intersection of places where has LTS value and skin_T < TR_sst & SUB500 <= TR_sub
+    ind7_predict = np.intersect1d(ind_true_predict, ind_sstlt_up_predict)
+    # print('shape7 of predict data: ', ind7_predict.shape)   #.. points, shape 7
+    
+    # shape8:the intersection of places where LTS value and skin_T >= TR_sst & SUB500 <= TR_sub
+    ind8_predict = np.intersect1d(ind_true_predict, ind_sstle_up_predict)
+    # print('shape8 of predict data: ', ind8_predict.shape)   #.. points, shape 8
+    
+    # shape9:the intersection of places where has LTS value and skin_T < TR_sst & SUB500 > TR_sub
+    ind9_predict = np.intersect1d(ind_true_predict, ind_sstlt_dw_predict)
+    # print('shape9 of predict data: ', ind9_predict.shape)   #.. points, shape 9
+    
+    # shape10:the intersection of places where LTS value and skin_T >= TR_sst & SUB500 > TR_sub 
+    ind10_predict = np.intersect1d(ind_true_predict, ind_sstle_dw_predict)
+    # print('shape10 of predict data: ', ind10_predict.shape)
+    
+    
+    #..designate LWP single-array's value, training_data
+    YB2 = np.full((shape_fla_predict), 0.0)
+    YB2[ind_false_predict] = np.nan   
+    
+    
+    #.. Multiple linear regreesion of Liquid Water Path to CCFs :
+    
+    #..Remove abnormal and missing_values, train model with different TR_sst and TR_sub regimes data
+    XX_7_predict = np.array([predict_data['SST'][ind7_predict], predict_data['p_e'][ind7_predict], predict_data['LTS'][ind7_predict], predict_data['SUB'][ind7_predict]])
+    XX_8_predict = np.array([predict_data['SST'][ind8_predict], predict_data['p_e'][ind8_predict], predict_data['LTS'][ind8_predict], predict_data['SUB'][ind8_predict]])
+    XX_9_predict = np.array([predict_data['SST'][ind9_predict], predict_data['p_e'][ind9_predict], predict_data['LTS'][ind9_predict], predict_data['SUB'][ind9_predict]])
+    XX_10_predict = np.array([predict_data['SST'][ind10_predict], predict_data['p_e'][ind10_predict], predict_data['LTS'][ind10_predict], predict_data['SUB'][ind10_predict]])
 
 
-'''
-def fitLRMobs_1(dict_training, dict_predict, s_range, y_range, x_range, lats, lons):
-    # training and predicting the historical Observational variation of LWP.
-    # dict_training is the dictionary for storing the training data (CCFs, Cloud) in an pre-processed form;
-    # dict_predict is the dictionaray for storing the predicting data (CCFs, Cloud) as the same pre-processed form of 'dict_training'.
-    # s_range, x_range, y_range are used for doing area_mean.
-    
-    datavar_obs = ['SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre']
-    
-    # shape of given variables
-    shape_training = dict_training['LWP'].shape
-    shape_predict = dict_predict['LWP'].shape
+    if (len(ind7_predict)!=0) & (len(ind8_predict)!=0) & (len(ind9_predict)!=0) & (len(ind10_predict)!=0):
+        regr7_predi = linear_model.LinearRegression()
+        result7_predi = regr7_predi.fit(XX_7_predict.T, predict_data['LWP'][ind7_predict])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'up'
+        aeffi_predi = result7_predi.coef_
+        aint_predi = result7_predi.intercept_
 
-    shape_training_gmt = dict_predict['gmt'].shape
-    shape_predict_gmt = dict_predict['gmt'].shape
-    
-    dict2_predi_fla_training = {}
-    dict2_predi_fla_predict = {}
-    
-    dict2_predi_ano_training = {}  # need a climatological arrays of variables
-    dict2_predi_ano_predict = {}  # need a climatological arrays of variables
-    
-    dict2_predi_nor_training = {}
-    dict2_predi_nor_predict = {}
-    
-    dict2_predi_fla = {}
-    
-    # flatten the variable array for regressing:
-    for d in range(len(datavar_obs)):
-    
-        dict2_predi_fla_training[datavar_obs[d]] = dict_training[datavar_obs[d]].flatten()
-        dict2_predi_fla_predict[datavar_obs[d]] = dict_predict[datavar_obs[d]].flatten()
+        regr8_predi = linear_model.LinearRegression()
+        result8_predi = regr8_predi.fit(XX_8_predict.T, predict_data['LWP'][ind8_predict])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
+        beffi_predi = result8_predi.coef_
+        bint_predi = result8_predi.intercept_
         
-        # anomalies in the raw units:
-        # dict2_predi_ano_training[datavar_obs[d]] = dict2_predi_fla_training[datavar_obs[d]] - climatological_Area_mean(t)   # Unfinished
-        # dict2_predi_ano_predict[datavar_obs[d]] = dict2_predi_fla_predict[datavar_obs[d]] - climatological_Area_mean(t)   # Unfinished
+        regr9_predi = linear_model.LinearRegression()
+        result9_predi = regr9_predi.fit(XX_9_predict.T, predict_data['LWP'][ind9_predict])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'down'
+        ceffi_predi = result9_predi.coef_
+        cint_predi = result9_predi.intercept_
         
-        # normalized stardard deviation in unit of './std':
-        # dict2_predi_nor_training[datavar_obs[d]] = dict2_predi_ano_training[datavar_obs[d]] / nanstd(Area_mean(climatological_period_data(t, y, x)))
-        # dict2_predi_nor_predict[datavar_obs[d]] =  dict2_predi_ano_predict[datavar_obs[d]] / nanstd(Area_mean(climatological_period_data(t, y, x)))
+        regr10_predi = linear_model.LinearRegression()
+        result10_predi = regr10_predi.fit(XX_10_predict.T, predict_data['LWP'][ind10_predict])   #..regression for LWP WITH LTS and skin-T >= TR_sst & 'down'
+        deffi_predi = result10_predi.coef_
+        dint_predi = result10_predi.intercept_
+    
+    elif (len(ind7_predict) == 0) & (len(ind9_predict) == 0):
+        aeffi_predi = np.full(4, 0.0)
+        aint_predi = 0.0
+
+        regr8_predi = linear_model.LinearRegression()
+        result8_predi = regr8_predi.fit(XX_8_predict.T, predict_data['LWP'][ind8_predict])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
+        beffi_predi = result8_predi.coef_
+        bint_predi = result8_predi.intercept_
+        
+        ceffi_predi = np.full(4, 0.0)
+        cint_predi = 0.0
+        
+        regr10_predi = linear_model.LinearRegression()
+        result10_predi = regr10_predi.fit(XX_10_predict.T, predict_data['LWP'][ind10_predict])   #..regression for LWP WITH LTS and skin-T >= TR_sst& 'down'
+        deffi_predi = result10_predi.coef_
+        dint_predi = result10_predi.intercept_
+    
+    elif len(ind7_predict) == 0:
+        aeffi_predi = np.full(4, 0.0)
+        aint_predi = 0.0
+        
+        regr8_predi = linear_model.LinearRegression()
+        result8 = regr8_predi.fit(XX_8_predict.T, predict_data['LWP'][ind8_predict])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
+        beffi_predi = result8_predi.coef_
+        bint_predi = result8_predi.intercept_
+
+        regr9_predi = linear_model.LinearRegression()
+        result9_predi = regr9_predi.fit(XX_9_predict.T, predict_data['LWP'][ind9_predict])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'down'
+        ceffi_predi = result9_predi.coef_
+        cint_predi = result9_predi.intercept_
+
+        regr10_predi = linear_model.LinearRegression()
+        result10_predi = regr10_predi.fit(XX_10_predict.T, predict_data['LWP'][ind10_predict])   #..regression for LWP WITH LTS and skin-T >= TR_sst& 'down'
+        deffi_predi = result10_predi.coef_
+        dint_predi = result10_predi.intercept_
+        
+    elif len(ind9_predict) == 0:
+        regr7_predi = linear_model.LinearRegression()
+        result7_predi = regr7_predi.fit(XX_7_predict.T, predict_data['LWP'][ind7_predict])   #..regression for LWP WITH LTS and skin-T < TR_sst & 'up'
+        aeffi_predi = result7_predi.coef_
+        aint_predi = result7_predi.intercept_
+                
+        regr8_predi = linear_model.LinearRegression()
+        result8_predi = regr8_predi.fit(XX_8_predict.T, predict_data['LWP'][ind8_predict])   #..regression for LWP WITH LTS and skin-T >= TR_sst &'up'
+        beffi_predi = result8_predi.coef_
+        bint_predi = result8_predi.intercept_
+        
+        ceffi_predi = np.full(4, 0.0)
+        cint_predi = 0.0
+
+        regr10_predi = linear_model.LinearRegression()
+        result10_predi = regr10_predi.fit(XX_10_predict.T, predict_data['LWP'][ind10_predict])   #..regression for LWP WITH LTS and skin-T >= TR_sst& 'down'
+        deffi_predi = result10_predi.coef_
+        dint_predi = result10_predi.intercept_
+        
+    else:
+        aeffi_predi = np.full(4, 0.0)
+        beffi_predi = np.full(4, 0.0)
+        ceffi_predi = np.full(4, 0.0)
+        deffi_predi = np.full(4, 0.0)
+        aint_predi = 0.0
+        bint_predi = 0.0
+        cint_predi = 0.0
+        dint_predi = 0.0
+        
+        print('you input a non-wise value for cut-off(TR_sst, TR_sub at 500 mb')
+        print('please try another cut-offs input...')
+    
+    #..save the coefficients:
+    coef_a_predi = [np.array(aeffi_predi), aint_predi]
+    coef_b_predi = [np.array(beffi_predi), bint_predi]
+    coef_c_predi = [np.array(ceffi_predi), cint_predi]
+    coef_d_predi = [np.array(deffi_predi), dint_predi]
+    
+
+    # Regression for predict DATA:
+    
+    sstle_uplwp_predi_predict = np.dot(beffi_predi.reshape(1, -1), XX_8_predict) + bint_predi   #..larger or equal than Tr_SST & SUB at 500 <= TR_sub
+    sstlt_uplwp_predi_predict = np.dot(aeffi_predi.reshape(1, -1), XX_7_predict) + aint_predi   #..less than Tr_SST & SUB at 500 <= TR_sub
+    sstlt_dwlwp_predi_predict = np.dot(ceffi_predi.reshape(1, -1), XX_9_predict) + cint_predi   #..less than Tr_SST & SUB at 500 > TR_sub
+    sstle_dwlwp_predi_predict = np.dot(deffi_predi.reshape(1, -1), XX_10_predict) + dint_predi   #..larger or equal than Tr_SST & SUB at 500 > TR_sub
     
     
-    # Global-Mean surface air Temperature(tas):
-    # shape of 'GMT' is the length of time (t)
-    dict2_predi_fla_predict['gmt'] = area_mean(dict_predict['gmt'], s_range, x_range)
-    ## dict2_predi_fla_PI['gmt'] = GMT_pi.repeat(730)   # something wrong when calc dX_dTg(dCCFS_dgmt)
-    dict2_predi_fla_training['gmt'] = area_mean(dict_training['gmt'], s_range, x_range)
-    
-    dict2_predi_fla['gmt'] = np.append(dict2_predi_fla_predict['gmt'], dict2_predi_fla_training['gmt'])
-    shape_whole_period = np.asarray(dict2_predi_fla['gmt'].shape[0])
-    dict2_predi_ano_predict['gmt'] = dict_predict['gmt'] - np.nanmean(dict2_predi_fla['gmt'])  # shape in (t, lat, lon)
-    dict2_predi_ano_training['gmt'] = dict_training['gmt'] - np.nanmean(dict2_predi_fla['gmt'])  # shape in (t, lat, lon)
-    
-    dict2_predi_nor_predict['gmt'] = dict2_predi_ano_predict['gmt'] / np.nanstd(dict2_predi_fla['gmt'])
-    dict2_predi_nor_training['gmt'] = dict2_predi_ano_training['gmt'] / np.nanstd(dict2_predi_fla['gmt'])
-    
-    #.. Training Model (1-LRM, single regime)
-    #..
-    
-    training_LRM_result, ind_True, ind_False, coef_array_1r, shape_fla_training = rdlrm_1_training(dict2_predi_fla_training, predictant='LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 1)
-    # 'YB' is the predicted value of LWP in the 'training period':
-    YB = training_LRM_result['value']
-    
-    # Test Performance of LRM
-    stats_dict_training = Test_performance_1(dict2_predi_fla_training['LWP'], YB, ind_True, ind_False)
-    
-    # Save 'YB', and resample the shape into 3-D:
-    C_dict = {}   # as output
-    ## currently using raw value as fit/predict values
-    C_dict['LWP_actual_training'] = dict2_predi_fla_training['LWP'].reshape(shape_training)
-    C_dict['LWP_predi_training'] = np.asarray(YB).reshape(shape_training)
-    C_dict['training_LRM_result'] = training_LRM_result
-    C_dict['coef_dict'] = coef_array_1r
-    C_dict['stats_dict_training'] = stats_dict_training
-    
-    #.. Predict Model (1-LRM, single regime)
-    predict_LRM_result, ind_True_predi, ind_False_predi, shape_fla_predicting = rdlrm_1_predict(dict2_predi_fla_predict, coef_array_1r, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 1)
-    
-    # 'YB_predi' is the predicted value of LWP in the 'predict period':
-    YB_predi = predict_LRM_result['value']
-    
-    # Test Performance of LRM
-    stats_dict_predict = Test_performance_1(dict2_predi_fla_predict['LWP'], YB_predi, ind_True_predi, ind_False_predi)
-    
-    # Save 'YB', and resample the shape into 3-D:
-    ## currently using raw value as fit/predict values
-    C_dict['LWP_actual_predict'] = dict2_predi_fla_predict['LWP'].reshape(shape_predict)
-    C_dict['LWP_predi_predict'] = np.asarray(YB_predi).reshape(shape_predict)
-    C_dict['predict_LRM_result'] = predict_LRM_result
-    
-    C_dict['stats_dict_predict'] = stats_dict_predict
+    # emsembling into 'YB' predicted data array for Pi:
+    YB2[ind7_predict] = sstlt_uplwp_predi_predict
+    YB2[ind8_predict] = sstle_uplwp_predi_predict
+    YB2[ind9_predict] = sstlt_dwlwp_predi_predict
+    YB2[ind10_predict] = sstle_dwlwp_predi_predict
     
     
-    return C_dict
+    # Test performance for training data:
     
-    '''
+    abs_BIAS_predict = np.nansum(np.abs(predict_data['LWP'][ind_true_predict] - YB2[ind_true_predict])) / shape_fla_nonnan_predict
+    
+    MSE_shape1_predict = mean_squared_error(predict_data['LWP'][ind_true_predict].reshape(-1,1), YB2[ind_true_predict].reshape(-1,1))
+    # print("RMSE_shape1 for training data lwp: ", sqrt(MSE_shape1_predict))
+    
+    R_2_shape1_predict = r2_score(predict_data['LWP'][ind_true_predict].reshape(-1, 1), YB2[ind_true_predict].reshape(-1,1))
+    print("R_2_shape1 for predict data lwp: ", R_2_shape1_predict)
+    
+    ## print(training_data['LWP'].reshape(-1,1), YB.reshape(-1,1))
+    r_shape1_predict, p_shape1_predict = pearsonr(np.asarray(predict_data['LWP'][ind_true_predict]), array(YB2[ind_true_predict]))
+    print("Pearson correlation coefficient for predict data: ", r_shape1_predict,  "p_value = ", p_shape1_predict)
+    
+
+    # Examine the effectiveness of regression model:
+    # print('examine regres-mean LWP for predict shape1:', np.nanmean(predict_data['LWP']), np.nanmean(YB2))
+    # print('examine regres-mean LWP for predict shape10:', np.nanmean(predict_data['LWP'][ind10_predict]), np.nanmean(sstle_dwlwp_predi_predict))
+    
+    return abs_BIAS_predict, sqrt(MSE_shape1_predict), r_shape1, R_2_shape1, cut_off1, cut_off2, coef_a, coef_b, coef_c, coef_d
+

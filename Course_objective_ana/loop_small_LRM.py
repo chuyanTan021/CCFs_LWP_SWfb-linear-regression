@@ -432,13 +432,26 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
 
     dict2_predi_fla_PI = {}
     dict2_predi_fla_abr = {}
-
+    
+    dict2_predi_ano_PI = {}  # need a climatological arrays of variables
+    dict2_predi_ano_abr = {}  # need a climatological arrays of variables
+    
+    dict2_predi_nor_PI = {} # standardized anomalies of variables
+    dict2_predi_nor_abr = {}
+    
     #..Ravel binned array /Standardized data ARRAY :
     for d in range(len(datavar_nas)):
 
         dict2_predi_fla_PI[datavar_nas[d]] = dict1_mon_bin_PI[datavar_nas[d]+'_mon_bin'].flatten()
         dict2_predi_fla_abr[datavar_nas[d]] = dict1_mon_bin_abr[datavar_nas[d]+'_mon_bin'].flatten()
 
+        # anomalies in the raw units:
+        # dict2_predi_ano_PI[datavar_nas[d]] = dict2_predi_fla_PI[datavar_nas[d]] - climatological_Area_mean(t)   # Unfinished
+        # dict2_predi_ano_abr[datavar_nas[d]] = dict2_predi_fla_abr[datavar_nas[d]] - climatological_Area_mean(t)   # Unfinished
+        
+        # normalized stardard deviation in unit of './std':
+        # dict2_predi_nor_PI[datavar_nas[d]] = dict2_predi_ano_PI[datavar_nas[d]] / nanstd(Area_mean(climatological_period_data(t, y, x)))
+        # dict2_predi_nor_abr[datavar_nas[d]] =  dict2_predi_ano_abr[datavar_nas[d]] / nanstd(Area_mean(climatological_period_data(t, y, x)))
     
     #..Use area_mean method, 'np.repeat' and 'np.tile' to reproduce gmt area-mean Array as the same shape as other flattened variables
     GMT_pi_mon  = area_mean(dict1_mon_bin_PI['gmt_mon_bin'], s_range,  x_range)   #..ALL in shape : shape_yr_abr(single dimension)
@@ -511,11 +524,11 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     min_pedict_absbias_id = unravel_index(nanargmin(s1, axis=None), s1.shape)
     max_training_R2_id  = unravel_index(nanargmax(s5, axis=None),  s5.shape)
     
-    TR_minabias_SST =  y_gcm[min_pedict_absbias_id[0]]
-    TR_minabias_SUB =  x_gcm[min_pedict_absbias_id[1]]
+    TR_minabias_SST = y_gcm[min_pedict_absbias_id[0]]
+    TR_minabias_SUB = x_gcm[min_pedict_absbias_id[1]]
     
-    TR_maxR2_SST  = y_gcm[max_training_R2_id[0]]
-    TR_maxR2_SUB  = x_gcm[max_training_R2_id[1]]
+    TR_maxR2_SST = y_gcm[max_training_R2_id[0]]
+    TR_maxR2_SUB = x_gcm[max_training_R2_id[1]]
     
     
     
@@ -642,9 +655,9 @@ def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_train
         beffi = result8.coef_
         bint = result8.intercept_
         regr8_iwp = linear_model.LinearRegression()
-        result8_IWP =regr8_iwp.fit(XX_8.T, training_data['IWP'][ind8])
+        result8_IWP = regr8_iwp.fit(XX_8.T, training_data['IWP'][ind8])
         beffi_iwp = result8_IWP.coef_
-        bint_iwp  = result8_IWP.intercept_
+        bint_iwp = result8_IWP.intercept_
 
         ceffi = full(4, 0.0)
         cint = 0.0
@@ -653,12 +666,12 @@ def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_train
 
         regr10 = linear_model.LinearRegression()
         result10 = regr10.fit(XX_10.T, training_data['LWP'][ind10])   #..regression for LWP WITH LTS and skin-T >= TR_sst& 'down'
-        deffi  = result10.coef_
-        dint   = result10.intercept_
+        deffi = result10.coef_
+        dint = result10.intercept_
         regr10_iwp = linear_model.LinearRegression()
-        result10_IWP =regr10_iwp.fit(XX_10.T, training_data['IWP'][ind10])
-        deffi_iwp =  result10_IWP.coef_
-        dint_iwp  =  result10_IWP.intercept_
+        result10_IWP = regr10_iwp.fit(XX_10.T, training_data['IWP'][ind10])
+        deffi_iwp = result10_IWP.coef_
+        dint_iwp  = result10_IWP.intercept_
         
     elif len(ind7)==0:
         aeffi  = full(4, 0.0)
