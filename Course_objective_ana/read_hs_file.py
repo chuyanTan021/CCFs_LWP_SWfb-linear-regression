@@ -10,13 +10,14 @@ pp_path_cisl='/glade/collections/cmip/'
 # ON CISL: /glade/collections/cmip/CMIP6/CMIP/CNRM-CERFACS/CNRM-CM6-1/historical/r1i1p1f2/Amon/clw/gr/v20180917/clw/
 # ON CISL:NCAR MODEL: /glade/collections/cdg/data/CMIP6/CMIP/NCAR/CESM2/piControl/r1i1p1f1/Amon/evspsbl/gn/v20190320/
 
+
 def read_var_mod(modn='CNRM-CM6-1', consort='CNRM-CERFACS', varnm='clwvi', cmip='cmip6', exper='historical', ensmem='r1i1p1f2', typevar='Amon', gg='gr', read_p=False, time1=[1, 1, 15], time2=[8000, 12, 31]):
     ### ------------------
     # Reads in data from named GCM for specified time range
     # For 3D data read_p=True.
     # Will need mods for different sub experiments.
     ### ------------------
-
+    
 
     if cmip == 'cmip6':
         MIP = 'CMIP'
@@ -30,30 +31,44 @@ def read_var_mod(modn='CNRM-CM6-1', consort='CNRM-CERFACS', varnm='clwvi', cmip=
         #    pth = '/glade/collections/cdg/data/'+'/CMIP6/'+'CMIP'+'/'+consort+'/'+modn + \
         #        '/'+exper+'/'+ensmem+'/'+typevar+'/'+varnm+'/'+gg+'/latest/'
     if cmip == 'cmip5':
-        pth = pp_path_cisl+cmip+'/data/cmip5/'+output+'/'+consort+'/'+modn + \
-            '/'+exper+'/mon/atmos/'+typevar+'/'+ensmem+'/latest/'+varnm+'/'
+        pth = '/glade/collections/cdg/data/'+cmip+'/output1/'+consort+'/'+modn + \
+            '/'+exper+'/mon/atmos/'+ typevar +'/'+ensmem+'/'
         if typevar == 'OImon':
             pth = pp_path_cisl+cmip+'/data/cmip5/'+output+'/'+consort+'/'+modn + \
-                '/'+exper+'/mon/seaIce/'+typevar+'/'+ensmem+'/latest/'+varnm+'/'
+            '/'+exper+'/mon/seaIce/'+typevar+'/'+ensmem+'/'
     # data_source flag
     ds_flag = 2
-    try:
-        data, P, lat, lon, time = read_hs('/glade/scratch/chuyan/CMIP6data/', varnm, 
-                read_p=read_p, modnm=modn, exper=exper, ensmem=ensmem, typevar=typevar, time1=time1, time2=time2, ds_flag = ds_flag)
-        
-    except UnboundLocalError:
-        ds_flag = 1
-        print('TRYING CISL FILES')
-        data, P, lat, lon, time = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
-        
-    except IndexError:
-        ds_flag = 1
-        print('LOCAL FILES Indexing Error')
-        data, P, lat, lon, time = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
-    
+    if cmip == 'cmip6':
+        try:
+            data, P, lat, lon, time = read_hs('/glade/scratch/chuyan/CMIP6data/', varnm, 
+                    read_p=read_p, modnm=modn, exper=exper, ensmem=ensmem, typevar=typevar, time1=time1, time2=time2, ds_flag = ds_flag)
+        except UnboundLocalError:
+            ds_flag = 1
+            print('TRYING CISL FILES')
+            data, P, lat, lon, time = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
+
+        except IndexError:
+            ds_flag = 1
+            print('LOCAL FILES Indexing Error')
+            data, P, lat, lon, time = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
+            
+    ds_flag = 2
+    if cmip == 'cmip5':
+        try:
+            data, P, lat, lon, time = read_hs('/glade/scratch/chuyan/CMIP5data/', varnm, 
+                    read_p=read_p, modnm=modn, exper=exper, ensmem=ensmem, typevar=typevar, time1=time1, time2=time2, ds_flag = ds_flag)
+        except UnboundLocalError:
+            ds_flag = 1
+            print('TRYING CISL FILES')
+            data, P, lat, lon, time = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
+
+        except IndexError:
+            ds_flag = 1
+            print('LOCAL FILES Indexing Error')
+            data, P, lat, lon, time = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
     if read_p:
-        if len(P[0].shape) > 2:
-            P = concatenate(P, axis=0)
+        if asarray(P).ndim != 1:
+            P = concatenate(P, axis=0)  # P is duplicated here. Modified on Aug 28th
 
     dataOUT = concatenate(data, axis=0)
     lon2 = lon[:]*1.
@@ -66,7 +81,7 @@ def read_var_mod(modn='CNRM-CM6-1', consort='CNRM-CERFACS', varnm='clwvi', cmip=
     lon2 = lon2[ind]
     timeo = concatenate(time, axis=0)
     dataOUT, time = get_unique_time(dataOUT, timeo)
-    print(dataOUT.shape)                                                                                       # 5
+    print(dataOUT.shape)                                                       # 5
     return dataOUT.filled(fill_value=NaN), P, lat[:].filled(fill_value=NaN), lon2.filled(fill_value=NaN), time  # concatenate(time,axis=0)
 # concatenate(P,axis=0),lat,lon
 
@@ -77,56 +92,60 @@ def get_unique_time(data, time):
     return data[ind], time[ind]
 
 
+
 # ex:time1,time2, atual value above in Parameters of 'read_var_mod':
-def read_hs(wd, varnm, read_p=False, modnm='', exper='', ensmem='', typevar='', time1=[2000, 1, 15], time2=[2005, 12, 31], ds_flag =0):
+def read_hs(wd, varnm, read_p=False, modnm='', exper='', ensmem='', typevar='', time1=[2000, 1, 15], time2=[2005, 12, 31], ds_flag=0):
     import glob
-    
+
     if ds_flag == 2:
         folder = wd
         print(modnm)
         fn = glob.glob(folder+ '*' +varnm+'_*'+typevar+'*' +modnm+'_'+exper+'*'+ensmem+'*nc*')
+        print('1')
     
     elif ds_flag == 1:
         folder=glob.glob(wd+'*/*/')
-        print(modnm)                                                                                          # 1
-        if modnm== 'MIROC6' or modnm =='SAM0-UNICON':
+        print(modnm)                                                           # 1
+        if (modnm== 'MIROC6') or modnm == ('SAM0-UNICON'):
             fn = glob.glob(folder[0]+'/*'+varnm+'_*'+typevar+'*' +modnm+'_'+exper+'*'+ensmem+'*nc*')
-            print('1')
-        elif modnm =='CESM2':
+            print('3')
+        elif (modnm =='CESM2'):
             folder=glob.glob(wd+ '*/')
-            #..print(folder)
+            # print(folder)
             fn = glob.glob(folder[-1]+'/*'+varnm+'_*'+typevar+'*' +modnm+'_'+exper+'*'+ensmem+'*nc*')
-            print('2')
-        elif modnm =='FGOALS-g3':
+            print('3')
+        elif (modnm =='FGOALS-g3'):
             fn = glob.glob(folder[-1]+'/*'+varnm+'_*'+typevar+'*' +modnm+'_'+exper+'*'+ensmem+'*nc*')
             for i in range(len(fn)):
                 if fn[i] == '/glade/collections/cmip/CMIP6/CMIP/CAS/FGOALS-g3/piControl/r1i1p1f1/Amon/ta/gn/v20190818/ta/ta_Amon_FGOALS-g3_piControl_r1i1p1f1_gn_055001-055912.nc':
                     fn[i] = '/glade/work/chuyan/Research/Cloud_CCFs_RMs/Plots_proposal/ta_Amon_FGOALS-g3_piControl_r1i1p1f1_gn_055001-055912.nc'        
-            print('4')
+            print('3')
+        elif (modnm =='CCSM4'):
+            folder=glob.glob(wd+ '*/')
+            #..print(folder[-1])
+            fn = glob.glob(folder[-1]+ varnm+'/*'+varnm+'*'+typevar+'*'+modnm+'_'+exper+'*'+ensmem+'*nc*')
         else:
             fn = glob.glob(folder[-1]+'/*'+varnm+'_*'+typevar+'*' +modnm+'_'+exper+'*'+ensmem+'*nc*')
-            print('3')                                                                                           #2'
+            print('2')                                                         # 2
 
-    print(folder)                                                                                                # 2
-    # print(fn)                 #..folder[0]+'/*'+varnm+'*'+typevar+'*'+modnm+'_'+exper+'*'+ensmem+'*nc*'          # 3'
+    print(folder)                                                              # 3
+    print(fn)                 #..folder[0]+'/*'+varnm+'*'+typevar+'*'+modnm+'_'+exper+'*'+ensmem+'*nc*'   # 3'
     
     data = []
     P = []
     timeo = []
     # filter out the data file with times too larger
-    print(" Variable", varnm, ' ', exper)                                                                          # 3
+    print(" Variable", varnm, ' ', exper)                                      # 4
     for i in range(len(fn)):
-        
-        # print(fn[i])                                                                                  # 3'
-        tt = read_hs_file(fn[i], varnm, read_p=read_p,
-                          time1=time1, time2=time2)
+        # print(fn[i])                                                         # 4'
+        tt = read_hs_file(fn[i], varnm, read_p=read_p, time1=time1, time2=time2)
         if len(tt['data']) > 0:
             data.append(tt['data'])
             lat = tt['lat']
             lon = tt['lon']
             timeo.append(tt['time'])
             if read_p == True:
-                P.append(tt['P'])
+                P = tt['P']
     return data, P, lat, lon, timeo
 
 
@@ -151,7 +170,7 @@ def read_hs_file(fn, varnm, time1, time2, read_p=False):
         tt1 = nc.num2date(tt[i], f.variables[tvar].units,
                           calendar=f.variables[tvar].calendar)
         timeout[i, :] = [tt1.year, tt1.month, tt1.day]
-
+    # select the indices of numeric variable 'tt' which most close to the starting & ending time_stamp:
     ind1 = nc.date2index(
         datetime(time1[0], time1[1], time1[2]), tt, select='nearest')
     ind2 = nc.date2index(
@@ -174,7 +193,7 @@ def read_hs_file(fn, varnm, time1, time2, read_p=False):
 
 def get_pressure_nc(f, ind):
     vv = list(f.variables.keys())
-    print(vv)                                                                                                  #possible 4
+    print(vv)                                                                     # possible 4
     for i in range(len(vv)):
         if 'formula' in f.variables[vv[i]].ncattrs():
             formul_p = f.variables[vv[i]].formula
@@ -207,4 +226,3 @@ def get_pressure_nc(f, ind):
             P[:, i, :, :] = ptop+lev[i]*(ps-ptop)
 
     return P
-    

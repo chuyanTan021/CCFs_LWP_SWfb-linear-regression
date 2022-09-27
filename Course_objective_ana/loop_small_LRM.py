@@ -6,8 +6,8 @@ import netCDF4
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
-
-from calc_LRM_metric import *
+# from fitLRM_cy import *
+# from calc_LRM_metric import *
 import sys
 
 import netCDF4
@@ -31,27 +31,27 @@ from read_hs_file import read_var_mod
 from get_LWPCMIP5data import *
 from get_LWPCMIP6data import *
 from get_annual_so import *
-# from fitLRM_cy import *
 from useful_func_cy import *
+
+
 
 def main():
     # cmip6 model list
     # deck_nas = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1']
     
-    deck_nas = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM2', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1', 'BNUESM', 'CCSM4', 'CNRMCM5', 'CSIRO_Mk360', 'CanESM2', 'FGOALSg2', 'FGOALSs2', 'GFDLCM3', 'GISSE2H', 'GISSE2R', 'IPSLCM5ALR', 'MIROC5', 'MPIESMMR', 'NorESM1M']
+    deck_nas = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM21', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1', 'BNUESM', 'CCSM4', 'CNRMCM5', 'CSIRO_Mk360', 'CanESM2', 'FGOALSg2', 'FGOALSs2', 'GFDLCM3', 'GISSE2H', 'GISSE2R', 'IPSLCM5ALR', 'MIROC5', 'MPIESMMR', 'NorESM1M', 'MIROCESM', 'MRICGCM3', 'MPIESMLR', 'bcccsm11', 'GFDLESM2G', 'GFDLESM2M']
     
     Number_of_models = int(sys.argv[1])
     print("Number of models : ", Number_of_models)
     h = loop_LRM_simple(modn = deck_nas[Number_of_models], type_analysis= 'forecasting')
-
     
     return None
 
 
-def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
+def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis = 'forecasting'):
     exp = 'piControl'
     
-    # CMIP6: 31
+    # CMIP6: 31 (30: BCCCSMCM2MR)
     AWICM11MR = {'modn': 'AWI-CM-1-1-MR', 'consort': 'AWI', 'cmip': 'cmip6',
                 'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'}
     BCCCSMCM2MR = {'modn': 'BCC-CSM2-MR', 'consort': 'BCC', 'cmip': 'cmip6',
@@ -119,7 +119,8 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
                 'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'}
     TaiESM1 = {'modn': 'TaiESM1', 'consort': 'AS-RCEC', 'cmip': 'cmip6', 
                      'exper': exp, 'ensmem': 'r1i1p1f1', 'gg': 'gn', "typevar": 'Amon'}
-    # CMIP5: 11
+    
+    # CMIP5: 20 (18, ACCESS10, ACCESS13)
     ACCESS10 = {'modn': 'ACCESS1-0', 'consort': 'CSIRO-BOM', 'cmip': 'cmip5',   # 2-d (145) and 3-d (146) variables have different lat shape
                 'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
     ACCESS13 = {'modn': 'ACCESS1-3', 'consort': 'CSIRO-BOM', 'cmip': 'cmip5',   # 2-d (145) and 3-d (146) variables have different lat shape
@@ -154,10 +155,23 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     NorESM1M = {'modn': 'NorESM1-M', 'consort': 'NCC', 'cmip': 'cmip5',
                 'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
     
-    deck2 = [BCCESM1, CanESM5, CESM2, CESM2FV2, CESM2WACCM, CNRMESM21, GISSE21G, GISSE21H, IPSLCM6ALR, MRIESM20, MIROC6, SAM0, E3SM10, FGOALSg3, GFDLCM4, CAMSCSM1, INM_CM48, MPIESM12LR, AWICM11MR, BCCCSMCM2MR, CMCCCM2SR5, CESM2WACCMFV2, CNRMCM61, CNRMCM61HR, ECEarth3, ECEarth3Veg, GISSE22G, MIROCES2L, NESM3, NorESM2MM, TaiESM1, BNUESM, CCSM4, CNRMCM5, CSIRO_Mk360, CanESM2, FGOALSg2, FGOALSs2, GFDLCM3, GISSE2H, GISSE2R, IPSLCM5ALR, MIROC5, MPIESMMR, NorESM1M]   # current # 31 (no.19) + 14 = 45
+    MIROCESM = {'modn': 'MIROC-ESM', 'consort': 'MIROC', 'cmip': 'cmip5', 
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    MRICGCM3 = {'modn': 'MRI-CGCM3', 'consort': 'MRI', 'cmip': 'cmip5', 
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    MPIESMLR = {'modn': 'MPI-ESM-LR', 'consort': 'MPI-M', 'cmip': 'cmip5',
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    bcccsm11 = {'modn': 'bcc-csm1-1', 'consort': 'BCC', 'cmip': 'cmip5', 
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    GFDLESM2G = {'modn': 'GFDL-ESM2G', 'consort': 'NOAA-GFDL', 'cmip': 'cmip5', 
+                'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    GFDLESM2M = {'modn': 'GFDL-ESM2M', 'consort': 'NOAA-GFDL', 'cmip': 'cmip5', 
+               'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    inmcm4 = {'modn': 'inmcm4', 'consort': 'INM', 'cmip': 'cmip5', 
+                 'exper': exp, 'ensmem': 'r1i1p1', "typevar": 'Amon'}
+    deck2 = [BCCESM1, CanESM5, CESM2, CESM2FV2, CESM2WACCM, CNRMESM21, GISSE21G, GISSE21H, IPSLCM6ALR, MRIESM20, MIROC6, SAM0, E3SM10, FGOALSg3, GFDLCM4, CAMSCSM1, INM_CM48, MPIESM12LR, AWICM11MR, BCCCSMCM2MR, CMCCCM2SR5, CESM2WACCMFV2, CNRMCM61, CNRMCM61HR, ECEarth3, ECEarth3Veg, GISSE22G, MIROCES2L, NESM3, NorESM2MM, TaiESM1, BNUESM, CCSM4, CNRMCM5, CSIRO_Mk360, CanESM2, FGOALSg2, FGOALSs2, GFDLCM3, GISSE2H, GISSE2R, IPSLCM5ALR, MIROC5, MPIESMMR, NorESM1M, MIROCESM, MRICGCM3, MPIESMLR, bcccsm11, GFDLESM2G, GFDLESM2M, inmcm4]  # current # 31 (no.19) + 21 = 52
 
-    
-    deck_nas2 = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM21', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1', 'BNUESM', 'CCSM4', 'CNRMCM5', 'CSIRO_Mk360', 'CanESM2', 'FGOALSg2', 'FGOALSs2', 'GFDLCM3', 'GISSE2H', 'GISSE2R', 'IPSLCM5ALR', 'MIROC5', 'MPIESMMR', 'NorESM1M']  # current # 31 (np.19) + 14 = 45
+    deck_nas2 = ['BCCESM1', 'CanESM5', 'CESM2', 'CESM2FV2', 'CESM2WACCM', 'CNRMESM21', 'GISSE21G', 'GISSE21H', 'IPSLCM6ALR', 'MRIESM20', 'MIROC6', 'SAM0', 'E3SM10', 'FGOALSg3', 'GFDLCM4', 'CAMSCSM1', 'INM_CM48', 'MPIESM12LR', 'AWICM11MR', 'BCCCSMCM2MR', 'CMCCCM2SR5', 'CESM2WACCMFV2', 'CNRMCM61', 'CNRMCM61HR', 'ECEarth3', 'ECEarth3Veg', 'GISSE22G', 'MIROCES2L', 'NESM3', 'NorESM2MM', 'TaiESM1', 'BNUESM', 'CCSM4', 'CNRMCM5', 'CSIRO_Mk360', 'CanESM2', 'FGOALSg2', 'FGOALSs2', 'GFDLCM3', 'GISSE2H', 'GISSE2R', 'IPSLCM5ALR', 'MIROC5', 'MPIESMMR', 'NorESM1M', 'MIROCESM', 'MRICGCM3', 'MPIESMLR', 'bcccsm11', 'GFDLESM2G', 'GFDLESM2M', 'inmcm4']  # current # 31 (np.19) + 21 = 52
 
     
     # get cmip6 data:
@@ -165,21 +179,17 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     while name_j < len(deck_nas2):
         
         if modn == deck_nas2[name_j]:
+            print("No. of models: ", name_j)
             if (deck2[name_j]['cmip']=='cmip6') & (type_analysis == 'forecasting'):
                 inputVar_pi, inputVar_abr = get_LWPCMIP6(**deck2[name_j])
             elif (deck2[name_j]['cmip']=='cmip5') & (type_analysis == 'forecasting'):
                 inputVar_pi, inputVar_abr = get_LWPCMIP5(**deck2[name_j])
-            else:       # port for historical analysis
-                print('not existing data within cmip5 and cmip6 storage in scratch.')
+            else:
+                print('No existing data of this model in chuyan scratch space.')
             break
-        print("Number of models: ", name_j)
+        
         name_j += 1
     
-    #if name_j== len(deck_nas2) -1:
-    #   print("Don't have this model right now !")
-
-
-
     # begin process data:
     #..get the shapes of monthly data
     shape_lat = len(inputVar_pi['lat'])
@@ -231,10 +241,10 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     print('Abr simple global-mean-gmt(K): ', nanmean(gmt_abr))
 
     #..pi-Control Variables: LWP, tas(gmt), SST, p-e, LTS, subsidence
-    LWP  = array(inputVar_pi['clwvi']) - array(inputVar_pi['clivi'])  #..units in kg m^-2
+    LWP = array(inputVar_pi['clwvi']) - array(inputVar_pi['clivi'])  #..units in kg m^-2
 
-    gmt  = array(inputVar_pi['tas'])
-    SST  = array(inputVar_pi['sfc_T'])
+    gmt = array(inputVar_pi['tas'])
+    SST = array(inputVar_pi['sfc_T'])
 
     Precip = array(inputVar_pi['P'])* (24.*60.*60.)    #..Precipitation. Convert the units from kg m^-2 s^-1 -> mm*day^-1
     
@@ -244,8 +254,8 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     
     MC = Precip - Eva1   #..Moisture Convergence calculated from pi-Control's P - E, Units in mm day^-1
     
-    Twp  = array(inputVar_pi['clwvi'])
-    Iwp  = array(inputVar_pi['clivi'])
+    Twp = array(inputVar_pi['clwvi'])
+    Iwp = array(inputVar_pi['clivi'])
 
     print('pi-C simple global mean-gmt(K): ', nanmean(gmt))
     if np.min(LWP)<-1e-5:
@@ -255,30 +265,30 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     #..abrupt4xCO2
     # Lower Tropospheric Stability:
     k  = 0.286
-    theta_700_abr  = array(inputVar_abr['T_700']) * (100000./70000.)** k
+    theta_700_abr = array(inputVar_abr['T_700']) * (100000./70000.)** k
     theta_skin_abr = array(inputVar_abr['sfc_T']) * (100000./ array(inputVar_abr['sfc_P'])) **k
-    LTS_m_abr  = theta_700_abr - theta_skin_abr
+    LTS_m_abr = theta_700_abr - theta_skin_abr
 
     #..Subtract the outliers in T_700 and LTS_m, 'nan' comes from missing T_700 data
-    LTS_e_abr  = ma.masked_where(theta_700_abr >= 500, LTS_m_abr)
+    LTS_e_abr = ma.masked_where(theta_700_abr >= 500, LTS_m_abr)
 
 
     # Meteorology Subsidence at 500 hPa, units in Pa s^-1:
-    Subsidence_abr =  array(inputVar_abr['sub'])
+    Subsidence_abr = array(inputVar_abr['sub'])
 
 
     #..pi-Control 
     # Lower Tropospheric Stability:
     theta_700  = array(inputVar_pi['T_700']) * (100000./70000.)** k
     theta_skin = array(inputVar_pi['sfc_T']) * (100000./ array(inputVar_pi['sfc_P'])) **k
-    LTS_m  = theta_700 - theta_skin
+    LTS_m = theta_700 - theta_skin
 
     #..Subtract the outliers in T_700 and LTS_m 
-    LTS_e  = ma.masked_where(theta_700 >= 500, LTS_m)
+    LTS_e = ma.masked_where(theta_700 >= 500, LTS_m)
 
 
     #..Meteological Subsidence at 500 hPa, units in Pa s^-1:
-    Subsidence =  array(inputVar_pi['sub'])
+    Subsidence = array(inputVar_pi['sub'])
 
 
     # define Dictionary to store: CCFs(4), gmt, other variables:
@@ -301,11 +311,11 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     shape_yr_abr =  shape_time_abr//12
 
 
-    layover_yr_abr =  zeros((len(datavar_nas), shape_yr_abr, shape_latSO, shape_lon))
-    layover_yr_pi  =  zeros((len(datavar_nas), shape_yr_pi, shape_latSO, shape_lon))
+    layover_yr_abr = zeros((len(datavar_nas), shape_yr_abr, shape_latSO, shape_lon))
+    layover_yr_pi = zeros((len(datavar_nas), shape_yr_pi, shape_latSO, shape_lon))
 
-    layover_yr_abr_gmt =  zeros((shape_yr_abr, shape_lat, shape_lon))
-    layover_yr_pi_gmt =  zeros((shape_yr_pi, shape_lat, shape_lon))
+    layover_yr_abr_gmt = zeros((shape_yr_abr, shape_lat, shape_lon))
+    layover_yr_pi_gmt = zeros((shape_yr_pi, shape_lat, shape_lon))
 
 
     for a in range(len(datavar_nas)):
@@ -359,17 +369,17 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
 
     for b in range(len(datavar_nas)):
 
-        dict1_yr_bin_abr[datavar_nas[b]+'_yr_bin']  =   binned_cySouthOcean5(dict1_abr_yr[datavar_nas[b]+'_yr'], lat_array, lon_array)
-        dict1_yr_bin_PI[datavar_nas[b]+'_yr_bin']   =  binned_cySouthOcean5(dict1_PI_yr[datavar_nas[b]+'_yr'], lat_array, lon_array)
+        dict1_yr_bin_abr[datavar_nas[b]+'_yr_bin'] = binned_cySouthOcean5(dict1_abr_yr[datavar_nas[b]+'_yr'], lat_array, lon_array)
+        dict1_yr_bin_PI[datavar_nas[b]+'_yr_bin'] = binned_cySouthOcean5(dict1_PI_yr[datavar_nas[b]+'_yr'], lat_array, lon_array)
         print(datavar_nas[b], " finished calculating annually-mean bin array") 
 
-    dict1_yr_bin_abr['gmt_yr_bin']   =  binned_cyGlobal5(dict1_abr_yr['gmt_yr'], lat_array1, lon_array)
-    dict1_yr_bin_PI['gmt_yr_bin']   =  binned_cyGlobal5(dict1_PI_yr['gmt_yr'], lat_array1, lon_array)
+    dict1_yr_bin_abr['gmt_yr_bin'] = binned_cyGlobal5(dict1_abr_yr['gmt_yr'], lat_array1, lon_array)
+    dict1_yr_bin_PI['gmt_yr_bin'] = binned_cyGlobal5(dict1_PI_yr['gmt_yr'], lat_array1, lon_array)
 
     print('gmt_yr_bin', " finish calc annually-mean binned gmt")
 
-    dict1_abr_var['dict1_yr_bin_abr']  =  dict1_yr_bin_abr
-    dict1_PI_var['dict1_yr_bin_PI']  = dict1_yr_bin_PI
+    dict1_abr_var['dict1_yr_bin_abr'] = dict1_yr_bin_abr
+    dict1_PI_var['dict1_yr_bin_PI'] = dict1_yr_bin_PI
 
 
 
@@ -388,8 +398,8 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
 
     print('gmt_mon_bin', " finish calc monthly-mean binned gmt")
 
-    dict1_abr_var['dict1_mon_bin_abr']  = dict1_mon_bin_abr
-    dict1_PI_var['dict1_mon_bin_PI']  = dict1_mon_bin_PI
+    dict1_abr_var['dict1_mon_bin_abr'] = dict1_mon_bin_abr
+    dict1_PI_var['dict1_mon_bin_PI'] = dict1_mon_bin_PI
 
 
     # input the shapes of year and month of pi&abr exper into the raw data dictionaries:
@@ -436,8 +446,10 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     dict2_predi_ano_PI = {}  # need a climatological arrays of variables
     dict2_predi_ano_abr = {}  # need a climatological arrays of variables
     
-    dict2_predi_nor_PI = {} # standardized anomalies of variables
+    dict2_predi_nor_PI = {}  # standardized anomalies of variables
     dict2_predi_nor_abr = {}
+    
+    dict2_predi = {}
     
     #..Ravel binned array /Standardized data ARRAY :
     for d in range(len(datavar_nas)):
@@ -446,36 +458,44 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
         dict2_predi_fla_abr[datavar_nas[d]] = dict1_mon_bin_abr[datavar_nas[d]+'_mon_bin'].flatten()
 
         # anomalies in the raw units:
-        # dict2_predi_ano_PI[datavar_nas[d]] = dict2_predi_fla_PI[datavar_nas[d]] - climatological_Area_mean(t)   # Unfinished
-        # dict2_predi_ano_abr[datavar_nas[d]] = dict2_predi_fla_abr[datavar_nas[d]] - climatological_Area_mean(t)   # Unfinished
+        # 'dict2_predi' as a dict for reference-period (mean state) data
+        dict2_predi[datavar_nas[d]] = deepcopy(dict1_mon_bin_PI[datavar_nas[d]+'_mon_bin'])
+        
+        dict2_predi_ano_PI[datavar_nas[d]] = dict2_predi_fla_PI[datavar_nas[d]] - nanmean(area_mean(dict2_predi[datavar_nas[d]], y_range, x_range))
+        dict2_predi_ano_abr[datavar_nas[d]] = dict2_predi_fla_abr[datavar_nas[d]] - nanmean(area_mean(dict2_predi[datavar_nas[d]], y_range,x_range))
         
         # normalized stardard deviation in unit of './std':
-        # dict2_predi_nor_PI[datavar_nas[d]] = dict2_predi_ano_PI[datavar_nas[d]] / nanstd(Area_mean(climatological_period_data(t, y, x)))
-        # dict2_predi_nor_abr[datavar_nas[d]] =  dict2_predi_ano_abr[datavar_nas[d]] / nanstd(Area_mean(climatological_period_data(t, y, x)))
+        dict2_predi_nor_PI[datavar_nas[d]] = dict2_predi_ano_PI[datavar_nas[d]] / nanstd(dict2_predi_fla_PI[datavar_nas[d]])  # divided by monthly standard variance
+        dict2_predi_nor_abr[datavar_nas[d]] = dict2_predi_ano_abr[datavar_nas[d]] / nanstd(dict2_predi_fla_PI[datavar_nas[d]])
     
-    #..Use area_mean method, 'np.repeat' and 'np.tile' to reproduce gmt area-mean Array as the same shape as other flattened variables
-    GMT_pi_mon  = area_mean(dict1_mon_bin_PI['gmt_mon_bin'], s_range,  x_range)   #..ALL in shape : shape_yr_abr(single dimension)
-    ## dict2_predi_fla_PI['gmt']  = GMT_pi.repeat(730)   # something wrong when calc dX_dTg(dCCFS_dgmt)
-    GMT_abr_mon  = area_mean(dict1_mon_bin_abr['gmt_mon_bin'], s_range, x_range)   #..ALL in shape : shape_yr_abr(single dimension)
-    ## dict2_predi_fla_abr['gmt'] = GMT_abr.repeat(730)
+    #.. global-mean surface air temperature
+    # shape of 'GMT' is the length of time (t)
+    dict2_predi_fla_PI['gmt'] = area_mean(dict1_mon_bin_PI['gmt_mon_bin'], s_range, x_range)
+    dict2_predi_fla_abr['gmt'] = area_mean(dict1_mon_bin_abr['gmt_mon_bin'], s_range, x_range)
+
+    dict2_predi['gmt'] = deepcopy(dict2_predi_fla_PI['gmt'])
+    shape_whole_period = asarray(dict2_predi['gmt'].shape[0])
     
-    dict2_predi_fla_PI['gmt'] = dict1_mon_bin_PI['gmt_mon_bin'][:,1:11,:].flatten()
-    dict2_predi_fla_abr['gmt'] = dict1_mon_bin_abr['gmt_mon_bin'][:,1:11,:].flatten()
+    dict2_predi_ano_abr['gmt'] = dict2_predi_fla_abr['gmt'] - np.nanmean(dict2_predi['gmt'])  # shape in (t, lat, lon).flatten()
+    dict2_predi_ano_PI['gmt'] = dict2_predi_fla_PI['gmt'] - np.nanmean(dict2_predi['gmt'])  # shape in (t, lat, lon).flatten()
+    
+    dict2_predi_nor_abr['gmt'] = dict2_predi_ano_abr['gmt'] / np.nanstd(dict2_predi_fla_PI['gmt'])
+    dict2_predi_nor_PI['gmt'] = dict2_predi_ano_PI['gmt'] / np.nanstd(dict2_predi_fla_PI['gmt'])
 
     # shape of flattened array:
+    metric_training = deepcopy(dict2_predi_ano_PI)
+    metric_predict = deepcopy(dict2_predi_ano_abr)
+    
     shape_fla_PI = dict2_predi_fla_PI['LWP'].shape
     shape_fla_abr = dict2_predi_fla_abr['LWP'].shape
-
     
     # For pluging in different sets of cut-off(TR_sst & TR_sub) into LRM(s):
+    # split cut-off: TR_sst and TR_sub for N1 and N2 slices in sort of self-defined (Mon)variable ranges
     
-    ##  split cut-off: TR_sst and TR_sub for N1 and N2 slices in sort of self-defined (Mon)variable ranges
+    YY_ay_gcm = metric_training['SST']
+    XX_ay_gcm = metric_training['SUB']
 
-    YY_ay_gcm  = dict1_mon_bin_PI['SST_mon_bin']
-    XX_ay_gcm  = dict1_mon_bin_PI['SUB_mon_bin']
-
-
-    y_gcm = linspace(nanpercentile(YY_ay_gcm, 5), nanpercentile(YY_ay_gcm, 99), 31)   #..supposed to be changed, 31
+    y_gcm = linspace(nanpercentile(YY_ay_gcm, 2), nanpercentile(YY_ay_gcm, 99), 31)   #..supposed to be changed, 31
     x_gcm = linspace(nanpercentile(XX_ay_gcm, 5), nanpercentile(XX_ay_gcm, 95), 22)   #.., 22
 
     print("slice SUB bound:  ", x_gcm)
@@ -484,8 +504,8 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
 
     # define cut-off:
 
-    TR_sst =  full(len(y_gcm)-1, NaN)
-    TR_sub =  full(len(x_gcm) -1, NaN)
+    TR_sst = full(len(y_gcm)-1, NaN)
+    TR_sub = full(len(x_gcm) -1, NaN)
 
     for c in arange(len(y_gcm)-1):
         TR_sst[c]  = (y_gcm[c] + y_gcm[c+1]) /2. 
@@ -495,34 +515,34 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     print("TR_sub : ",TR_sub )
     
     #..storage N1*N2 shape output result:
-    s1  = zeros((len(TR_sst), len(TR_sub)))
-    s2  = zeros((len(TR_sst), len(TR_sub)))
-    s3  = zeros((len(TR_sst), len(TR_sub)))
-    s4  = zeros((len(TR_sst), len(TR_sub)))  
-    s5  = zeros((len(TR_sst), len(TR_sub)))   #.. for store training data R^2: coefficient of determination
+    s1 = zeros((len(TR_sst), len(TR_sub)))
+    s2 = zeros((len(TR_sst), len(TR_sub)))
+    s3 = zeros((len(TR_sst), len(TR_sub)))
+    s4 = zeros((len(TR_sst), len(TR_sub)))  
+    s5 = zeros((len(TR_sst), len(TR_sub)))   #.. for store training data R^2: coefficient of determination
     
-    cut_off1  = zeros((len(TR_sst), len(TR_sub)))   #..2d, len(y_gcm)-1 * len(x_gcm)-1
-    cut_off2  = zeros((len(TR_sst), len(TR_sub)))
+    cut_off1 = zeros((len(TR_sst), len(TR_sub)))   #..2d, len(y_gcm)-1 * len(x_gcm)-1
+    cut_off2 = zeros((len(TR_sst), len(TR_sub)))
     coefa = []
     coefb = []
-    coefc =  []
+    coefc = []
     coefd = []
 
     # plug the cut-off into LRM tring function:
     for i in range(len(y_gcm)-1):
         for j in range(len(x_gcm)-1):
-            s1[i,j], s2[i,j], s3[i,j], s4[i,j], s5[i,j], cut_off1[i,j], cut_off2[i,j], coef_a, coef_b, coef_c, coef_d = train_LRM_4(TR_sst[i], TR_sub[j], dict2_predi_fla_PI, dict2_predi_fla_abr, shape_fla_PI, shape_fla_abr)
+            s1[i,j], s2[i,j], s3[i,j], s4[i,j], s5[i,j], cut_off1[i,j], cut_off2[i,j], coef_a, coef_b, coef_c, coef_d = train_LRM_4(TR_sst[i], TR_sub[j], metric_training, metric_predict, shape_fla_PI, shape_fla_abr)
     
             print('number:', i+j+ 2)
-        
+            
             coefa.append(coef_a)
             coefb.append(coef_b)
             coefc.append(coef_c)
             coefd.append(coef_d)
-    
+        
     # find the least bias and its position:
     min_pedict_absbias_id = unravel_index(nanargmin(s1, axis=None), s1.shape)
-    max_training_R2_id  = unravel_index(nanargmax(s5, axis=None),  s5.shape)
+    max_training_R2_id = unravel_index(nanargmax(s5, axis=None),  s5.shape)
     
     TR_minabias_SST = y_gcm[min_pedict_absbias_id[0]]
     TR_minabias_SUB = x_gcm[min_pedict_absbias_id[1]]
@@ -535,7 +555,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis= 'forecasting'):
     # Storage data into .npz file for each GCMs
     WD = '/glade/scratch/chuyan/CMIP_output/'
     
-    savez(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y_Aug30th', bound_y = y_gcm,bound_x = x_gcm, stats_1 = s1, stats_2 = s2, stats_3 = s3, stats_4 = s4, stats_5 = s5, cut_off1=cut_off1, cut_off2=cut_off2, TR_minabias_SST=TR_minabias_SST, TR_minabias_SUB=TR_minabias_SUB, TR_maxR2_SST=TR_maxR2_SST, TR_maxR2_SUB=TR_maxR2_SUB,  coef_a = coefa, coef_b = coefb, coef_c = coefc, coefd = coefd)
+    savez(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y_Sep9th_anomalies', bound_y = y_gcm,bound_x = x_gcm, stats_1 = s1, stats_2 = s2, stats_3 = s3, stats_4 = s4, stats_5 = s5, cut_off1=cut_off1, cut_off2=cut_off2, TR_minabias_SST=TR_minabias_SST, TR_minabias_SUB=TR_minabias_SUB, TR_maxR2_SST=TR_maxR2_SST, TR_maxR2_SUB=TR_maxR2_SUB,  coef_a = coefa, coef_b = coefb, coef_c = coefc, coefd = coefd)
     return None
 
 
@@ -549,7 +569,7 @@ def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_train
     
     # Process Training data
     #.. Subtract 'nan' in data, shape1 -> shape2(without 'nan' number) points and shape5('nan' number)
-    ind1 = isnan(training_data['LTS']) == False 
+    ind1 = isnan(training_data['LTS']) == False
     ind_true =  nonzero(ind1 ==True)
     #..Sign the the indexing into YB, or YB value will have a big changes
     ind_false =  nonzero(ind1 ==False)
@@ -560,10 +580,10 @@ def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_train
     # Split data points with skin Temperature < / >=TR_sst & Subsidence@500mb <= / > TR_sub (upward motion / downward motion): 
 
     # shape1 split into shape3(smaller.TR_sst & up)\shape4(larger.equal.TR_sst & up)\shape5(smaller.TR_sst & down)\shape6(larger.equal.TR_sst & down)
-    ind_sstlt_up =  nonzero( (training_data['SST'] <  cut_off1) & (training_data['SUB'] <=  cut_off2))
-    ind_sstle_up =  nonzero( (training_data['SST'] >=  cut_off1) & (training_data['SUB'] <=  cut_off2))
-    ind_sstlt_dw  = nonzero((training_data['SST'] <  cut_off1) &  (training_data['SUB'] >   cut_off2 ))
-    ind_sstle_dw  = nonzero((training_data['SST'] >=  cut_off1) & (training_data['SUB'] >   cut_off2 ))
+    ind_sstlt_up = nonzero( (training_data['SST'] < cut_off1) & (training_data['SUB'] <= cut_off2))
+    ind_sstle_up = nonzero( (training_data['SST'] >= cut_off1) & (training_data['SUB'] <= cut_off2))
+    ind_sstlt_dw = nonzero((training_data['SST'] < cut_off1) &  (training_data['SUB'] > cut_off2 ))
+    ind_sstle_dw = nonzero((training_data['SST'] >= cut_off1) & (training_data['SUB'] > cut_off2 ))
 
     
     # shape7:the intersection of places where has LTS value and skin_T < TR_sst & SUB500 <= TR_sub
@@ -780,15 +800,15 @@ def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_train
     # sstle_dwiwp_predi  = dot(deffi_iwp.reshape(1,-1), XX_10) + dint_iwp
     
     # emsembling into 'YB' predicted data array for Pi:
-    YB[ind7] =  sstlt_uplwp_predi
-    YB[ind8] =  sstle_uplwp_predi
-    YB[ind9] =  sstlt_dwlwp_predi
-    YB[ind10] =  sstle_dwlwp_predi
+    YB[ind7] = sstlt_uplwp_predi
+    YB[ind8] = sstle_uplwp_predi
+    YB[ind9] = sstlt_dwlwp_predi
+    YB[ind10] = sstle_dwlwp_predi
     
-    # YB_iwp[ind7]  = sstlt_upiwp_predi
-    # YB_iwp[ind8] =  sstle_upiwp_predi
-    # YB_iwp[ind9]  = sstlt_dwiwp_predi
-    # YB_iwp[ind10]  =  sstle_dwiwp_predi
+    # YB_iwp[ind7] = sstlt_upiwp_predi
+    # YB_iwp[ind8] = sstle_upiwp_predi
+    # YB_iwp[ind9] = sstlt_dwiwp_predi
+    # YB_iwp[ind10] =  sstle_dwiwp_predi
     
     
     # Test performance for training data:
@@ -909,9 +929,9 @@ def train_LRM_4(cut_off1, cut_off2, training_data, predict_data, shape_fla_train
     
 def stats_matrics_Visualization(modn = 'IPSLCM6ALR'):
     
-    WD = '/glade/scratch/chuyan/CMIP6_output/'
+    WD = '/glade/scratch/chuyan/CMIP_output/'
     
-    folder =  glob.glob(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y_Aug30th'+'.npz')
+    folder =  glob.glob(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y_Sep9th'+'.npz')
     print(folder)
     
     output_ARRAY  =  np.load(folder[0], allow_pickle=True)  # str(TR_sst)
@@ -924,7 +944,7 @@ def stats_matrics_Visualization(modn = 'IPSLCM6ALR'):
 
     #..defined a proper LWP ticks within its range
     p10_valuespace1 = np.nanpercentile(output_stat1, 25.) - np.nanpercentile(output_stat1, 15.)
-    levels_value1 = np.linspace(np.nanpercentile(output_stat1, 1.5)-p10_valuespace1, np.nanpercentile(output_stat1, 99.5) + p10_valuespace1, 164)  # arange(0.368, 0.534, 0.002) 
+    levels_value1 = np.linspace(np.nanpercentile(output_stat1, 1.5)-p10_valuespace1, np.nanpercentile(output_stat1, 99.5) + p10_valuespace1,164)  # arange(0.368, 0.534, 0.002) 
     # print(levels_value1)
     p10_valuespace2 = np.nanpercentile(output_stat2, 25.) - np.nanpercentile(output_stat2, 15.)
     levels_value2 = np.linspace(np.nanpercentile(output_stat2, 1.5)-p10_valuespace2, np.nanpercentile(output_stat2, 99.5) + p10_valuespace2, 164)
@@ -960,7 +980,7 @@ def stats_matrics_Visualization(modn = 'IPSLCM6ALR'):
 
     plt.savefig(path6 + "Observational_bias.jpg" )
     
-    
+
     return None
 
 

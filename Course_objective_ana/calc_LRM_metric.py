@@ -25,10 +25,13 @@ from get_LWPCMIP5data import *
 from get_LWPCMIP6data import *
 from fitLRM_cy1 import *
 from fitLRM_cy2 import *
-from fitLRM_cy4 import *
+# from fitLRM_cy4 import *
+
 from useful_func_cy import *
 from calc_Radiation_LRM_1 import *
 from calc_Radiation_LRM_2 import *
+
+
 
 def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     # get variable data
@@ -289,32 +292,32 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
 
 
     ###..Put data into 'fitLRM' FUNCTION to get predicted LWP splitted by 'Tr_sst'/'Tr_sub' infos_models:
-    TR_sst = THRESHOLD_sst   ###.. Important line
-    TR_sub = THRESHOLD_sub   ###.threshold of 500 mb Subsidences
+    TR_sst = THRESHOLD_sst   ###.. threshold skin T
+    TR_sub = THRESHOLD_sub   ###.. threshold of 500 mb Subsidence
     WD = '/glade/scratch/chuyan/CMIP_output/CMIP_lrm_RESULT/'
     
     
-    rawdata_dict1 = fitLRM(C_dict = B_dict, TR_sst=TR_sst, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)
-    rawdata_dict3 = p4plot1(s_range=s_range, y_range=y_range, x_range=x_range, shape_yr_pi=shape_yr_pi, shape_yr_abr=shape_yr_abr, rawdata_dict=rawdata_dict1)
+    rawdata_dict1 = fitLRM3(C_dict = B_dict, TR_sst=TR_sst, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)
+    rawdata_dict3 = p4plot1(s_range=s_range, y_range=y_range, x_range=x_range, Mean_training = rawdata_dict1['Mean_training'], Stdev_training = rawdata_dict1['Stdev_training'], shape_yr_pi=shape_yr_pi, shape_yr_abr=shape_yr_abr, rawdata_dict=rawdata_dict1)
 
     rawdata_dict3['TR_sst'] = THRESHOLD_sst
 
-    # savez(WD+C_dict['model_data']['modn']+'_r2r1_hotcold(Jan)_(largestpiR2)_Aug30th_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
+    savez(WD+C_dict['model_data']['modn']+'_r2r1_hotcold(Jan)_(largestpiR2)_Sep9th_Normalized_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
     
     #.. best fit save_2lrm command:
-    savez(WD+C_dict['model_data']['modn']+'_r1r1_(Jan)_(largestpiR2)_Aug30th_'+'0.0K'+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
+    # savez(WD+C_dict['model_data']['modn']+'_r1r1_(Jan)_(largestpiR2)_Sep9th_Normalized_'+'0.0K'+'_dats', model_data = C_dict['model_data'], rawdata_dict = rawdata_dict3, Mean_LWP_training = rawdata_dict1['Mean_training'], Stdev_LWP_training= rawdata_dict1['Stdev_training'])
     
     
-    rawdata_dict2 = fitLRM2(C_dict = D_dict, TR_sst=TR_sst, TR_sub=TR_sub, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)
-    rawdata_dict4 = p4plot1(s_range=s_range, y_range=y_range, x_range=x_range, shape_yr_pi=shape_yr_pi, shape_yr_abr=shape_yr_abr, rawdata_dict=rawdata_dict2)
+    rawdata_dict2 = fitLRM4(C_dict = D_dict, TR_sst=TR_sst, TR_sub=TR_sub, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)
+    rawdata_dict4 = p4plot1(s_range=s_range, y_range=y_range, x_range=x_range,  Mean_training = rawdata_dict1['Mean_training'], Stdev_training = rawdata_dict1['Stdev_training'], shape_yr_pi=shape_yr_pi, shape_yr_abr=shape_yr_abr, rawdata_dict=rawdata_dict2)
 
     rawdata_dict4['TR_sst'] = THRESHOLD_sst
     rawdata_dict4['TR_sub'] = THRESHOLD_sub
 
-    # savez(WD+C_dict['model_data']['modn']+'_r4r1(Jan)_(largestpiR2)_Aug30th_'+str(round(TR_sst, 2))+'K_'+'ud'+str(round(TR_sub*100, 2))+'_dats', model_data =  C_dict['model_data'], rawdata_dict = rawdata_dict4)
+    savez(WD+C_dict['model_data']['modn']+'_r4r1(Jan)_(largestpiR2)_Sep9th_Normalized_'+str(round(TR_sst, 2))+'K_'+'ud'+str(round(TR_sub*100, 2))+'_dats', model_data =  C_dict['model_data'], rawdata_dict = rawdata_dict4)
     
     #.. best fit save_4lrm command:
-    savez(WD+C_dict['model_data']['modn']+'_r2r1_updown(Jan)_(largestpiR2)_Aug30th_'+ '0.0K_ud'+str(round(TR_sub*100, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict4)
+    # savez(WD+C_dict['model_data']['modn']+'_r2r1_updown(Jan)_(largestpiR2)_Sep9th_Normalized_'+ '0.0K_ud'+str(round(TR_sub*100, 2))+'_dats', model_data = C_dict['model_data'], rawdata_dict = rawdata_dict4, Mean_LWP_training = rawdata_dict2['Mean_training'], Stdev_LWP_training= rawdata_dict2['Stdev_training'])
     
 
     return None

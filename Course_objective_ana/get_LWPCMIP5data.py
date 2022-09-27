@@ -36,24 +36,9 @@ def get_LWPCMIP5(modn='', consort='', cmip='', exper='', ensmem='', typevar='Amo
     #..abrupt4xCO2
     exper = 'abrupt4xCO2'
     
-    if modn == 'HadGEM3-GC31-LL':
-        ensmem = 'r1i1p1f3'
-
-        TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='pr',cmip=cmip,exper=exper,ensmem=ensmem, typevar=typevar,time1=[1,1,15], time2=[3349, 12, 15])[-1]
-        time1=[int(min(TEST1_time[:,0])),1,15]
-        time2=[int(min(TEST1_time[:,0]))+149, 12, 15]
-    
-    elif modn == 'EC-Earth3':
-        ensmem = 'r3i1p1f1'
-
-        TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='pr',cmip=cmip,exper=exper,ensmem=ensmem, typevar=typevar,time1=[1,1,1], time2=[3349, 12, 31])[-1]
-        time1=[int(min(TEST1_time[:,0])),1,1]
-        time2=[int(min(TEST1_time[:,0]))+149, 12, 31]
-    
-    else:
-        TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='pr',cmip=cmip,exper=exper,ensmem=ensmem, typevar=typevar, time1=[1,1,1], time2=[3349, 12, 31])[-1]
-        time1=[int(min(TEST1_time[:,0])),1,1]
-        time2=[int(min(TEST1_time[:,0]))+149, 12, 31]
+    TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='pr',cmip=cmip,exper=exper,ensmem=ensmem, typevar=typevar, time1=[1,1,1], time2=[3349, 12, 31])[-1]
+    time1=[int(min(TEST1_time[:,0])),1,1]
+    time2=[int(min(TEST1_time[:,0]))+149, 12, 31]
         
     print("retrieve time: ", time1, time2)
         
@@ -74,7 +59,7 @@ def get_LWPCMIP5(modn='', consort='', cmip='', exper='', ensmem='', typevar='Amo
     tas_abr         = read_var_mod(modn=modn, consort=consort, varnm='tas', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, read_p=False, time1= time1, time2= time2)[0]
 
     P_abr           = read_var_mod(modn=modn, consort=consort, varnm='pr', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, read_p=False, time1= time1, time2= time2)[0]
-    E_abr           = read_var_mod(modn=modn, consort=consort, varnm='evspsbl', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, read_p=False, time1= time1, time2= time2)[0]
+    E_abr           = read_var_mod(modn=modn, consort=consort, varnm='hfls', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, read_p=False, time1= time1, time2= time2)[0]
 
     
     rsdt_abr        = read_var_mod(modn=modn, consort=consort, varnm='rsdt', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, read_p=False, time1= time1, time2= time2)[0]
@@ -90,24 +75,12 @@ def get_LWPCMIP5(modn='', consort='', cmip='', exper='', ensmem='', typevar='Amo
     #..pi-Control
     exper = 'piControl'
     
-    if modn == 'HadGEM3-GC31-LL':
-        ensmem = 'r1i1p1f1'
-        TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip, exper=exper,ensmem=ensmem, typevar=typevar,time1=[1,1,15], time2=[8000,12,15])[-1]
-        timep1=[int(min(TEST2_time[:,0])), 1,15]   #.. max-799
-        timep2=[int(min(TEST2_time[:,0]))+98, 12, 15]  #.. max-750
-
-    elif modn == 'EC-Earth3':
-        ensmem = 'r1i1p1f1'
-        TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip, exper=exper,ensmem=ensmem, typevar=typevar,time1=[1,1,1], time2=[8000,12,31])[-1]
+    if modn == 'IPSL-CM5A-LR':
+        ensmem = 'r1i1p1'
+        TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='hfls',cmip=cmip, exper=exper,ensmem=ensmem, typevar=typevar, read_p= False, time1=[1,1,1], time2=[8000,12,31])[-1]
         timep1=[int(min(TEST2_time[:,0])), 1, 1]   #.. max-799
         timep2=[int(min(TEST2_time[:,0]))+98, 12, 31]  #.. max-750
-
-    elif modn == 'NESM3':
-        ensmem = 'r1i1p1f1'
-        TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ta',cmip=cmip, exper=exper,ensmem=ensmem, typevar=typevar, read_p= True, time1=[1,1,1], time2=[8000,12,31])[-1]
-        timep1=[int(min(TEST2_time[:,0])), 1, 1]   #.. max-799
-        timep2=[int(min(TEST2_time[:,0]))+98, 12, 31]  #.. max-750
-    
+        
     else:
 
         TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ps',cmip=cmip, exper=exper,ensmem=ensmem, typevar=typevar,time1=[1,1,1], time2=[8000,12,31])[-1]
@@ -136,9 +109,9 @@ def get_LWPCMIP5(modn='', consort='', cmip='', exper='', ensmem='', typevar='Amo
     #..2-m air Temperature, for 'gmt'
 
     P_pi           = read_var_mod(modn= modn, consort= consort, varnm='pr', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, read_p=False, time1= timep1, time2= timep2)[0]
-    #..Precipitation, Units in kg m^-2 s^-1 = mm *s^-1
-    E_pi           = read_var_mod(modn= modn, consort= consort, varnm='evspsbl', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, read_p=False, time1= timep1, time2= timep2)[0]
-    #..Evaporations, Units also in kg m^-2 s^-1 = mm *s^-1
+    #..Precipitation, Units in kg m^-2 s^-1 = mm * s^-1
+    E_pi           = read_var_mod(modn= modn, consort= consort, varnm='hfls', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, read_p=False, time1= timep1, time2= timep2)[0]
+    #..Evaporations, Units in W m^-2 = J * m^-2 * s^-1
 
     rsdt_pi        = read_var_mod(modn=modn, consort=consort, varnm='rsdt', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, read_p=False, time1= timep1, time2= timep2)[0]
     rsut_pi        = read_var_mod(modn=modn, consort=consort, varnm='rsut', cmip=cmip, exper= exper, ensmem=ensmem, typevar=typevar, read_p=False, time1= timep1, time2= timep2)[0]
