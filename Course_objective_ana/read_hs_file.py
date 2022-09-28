@@ -40,37 +40,37 @@ def read_var_mod(modn='CNRM-CM6-1', consort='CNRM-CERFACS', varnm='clwvi', cmip=
     ds_flag = 2
     if cmip == 'cmip6':
         try:
-            data, P, lat, lon, time = read_hs('/glade/scratch/chuyan/CMIP6data/', varnm, 
+            data, P, lat, lon, time, filled_value = read_hs('/glade/scratch/chuyan/CMIP6data/', varnm, 
                     read_p=read_p, modnm=modn, exper=exper, ensmem=ensmem, typevar=typevar, time1=time1, time2=time2, ds_flag = ds_flag)
         except UnboundLocalError:
             ds_flag = 1
             print('TRYING CISL FILES')
-            data, P, lat, lon, time = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
+            data, P, lat, lon, time, filled_value = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
 
         except IndexError:
             ds_flag = 1
             print('LOCAL FILES Indexing Error')
-            data, P, lat, lon, time = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
+            data, P, lat, lon, time, filled_value = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
             
     ds_flag = 2
     if cmip == 'cmip5':
         try:
-            data, P, lat, lon, time = read_hs('/glade/scratch/chuyan/CMIP5data/', varnm, 
+            data, P, lat, lon, time, filled_value = read_hs('/glade/scratch/chuyan/CMIP5data/', varnm, 
                     read_p=read_p, modnm=modn, exper=exper, ensmem=ensmem, typevar=typevar, time1=time1, time2=time2, ds_flag = ds_flag)
         except UnboundLocalError:
             ds_flag = 1
             print('TRYING CISL FILES')
-            data, P, lat, lon, time = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
+            data, P, lat, lon, time, filled_value = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
 
         except IndexError:
             ds_flag = 1
             print('LOCAL FILES Indexing Error')
-            data, P, lat, lon, time = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
+            data, P, lat, lon, time, filled_value = read_hs(pth, varnm, read_p=read_p, modnm=modn, time1=time1, time2=time2, ds_flag = ds_flag)
     if read_p:
         if asarray(P).ndim != 1:
             P = concatenate(P, axis=0)  # P is duplicated here. Modified on Aug 28th
 
-    dataOUT = concatenate(data, axis=0)
+    dataOUT = ma.concatenate(data, axis=0)
     lon2 = lon[:]*1.
     lon2[lon2 > 180] = lon2[lon2 > 180]-360.
     ind = argsort(lon2)
@@ -80,9 +80,13 @@ def read_var_mod(modn='CNRM-CM6-1', consort='CNRM-CERFACS', varnm='clwvi', cmip=
         dataOUT = dataOUT[:, :, :, ind]
     lon2 = lon2[ind]
     timeo = concatenate(time, axis=0)
-    dataOUT, time = get_unique_time(dataOUT, timeo)
-    print(dataOUT.shape)                                                       # 5
-    return dataOUT.filled(fill_value=NaN), P, lat[:].filled(fill_value=NaN), lon2.filled(fill_value=NaN), time  # concatenate(time,axis=0)
+    # Processing 'filled_value':
+    print('type of dataOUT in read_hs_file', type(dataOUT))
+    dataOUT2 = dataOUT * 1.
+    dataOUT2[dataOUT2 == filled_value] = nan
+    dataOUT2, time = get_unique_time(dataOUT2, timeo)
+    print(dataOUT2.shape)                                                       # 5
+    return dataOUT2.filled(fill_value=nan), P, lat[:].filled(fill_value=nan), lon2.filled(fill_value=nan), time  # concatenate(time,axis=0)
 # concatenate(P,axis=0),lat,lon
 
 
@@ -144,9 +148,11 @@ def read_hs(wd, varnm, read_p=False, modnm='', exper='', ensmem='', typevar='', 
             lat = tt['lat']
             lon = tt['lon']
             timeo.append(tt['time'])
+            filled_value = tt['filled_value']
+            
             if read_p == True:
                 P = tt['P']
-    return data, P, lat, lon, timeo
+    return data, P, lat, lon, timeo, filled_value
 
 
 
@@ -163,7 +169,8 @@ def read_hs_file(fn, varnm, time1, time2, read_p=False):
     lon = f.variables[lonvar]
     tvar = 'time'
     tt = f.variables[tvar]
-    
+    filled_value_gcm = f.variables[varnm]._FillValue
+    # print('filled_value_gcm', filled_value_gcm)
     timeout = zeros((len(tt[:]), 3))
     
     for i in range(timeout.shape[0]):
@@ -188,7 +195,7 @@ def read_hs_file(fn, varnm, time1, time2, read_p=False):
             else:
                 P = get_pressure_nc(f, ind)
 
-    return {'data': data, 'P': P, 'lat': lat, 'lon': lon, 'time': timeout[ind, :]}
+    return {'data': data, 'P': P, 'lat': lat, 'lon': lon, 'time': timeout[ind, :], 'filled_value': filled_value_gcm}
 
 
 def get_pressure_nc(f, ind):

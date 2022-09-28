@@ -142,7 +142,7 @@ def run_single_model(N_of_model):
 
     WD = '/glade/scratch/chuyan/CMIP_output/'
 
-    folder = glob.glob(WD+ deck_nas[N_of_model]+'__'+ 'STAT_pi+abr_'+'22x_31y_Sep9th_normalized'+'.npz')
+    folder = glob.glob(WD+ deck_nas[N_of_model]+'__'+ 'STAT_pi+abr_'+'22x_31y_Sep9th_anomalies'+ '.npz')
     # print(folder)
     output_ARRAY = np.load(folder[0], allow_pickle=True)  # str(TR_sst)
     TR_sst1 = output_ARRAY['TR_minabias_SST']

@@ -246,7 +246,7 @@ def read_var_obs_MAClwp(varnm = 'cloudlwp', valid_range1 = [2002, 7, 15], valid_
 
     dataOUT2[dataOUT2 == filled_value_mac] = np.nan
     data_errorOUT2[data_errorOUT2 == filled_value_mac] = np.nan
-
+    
 
     return dataOUT2[:, :, ind_sort], data_errorOUT2[:, :, ind_sort], Mask_arrayOUT[:, :, ind_sort], np.array(lat), np.array(lon2), timeOUT
 

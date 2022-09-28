@@ -282,21 +282,18 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis = 'forecasting'):
     theta_700  = array(inputVar_pi['T_700']) * (100000./70000.)** k
     theta_skin = array(inputVar_pi['sfc_T']) * (100000./ array(inputVar_pi['sfc_P'])) **k
     LTS_m = theta_700 - theta_skin
-
-    #..Subtract the outliers in T_700 and LTS_m 
-    LTS_e = ma.masked_where(theta_700 >= 500, LTS_m)
-
-
+    
+    
     #..Meteological Subsidence at 500 hPa, units in Pa s^-1:
     Subsidence = array(inputVar_pi['sub'])
 
 
     # define Dictionary to store: CCFs(4), gmt, other variables:
-    dict0_PI_var = {'gmt': gmt, 'LWP': LWP, 'TWP': Twp, 'IWP': Iwp, 'SST': SST, 'p_e': MC, 'LTS': LTS_e, 'SUB': Subsidence
-                     ,'lat':lats, 'lon':lons, 'times': times_pi, 'pres':levels}
+    dict0_PI_var = {'gmt': gmt, 'LWP': LWP, 'TWP': Twp, 'IWP': Iwp, 'SST': SST, 'p_e': MC, 'LTS': LTS_m, 'SUB': Subsidence, 
+                    'lat':lats, 'lon':lons, 'times': times_pi, 'pres':levels}
 
-    dict0_abr_var = {'gmt': gmt_abr, 'LWP': LWP_abr, 'TWP': Twp_abr, 'IWP': Iwp_abr, 'SST': SST_abr, 'p_e': MC_abr, 'LTS': LTS_e_abr 
-                     ,'SUB': Subsidence_abr, 'lat':lats, 'lon':lons, 'times': times_abr, 'pres':levels}
+    dict0_abr_var = {'gmt': gmt_abr, 'LWP': LWP_abr, 'TWP': Twp_abr, 'IWP': Iwp_abr, 'SST': SST_abr, 'p_e': MC_abr, 'LTS': LTS_m_abr, 
+                     'SUB': Subsidence_abr, 'lat':lats, 'lon':lons, 'times': times_abr, 'pres':levels}
 
 
 
@@ -555,7 +552,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis = 'forecasting'):
     # Storage data into .npz file for each GCMs
     WD = '/glade/scratch/chuyan/CMIP_output/'
     
-    savez(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y_Sep9th_anomalies', bound_y = y_gcm,bound_x = x_gcm, stats_1 = s1, stats_2 = s2, stats_3 = s3, stats_4 = s4, stats_5 = s5, cut_off1=cut_off1, cut_off2=cut_off2, TR_minabias_SST=TR_minabias_SST, TR_minabias_SUB=TR_minabias_SUB, TR_maxR2_SST=TR_maxR2_SST, TR_maxR2_SUB=TR_maxR2_SUB,  coef_a = coefa, coef_b = coefb, coef_c = coefc, coefd = coefd)
+    savez(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y_Sep9th_normalized', bound_y = y_gcm,bound_x = x_gcm, stats_1 = s1, stats_2 = s2, stats_3 = s3, stats_4 = s4, stats_5 = s5, cut_off1=cut_off1, cut_off2=cut_off2, TR_minabias_SST=TR_minabias_SST, TR_minabias_SUB=TR_minabias_SUB, TR_maxR2_SST=TR_maxR2_SST, TR_maxR2_SUB=TR_maxR2_SUB,  coef_a = coefa, coef_b = coefb, coef_c = coefc, coefd = coefd)
     return None
 
 
