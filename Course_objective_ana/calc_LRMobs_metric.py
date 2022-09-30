@@ -79,9 +79,13 @@ def calc_LRMobs_metrics(valid_range1=[2002, 7, 15], valid_range2=[2016, 12, 31],
     predict_result_2r_updown = fitLRMobs_2_updown(dict_training, dict_predict, TR_sst2, TR_sub2, s_range, y_range, x_range, lats_Array, lons_Array)
     predict_result_2r_hotcold = fitLRMobs_2_hotcold(dict_training, dict_predict, TR_sst2, TR_sub2, s_range, y_range, x_range, lats_Array, lons_Array)
     
-    
-    
     predict_result_4r = fitLRMobs_4(dict_training, dict_predict, TR_sst2, TR_sub2, s_range, y_range, x_range, lats_Array, lons_Array)
+    
+    # Function # 6: Radiation changes
+    ############
+    # coef_array_alpha_cre_pi, coef_array_albedo_pi, coef_array_alpha_cre_abr, coef_array_albedo_abr = calc_Radiation_LRM_1(inputVar_pi, inputVar_abr, TR_albedo = 0.25)
+    coef_array_alpha_cre_training, coef_array_albedo_training, coef_array_alpha_cre_predict, coef_array_albedo_predict = calc_Radiation_OBS_2(s_range, x_range, y_range, valid_range1 = valid_range1, valid_range2 = valid_range2, valid_range3 = valid_range3, valid_range4 = valid_range4)
+    ###########  
     
     return None
 
@@ -148,13 +152,7 @@ def Pre_processing(s_range, x_range, y_range, valid_range1=[2002, 7, 15], valid_
 
     # Crop the regions
     # crop the variables to the Southern Ocean latitude range: (40 ~ 85^o S)
-
-    variable_nas = ['gmt', 'SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre', 'Maskarray_mac']   # all variables names.
-    variable_MERRA2 = ['gmt', 'SST', 'p_e', 'LTS', 'SUB']
-    variable_CCF = ['SST', 'p_e', 'LTS', 'SUB']
-    variable_MAC = ['LWP', 'LWP_statistic_error', 'Maskarray_mac']
-    variable_CERES = ['rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre']
-
+    
     dict1_SO, lat_merra2_so, lon_merra2_so = region_cropping(dict0_var, ['SST', 'p_e', 'LTS', 'SUB'], inputVar_obs['lat_merra2'], inputVar_obs['lon_merra2'], lat_range = [-85., -40.], lon_range = [-180., 180.])
 
     dict1_SO, lat_mac_so, lon_mac_so = region_cropping(dict1_SO, ['LWP', 'LWP_statistic_error', 'Maskarray_mac'], inputVar_obs['lat_mac'], inputVar_obs['lon_mac'], lat_range =[-85., -40.], lon_range = [-180., 180.])
@@ -233,11 +231,11 @@ def Pre_processing(s_range, x_range, y_range, valid_range1=[2002, 7, 15], valid_
     # count the ratio of values that are missing in each bin boxes:
     ratio_array = binned_cySO_count(x_array_mon, inputVar_obs['lat_ceres'], inputVar_obs['lon_ceres'])
 
-    ind_binned_omit = np.where(ratio_array >0.499, True, False)  # ignoring bin boxes which has the ratio of np.nan points over 0.5.
+    ind_binned_omit = np.where(ratio_array>0.499, True, False)  # ignoring bin boxes which has the ratio of np.nan points over 0.5.
 
     shape_ratio_bin = np.asarray(np.nonzero(ind_binned_omit == True)).shape[1] / len(ind_binned_omit.flatten())
     # print(shape_ratio_bin)   # ratio of bin boxes that should be omited
-
+    
     for k in ['SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre']:
         if dict3_SO_mon_bin[k].shape == dict3_SO_mon_bin['LWP'].shape:
             dict3_SO_mon_bin[k][ind_binned_omit] = np.nan
