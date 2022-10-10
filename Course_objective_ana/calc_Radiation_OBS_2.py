@@ -125,12 +125,13 @@ def calc_Radiation_OBS_2(s_range, x_range, y_range, valid_range1 = [2002, 7, 15]
     
     
     # Choose time frame: January:
+    # Choose time frame: January:
     if dict1_SO_training['times'][0,:][1] == 1.0:   # Jan
         shape_mon_training_raw = dict1_SO_training['LWP'][0::12, :,:].shape   # January data shape
         for i in range(len(datavar_nas)):
             dict2_training_var[datavar_nas[i]] = dict1_SO_training[datavar_nas[i]][0::12, :, :]   # January data
     else:
-        shape_mon_training_raw = dict1_SO_training['LWP'][int(13 - dict1_SO_training[0,:][1])::12, :,:].shape 
+        shape_mon_training_raw = dict1_SO_training['LWP'][int(13 - dict1_SO_training['times'][0,:][1])::12, :,:].shape 
         for i in range(len(datavar_nas)):
             dict2_training_var[datavar_nas[i]] = dict1_SO_training[datavar_nas[i]][int(13 - dict1_SO_training['times'][0,:][1])::12, :, :]
 
@@ -140,83 +141,150 @@ def calc_Radiation_OBS_2(s_range, x_range, y_range, valid_range1 = [2002, 7, 15]
             dict2_predict_var[datavar_nas[j]] = dict1_SO_predict[datavar_nas[j]][0::12, :, :]   # January data
 
     else:
-        shape_mon_abr_raw = dict1_SO_predict['LWP'][int(13 - dict1_SO_predict['times'][0,:][1])::12, latsi0:latsi1 +1,:].shape 
+        shape_mon_abr_raw = dict1_SO_predict['LWP'][int(13 - dict1_SO_predict['times'][0,:][1])::12, :,:].shape 
         for j in range(len(datavar_nas)):
             dict2_predict_var[datavar_nas[j]] = dict1_SO_predict[datavar_nas[j]][int(13 - dict1_SO_predict['times'][0,:][1])::12, :, :]
+
     
     # radiative transfer model: single regime LRM:
-
+    
+    threshold_list = [0.12, 0.15, 0.20, 0.30, 0.35, 0.50, 1.00]
     # training :
+    
+    coef_dict_Albedo_training, coef_dict_Alpha_cre_training = radiative_transfer_model_obs(dict2_training_var, threshold_list, label = 'training')
 
-    x_training = 1.* dict2_training_var['LWP']
-    
-    y2_training = 1.* dict2_training_var['alpha_cre']
-    
-    y1_training = 1.* dict2_training_var['albedo']
-    
-    cs_training = 1.* dict2_training_var['albedo_cs']
-    
-    rsdt_training = 1.* dict2_training_var['rsdt']
-    
-    # Filter threshold:
-    rsdt_training[rsdt_training < 10.0] = np.nan
-    
-    cs_training[cs_training < 0.0] = np.nan
-    cs_training[cs_training > 1.0] = np.nan
-
-    Z_training = (rsdt_training * cs_training * x_training * y2_training * y1_training) *1.
-    ind_false_training = np.isnan(Z_training)
-    ind_true_training = np.logical_not(ind_false_training)
-    
-    print(" ratio of not NaN value in Training data :" + str(np.asarray(np.nonzero(ind_true_training == True)).shape[1]/len(ind_true_training.flatten())))
-    
-    data_training = pandas.DataFrame({'x': x_training[ind_true_training].flatten(), 'y2': y2_training[ind_true_training].flatten(), 'y1': y1_training[ind_true_training].flatten(), 'cs': cs_training[ind_true_training].flatten()})
-
-    # Fit the model
-    model1_training = ols("y2 ~ x", data_training).fit()
-    model2_training = ols("y1 ~ x + cs", data_training).fit()
-    # print the summary
-    print("model1_training, alpha_cre = a1 * lwp + A2: ", ' ', model1_training.summary())
-    print("model2_training, albedo = a1* lwp + a2 * albedo_cs + A3: ", ' ', model2_training.summary())
-
-    coef_array_alpha_cre_training = np.asarray([model1_training._results.params[1], model1_training._results.params[0]])
-    coef_array_albedo_training = np.asarray([model2_training._results.params[1], model2_training._results.params[2], model2_training._results.params[0]])
-    
     # Compare to the training:
     # predicting :
 
-    x_predict = 1.* dict2_predict_var['LWP']
+    coef_dict_Albedo_predict, coef_dict_Alpha_cre_predict = radiative_transfer_model_obs(dict2_predict_var, threshold_list, label = 'predict')
     
-    y2_predict = 1.* dict2_predict_var['alpha_cre']
-    
-    y1_predict = 1.* dict2_predict_var['albedo']
-    
-    cs_predict = 1.* dict2_predict_var['albedo_cs']
-    
-    rsdt_predict = 1.* dict2_predict_var['rsdt']
-    
-    # Filter threshold:
-    rsdt_predict[rsdt_predict < 10.0] = np.nan
-    
-    cs_predict[cs_predict < 0] = np.nan
-    cs_predict[cs_predict > 1] = np.nan
+    # PLotting:
+    pLot_sca_sensitivity_to_albedo_cs_obs(dict2_training_var, coef_dict_Albedo_training, threshold_list, c_albedo_cs=0.08)
+    return coef_dict_Alpha_cre_training, coef_dict_Albedo_training, coef_dict_Alpha_cre_predict, coef_dict_Albedo_predict
 
-    Z_predict = (rsdt_predict * cs_predict * x_predict * y2_predict * y1_predict) *1.
-    ind_false_predict = np.isnan(Z_predict)
-    ind_true_predict = np.logical_not(ind_false_predict)
-    
-    print(" ratio of not NaN value in Predict data :" + str(np.asarray(np.nonzero(ind_true_predict == True)).shape[1]/len(ind_true_predict.flatten())))
-    
-    data_predict = pandas.DataFrame({'x': x_predict[ind_true_predict].flatten(), 'y2': y2_predict[ind_true_predict].flatten(), 'y1': y1_predict[ind_true_predict].flatten(), 'cs': cs_predict[ind_true_predict].flatten()})
 
-    # Fit the model
-    model1_predict = ols("y2 ~ x", data_predict).fit()
-    model2_predict = ols("y1 ~ x + cs", data_predict).fit()
-    # print the summary
-    print("model1_predict, alpha_cre = a1 * lwp + A2: ", ' ', model1_predict.summary())
-    print("model2_predict, albedo = a1* lwp + a2 * albedo_cs + A3: ", ' ', model2_predict.summary())
 
-    coef_array_alpha_cre_predict = np.asarray([model1_predict._results.params[1], model1_predict._results.params[0]])
-    coef_array_albedo_predict = np.asarray([model2_predict._results.params[1], model2_predict._results.params[2], model2_predict._results.params[0]])
+def radiative_transfer_model_obs(data_dict, threshold_list, label = 'training'):
+    # ---------------
+    # 'data_dict' is the dictionary store the variables for calc radiative tranfer model (lwp, albedo, albedo_cs, ..)
+    # 'threshold_list' is a list of the threshold values of 'albedo_cs': for filtering out the points with albedo_cs >= Threshold ;
+    ## now calc two different radiative transfer models: 
+    # M1. albedo = a1 * lwp + a2 * albedo_cs + a3;
+    # M2. alpha_cre = albedo - albedo_cs = a1 * lwp + a2
+    # ---------------    
+    coef_dict_Albedo = {}
+    coef_dict_Alpha_cre = {}
     
-    return coef_array_alpha_cre_training, coef_array_albedo_training, coef_array_alpha_cre_predict, coef_array_albedo_predict
+    # Loop through filter threshold:
+    for a in range(len(threshold_list)):
+        
+        TR_albedo_cs = threshold_list[a]
+        
+        # copy data from dictionary:
+        
+        x = deepcopy(data_dict['LWP'])
+        
+        y2 = deepcopy(data_dict['alpha_cre'])
+        
+        y1 = deepcopy(data_dict['albedo'])
+        
+        ck_a = deepcopy(data_dict['albedo_cs'])
+        
+        rsdt = deepcopy(data_dict['rsdt'])
+        # conditions:
+        rsdt[rsdt < 10.0] = np.nan
+        ck_a[ck_a < 0] = np.nan
+        ck_a[ck_a >= TR_albedo_cs] = np.nan
+        
+        # rsdt[rsdt < 10.0] = np.nan
+        # ck_a[ck_a < 0] = np.nan
+        x[x >= np.nanpercentile(x, 95)] = np.nan
+        print("threshold = ", TR_albedo_cs)
+        
+        # Processing 'nan' in aggregated data:
+        Z_training = (rsdt * ck_a * x * y2 * y1) * 1.
+        ind_false = np.isnan(Z_training)
+        ind_true = np.logical_not(ind_false)
+        
+        print(" fration of not NaN points to All points" + " in OBS "+label+ "data: " + 
+             str(np.asarray(np.nonzero(ind_true == True)).shape[1]/ len(ind_true.flatten())))
+    
+        # data_frame used for statsmodel:
+        data = pandas.DataFrame({'x': x[ind_true].flatten(), 'y2': y2[ind_true].flatten(), 'y1': y1[ind_true].flatten(), 'ck_a': ck_a[ind_true].flatten()})
+
+        # Fit the model
+        model1 = ols("y2 ~ x", data).fit()
+        model2 = ols("y1 ~ x + ck_a", data).fit()
+        # print the summary
+        print(" ")
+        print("model1, alpha_cre = a1 * lwp + a2: ", ' ', model1.summary())
+        print(" ")
+        print("model2, albedo = a1* lwp + a2 * albedo_cs + a3: ", ' ', model2.summary())
+
+        coef_array_alpha_cre = np.asarray([model1._results.params[1], model1._results.params[0]])
+        coef_array_albedo = np.asarray([model2._results.params[1], model2._results.params[2], model2._results.params[0]])
+        
+        coef_dict_Albedo[str(threshold_list[a] *100.)] = coef_array_albedo
+        coef_dict_Alpha_cre[str(threshold_list[a] *100.)] = coef_array_alpha_cre
+    
+    
+    return coef_dict_Albedo, coef_dict_Alpha_cre
+
+
+
+def pLot_sca_sensitivity_to_albedo_cs_obs(data_dict, coef_dict, threshold_list, c_albedo_cs= 0.1):
+    # ---------------
+    # 'data_dict' is the dictionary store the variables for visualize relation between albedo over lwp, color by albedo_cs;
+    # 'threshold_list' is a list of the threshold values of 'albedo_cs': for filtering out the points with albedo_cs >= Threshold;
+    # 'coef_dict' is the dictionary store the fitting line coefficients for M1, M2.
+    # ---------------
+    
+    # s_range = arange(-90., 90., 5.) + 2.5  #..global-region latitude edge: (36)
+    # x_range = arange(-180., 180., 5.)  #..logitude sequences edge: number: 72
+    # y_range = arange(-85, -40., 5.) +2.5  #..southern-ocaen latitude edge: 9
+    
+    # path1 = '/glade/scratch/chuyan/CMIP_output/CMIP_lrm_RESULT/'
+    path6 = '/glade/scratch/chuyan/Plots/CMIP_R_lwp_2/'
+    
+    albedo = np.array(data_dict['albedo'])
+    # print(albedo)
+    ck_albedo = np.array(data_dict['albedo_cs'])
+    # print(ck_albedo)
+    lwp = np.array(data_dict['LWP'])
+    # print(lwp)
+    
+    # PLot:
+    from matplotlib import cm
+    fig2 = plt.figure(figsize = (12, 9))
+    ax2 = fig2.add_subplot(111)
+    
+    color_list = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:brown", "tab:olive", "tab:cyan"]
+    
+    x = np.linspace(-0.005, np.nanmax(lwp), 54)
+    y = x
+    
+    # scatter plot of specific gcm:
+    scac2 = ax2.scatter(lwp[(ck_albedo <= 1.0)],albedo[(ck_albedo<= 1.0)]
+                              , c = ck_albedo[(ck_albedo<= 1.0)], s = 15, cmap = cm.rainbow)
+
+    # scac2=ax2.scatter(lwp[(ck_albedo>= 0.18)&(ck_albedo<= 0.25)],albedo[(ck_albedo>= 0.18)&(ck_albedo<= 0.25)]
+                             # , c = ck_albedo[(ck_albedo>= 0.18)& (ck_albedo<= 0.25)], s = 15, cmap = cm.rainbow)
+
+    ax2.set_xlabel("$LWP,\ [kg\ m^{2}]$", fontsize = 15)
+    ax2.set_ylabel(r"$\alpha \ $", fontsize = 15)
+    cb2 = fig2.colorbar(scac2, shrink = 0.9, aspect = 6)
+    cb2.set_label(r"$clear-sky\ \alpha$", fontsize = 15)
+    
+    for i in range(len(threshold_list)):
+        
+        ax2.plot(x, coef_dict[str(threshold_list[i] *100.)][0]*x + coef_dict[str(threshold_list[i] *100.)][1] * c_albedo_cs + coef_dict[str(threshold_list[i] *100.)][2], linewidth = 1.56, color = color_list[i], label = r'$ \alpha_{cs} < $' + str(threshold_list[i]))
+
+    plt.title("OBS: " + r"$\ with\ fitting\ line\ of\ appling\ TR_{\alpha_{cs}} $", fontsize = 17)  # \ 0.18 \leq \alpha_{cs} \leq 0.25\
+    plt.legend(loc = 'lower right', fontsize = 13)
+    plt.savefig(path6 + "OBS:_"+"albedo_LWP(95per)_coloredby_albedo_cs.jpg", bbox_inches ='tight', dpi = 300)
+    
+    
+    plt.close()
+    
+    return None
+    

@@ -31,9 +31,9 @@ from fitLRMobs import *
 from useful_func_cy import *
 from calc_Radiation_LRM_1 import *
 from calc_Radiation_LRM_2 import *
+from calc_Radiation_OBS_2 import *
 
-
-def calc_LRMobs_metrics(valid_range1=[2002, 7, 15], valid_range2=[2016, 12, 31], valid_range3=[1994, 1, 15], valid_range4=[2001, 12, 31], THRESHOLD_sst = 0.0, THRESHOLD_sub = 0.0):
+def calc_LRMobs_metrics(valid_range1=[2002, 7, 15], valid_range2=[2016, 12, 31], valid_range3=[1994, 1, 15], valid_range4=[2001, 12, 31]):
     # -----------------
     # 'valid_range1' and 'valid_range2' give the time stamps of starting and ending times of data for training,
     # 'valid_range3' and 'valid_range4' give the time stamps of starting and ending times of data for predicting.
@@ -84,8 +84,8 @@ def calc_LRMobs_metrics(valid_range1=[2002, 7, 15], valid_range2=[2016, 12, 31],
     # Function # 6: Radiation changes
     ############
     # coef_array_alpha_cre_pi, coef_array_albedo_pi, coef_array_alpha_cre_abr, coef_array_albedo_abr = calc_Radiation_LRM_1(inputVar_pi, inputVar_abr, TR_albedo = 0.25)
-    coef_array_alpha_cre_training, coef_array_albedo_training, coef_array_alpha_cre_predict, coef_array_albedo_predict = calc_Radiation_OBS_2(s_range, x_range, y_range, valid_range1 = valid_range1, valid_range2 = valid_range2, valid_range3 = valid_range3, valid_range4 = valid_range4)
-    ###########  
+    coef_dict_Alpha_cre_training, coef_dict_Albedo_training, coef_dict_Alpha_cre_predict, coef_dict_Albedo_predict = calc_Radiation_OBS_2(s_range, x_range, y_range, valid_range1 = valid_range1, valid_range2 = valid_range2, valid_range3 = valid_range3, valid_range4 = valid_range4)
+    ############ 
     
     return None
 

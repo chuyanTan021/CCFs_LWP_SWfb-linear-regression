@@ -367,7 +367,7 @@ def fitLRM4(C_dict, TR_sst, TR_sub, s_range, y_range, x_range, lats, lons):
 
     # Save into the rawdata dict
     C_dict['Coef_dict'] = coef_array
-    C_dict['Predict_dict_PI']  = predict_dict_PI
+    C_dict['Predict_dict_PI'] = predict_dict_PI
     C_dict['ind_Cold_Up_PI'] = ind7_PI
     C_dict['ind_Hot_Up_PI'] = ind8_PI
     C_dict['ind_Cold_Down_PI'] = ind9_PI

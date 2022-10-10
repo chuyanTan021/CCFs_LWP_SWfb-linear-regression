@@ -1,3 +1,4 @@
+
 ### This module is to get the model data we need from read func: 'get_LWPCMIP6', and calculate for CCFs and the required Cloud properties; 
 ## Crop regions, Transform the data to be annually mean, binned array form;
 ## Create the linear regression 2 & 4 regimes models from piControl sensitivity of cloud properties to the CCFs, then do the regressions on 'abrupt4xCO2' and save the data.
@@ -48,7 +49,7 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     # ******************************* #
     # Radiation Change
     # coef_array_alpha_cre_pi, coef_array_albedo_pi, coef_array_alpha_cre_abr, coef_array_albedo_abr = calc_Radiation_LRM_1(inputVar_pi, inputVar_abr, TR_albedo = 0.25)
-    coef_array_alpha_cre_pi, coef_array_albedo_pi, coef_array_alpha_cre_abr, coef_array_albedo_abr = calc_Radiation_LRM_2(inputVar_pi, inputVar_abr)
+    coef_dict_Alpha_cre_pi, coef_dict_Albedo_pi, coef_dict_Alpha_cre_abr, coef_dict_Albedo_abr = calc_Radiation_LRM_2(inputVar_pi, inputVar_abr, **model_data)
     
     # ******************************* #
     #..get the shapes of monthly data
@@ -57,7 +58,7 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     shape_time_pi = len(inputVar_pi['times'])
     shape_time_abr = len(inputVar_abr['times'])
     #print(shape_lat, shape_lon, shape_time_pi, shape_time_abr)
-
+    
     
     #..choose lat 40 -85 °S as the Southern-Ocean Regions
     lons = inputVar_pi['lon'] *1.
@@ -107,7 +108,7 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     Albedo_cs_abr = Rsutcs_abr / Rsdt_abr
     Alpha_cre_abr = Albedo_abr - Albedo_cs_abr
 
-    if np.min(LWP_abr)<0:
+    if np.min(LWP_abr)<1e-5:
         LWP_abr = Twp_abr
         print('clwvi mislabeled')
     
@@ -143,7 +144,7 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     Albedo_cs_pi = Rsutcs_pi / Rsdt_pi
     Alpha_cre_pi = Albedo_pi - Albedo_cs_pi
 
-    if np.min(LWP)<0:
+    if np.min(LWP)<1e-5:
         LWP = Twp
         print('clwvi mislabeled')
 
@@ -179,7 +180,6 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     dict0_abr_var = {'gmt': gmt_abr, 'LWP': LWP_abr, 'TWP': Twp_abr, 'IWP': Iwp_abr, 'SST': SST_abr, 'p_e': MC_abr, 'LTS': LTS_e_abr ,'SUB': Subsidence_abr, 'rsdt': Rsdt_abr, 'rsut': Rsut_abr, 'rsutcs': Rsutcs_abr, 'albedo': Albedo_abr, 'albedo_cs': Albedo_cs_abr, 'alpha_cre': Alpha_cre_abr, 'lat': lats, 'lon': lons, 'times': times_abr, 'pres': levels}
 
 
-    
     # get the Annual-mean, Southern-Ocean region arrays
 
     datavar_nas = ['LWP', 'TWP', 'IWP', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre', 'SST', 'p_e', 'LTS', 'SUB']   #..13 varisables except gmt (lon dimension diff)
@@ -204,7 +204,6 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
             layover_yr_abr[a, i,:,:] = nanmean(dict0_abr_var[datavar_nas[a]][i*12:(i+1)*12, latsi1:latsi0 +1,:], axis=0)
 
         dict1_abr_yr[datavar_nas[a]+'_yr'] = layover_yr_abr[a,:]
-
 
         # b_array = dict0_PI_var[datavar_nas[a]]
         for j in range(shape_time_pi//12):
@@ -286,7 +285,8 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     dict1_PI_var['shape_mon'] = shape_time_pi
     
     # Output a dict for processing function in 'calc_LRM_metrics', stored the data dicts for PI and abr, with the model name_dict
-    C_dict = {'dict1_PI_var': dict1_PI_var, 'dict1_abr_var': dict1_abr_var, 'model_data': model_data, 'coef_array_alpha_cre_pi': coef_array_alpha_cre_pi, 'coef_array_albedo_pi': coef_array_albedo_pi, 'coef_array_alpha_cre_abr': coef_array_alpha_cre_abr, 'coef_array_albedo_abr': coef_array_albedo_abr}  #..revised on June 23th, 2022.
+    C_dict = {'dict1_PI_var': dict1_PI_var, 'dict1_abr_var': dict1_abr_var, 'model_data': model_data, 'coef_dict_Alpha_cre_pi': coef_dict_Alpha_cre_pi, 'coef_dict_Albedo_pi': coef_dict_Albedo_pi, 'coef_dict_Alpha_cre_abr': coef_dict_Alpha_cre_abr, 'coef_dict_Albedo_abr': coef_dict_Albedo_abr}  #..revised on Oct 7th, 2022.
+    
     D_dict = deepcopy(C_dict)   # 'notice for the difference between shallow copy (object.copy()) and deep copy(copy.deepcopy(object))'
     B_dict = deepcopy(C_dict)
 
@@ -302,19 +302,19 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
 
     rawdata_dict3['TR_sst'] = THRESHOLD_sst
 
-    savez(WD+C_dict['model_data']['modn']+'_r2r1_hotcold(Jan)_(largestpiR2)_Sep9th_Anomalies_'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
+    savez(WD+C_dict['model_data']['modn']+'_r2r1_hotcold(Jan)_(largestpiR2)_Sep9th_Anomalies_Rtest'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
     
     #.. best fit save_2lrm command:
     # savez(WD+C_dict['model_data']['modn']+'_r1r1_(Jan)_(largestpiR2)_Sep9th_Anomalies_'+'0.0K'+'_dats', model_data = C_dict['model_data'], rawdata_dict = rawdata_dict3, Mean_LWP_training = rawdata_dict1['Mean_training'], Stdev_LWP_training= rawdata_dict1['Stdev_training'])
     
     
-    rawdata_dict2 = fitLRM2(C_dict = D_dict, TR_sst=TR_sst, TR_sub=TR_sub, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)
+    rawdata_dict2 = fitLRM4(C_dict = D_dict, TR_sst=TR_sst, TR_sub=TR_sub, s_range=s_range, y_range=y_range, x_range=x_range, lats=lats, lons=lons)
     rawdata_dict4 = p4plot1(s_range=s_range, y_range=y_range, x_range=x_range,  Mean_training = rawdata_dict1['Mean_training'], Stdev_training = rawdata_dict1['Stdev_training'], shape_yr_pi=shape_yr_pi, shape_yr_abr=shape_yr_abr, rawdata_dict=rawdata_dict2)
 
     rawdata_dict4['TR_sst'] = THRESHOLD_sst
     rawdata_dict4['TR_sub'] = THRESHOLD_sub
 
-    savez(WD+C_dict['model_data']['modn']+'_r4r1(Jan)_(largestpiR2)_Sep9th_Anomalies_'+str(round(TR_sst, 2))+'K_'+'ud'+str(round(TR_sub*100, 2))+'_dats', model_data =  C_dict['model_data'], rawdata_dict = rawdata_dict4)
+    savez(WD+C_dict['model_data']['modn']+'_r4r1(Jan)_(largestpiR2)_Sep9th_Anomalies_Rtest'+str(round(TR_sst, 2))+'K_'+'ud'+str(round(TR_sub*100, 2))+'_dats', model_data =  C_dict['model_data'], rawdata_dict = rawdata_dict4)
     
     #.. best fit save_4lrm command:
     # savez(WD+C_dict['model_data']['modn']+'_r2r1_updown(Jan)_(largestpiR2)_Sep9th_Anomalies_'+ '0.0K_ud'+str(round(TR_sub*100, 2))+'_dats', model_data = C_dict['model_data'], rawdata_dict = rawdata_dict4, Mean_LWP_training = rawdata_dict2['Mean_training'], Stdev_LWP_training= rawdata_dict2['Stdev_training'])
