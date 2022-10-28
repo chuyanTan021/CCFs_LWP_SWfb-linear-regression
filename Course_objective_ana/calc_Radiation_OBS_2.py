@@ -73,6 +73,9 @@ def calc_Radiation_OBS_2(s_range, x_range, y_range, valid_range1 = [2002, 7, 15]
     albedo_cs_training[(albedo_cs_training <= 0.08) & (albedo_cs_training >= 1.00)] = np.nan
     Alpha_cre_training[(albedo_cs_training <= 0.08) & (albedo_cs_training >= 1.00)] = np.nan
     
+    LWP_training[LWP_training <= 0.0] = np.nan
+    LWP_training[LWP_training >= np.nanpercentile(LWP_training, 95)] = np.nan
+    
     dict0_training_var = {'LWP': LWP_training, 'LWP_error': LWP_error_training, 'Maskarray_mac': Maskarray_mac_training, 'rsdt': Rsdt_training, 'rsut': Rsut_training, 'rsutcs': Rsutcs_training, 'albedo' : albedo_training, 'albedo_cs': albedo_cs_training, 'alpha_cre': Alpha_cre_training, 'times': inputVar_training_obs['times_ceres']}
     
     # Crop the regions
@@ -109,6 +112,9 @@ def calc_Radiation_OBS_2(s_range, x_range, y_range, valid_range1 = [2002, 7, 15]
     albedo_cs_predict[(albedo_cs_predict <= 0.08) & (albedo_cs_predict >= 1.00)] = np.nan
     Alpha_cre_predict[(albedo_cs_predict <= 0.08) & (albedo_cs_predict >= 1.00)] = np.nan
     
+    LWP_predict[LWP_predict <= 0.0] = np.nan
+    LWP_predict[LWP_predict >= np.nanpercentile(LWP_predict, 95)] = np.nan
+    
     dict0_predict_var = {'LWP': LWP_predict, 'LWP_error': LWP_error_predict, 'Maskarray_mac': Maskarray_mac_predict, 'rsdt': Rsdt_predict, 'rsut': Rsut_predict, 'rsutcs': Rsutcs_predict, 'albedo' : albedo_predict, 'albedo_cs': albedo_cs_predict, 'alpha_cre': Alpha_cre_predict, 'times': inputVar_predict_obs['times_ceres']}
     
     # Crop the regions
@@ -124,7 +130,7 @@ def calc_Radiation_OBS_2(s_range, x_range, y_range, valid_range1 = [2002, 7, 15]
     print('the first month in training and predict data: ', dict1_SO_training['times'][0,:][1], dict1_SO_predict['times'][0,:][1])
     
     
-    # Choose time frame: January:
+    
     # Choose time frame: January:
     if dict1_SO_training['times'][0,:][1] == 1.0:   # Jan
         shape_mon_training_raw = dict1_SO_training['LWP'][0::12, :,:].shape   # January data shape
@@ -148,19 +154,21 @@ def calc_Radiation_OBS_2(s_range, x_range, y_range, valid_range1 = [2002, 7, 15]
     
     # radiative transfer model: single regime LRM:
     
-    threshold_list = [0.12, 0.15, 0.20, 0.30, 0.35, 0.50, 1.00]
+    threshold_list = [0.12, 0.15, 0.20, 0.50]   # [0.12, 0.15, 0.20, 0.30, 0.35, 0.50, 1.00]
     # training :
     
-    coef_dict_Albedo_training, coef_dict_Alpha_cre_training = radiative_transfer_model_obs(dict2_training_var, threshold_list, label = 'training')
+    coef_dict_Albedo_training, coef_dict_Alpha_cre_training, coef_dict_Albedo_bin_training = radiative_transfer_model_obs(dict2_training_var, threshold_list, label = 'training')
 
     # Compare to the training:
     # predicting :
 
-    coef_dict_Albedo_predict, coef_dict_Alpha_cre_predict = radiative_transfer_model_obs(dict2_predict_var, threshold_list, label = 'predict')
+    coef_dict_Albedo_predict, coef_dict_Alpha_cre_predict, coef_dict_Albedo_bin_predict = radiative_transfer_model_obs(dict2_predict_var, threshold_list, label = 'predict')
     
     # PLotting:
-    pLot_sca_sensitivity_to_albedo_cs_obs(dict2_training_var, coef_dict_Albedo_training, threshold_list, c_albedo_cs=0.08)
-    return coef_dict_Alpha_cre_training, coef_dict_Albedo_training, coef_dict_Alpha_cre_predict, coef_dict_Albedo_predict
+    pLot_sca_sensitivity_to_albedo_cs_obs2(dict2_training_var, coef_dict_Albedo_training, coef_dict_Albedo_bin_training, threshold_list, c_albedo_cs= 0.114)
+    
+    
+    return coef_dict_Alpha_cre_training, coef_dict_Albedo_training, coef_dict_Albedo_bin_training, coef_dict_Alpha_cre_predict, coef_dict_Albedo_predict, coef_dict_Albedo_bin_predict
 
 
 
@@ -174,7 +182,7 @@ def radiative_transfer_model_obs(data_dict, threshold_list, label = 'training'):
     # ---------------    
     coef_dict_Albedo = {}
     coef_dict_Alpha_cre = {}
-    
+    coef_dict_Albedo_bin = {}
     # Loop through filter threshold:
     for a in range(len(threshold_list)):
         
@@ -198,7 +206,8 @@ def radiative_transfer_model_obs(data_dict, threshold_list, label = 'training'):
         
         # rsdt[rsdt < 10.0] = np.nan
         # ck_a[ck_a < 0] = np.nan
-        x[x >= np.nanpercentile(x, 95)] = np.nan
+        
+        # x[x >= np.nanpercentile(x, 95)] = np.nan
         print("threshold = ", TR_albedo_cs)
         
         # Processing 'nan' in aggregated data:
@@ -206,33 +215,53 @@ def radiative_transfer_model_obs(data_dict, threshold_list, label = 'training'):
         ind_false = np.isnan(Z_training)
         ind_true = np.logical_not(ind_false)
         
-        print(" fration of not NaN points to All points" + " in OBS "+label+ "data: " + 
+        print(" fration of not NaN points to All points" + " in OBS "+label+ " data: " + 
              str(np.asarray(np.nonzero(ind_true == True)).shape[1]/ len(ind_true.flatten())))
-    
-        # data_frame used for statsmodel:
+        
+        # binned data by LWP:
+        BINS_lwp = np.linspace(0.00, 0.24, 24)
+        
+        # data_frame used for binned ditribution regression:
+        mean_albedo, bin_edge1, binnumber_albedo = binned_statistic(x[ind_true], y1[ind_true], statistic='mean', bins = BINS_lwp)
+        mean_albedo_cs, bin_edge2, binnumber_albedo_cs = binned_statistic(x[ind_true], ck_a[ind_true], statistic='mean', bins = BINS_lwp)
+        x_lwp = (BINS_lwp[0:-1] + (BINS_lwp[1] - BINS_lwp[0]) / 2.)
+        data_bin = pandas.DataFrame({'y1': mean_albedo, 'ck_a': mean_albedo_cs, 'x': x_lwp})
+
+        # data_frame used for raw distribution regression:
         data = pandas.DataFrame({'x': x[ind_true].flatten(), 'y2': y2[ind_true].flatten(), 'y1': y1[ind_true].flatten(), 'ck_a': ck_a[ind_true].flatten()})
 
         # Fit the model
+        
+        # binned distribution regression:
+        
+        model_binLWP = ols("y1 ~ x + ck_a", data_bin).fit()
+        print(" model_binLWP, albedo_bin = a1 * lwp_bin + a2 * albedo_cs_bin + a3: ", model_binLWP.summary())
+
+        coef_array_albedo_bin = np.asarray([model_binLWP._results.params[1], model_binLWP._results.params[2], model_binLWP._results.params[0]])
+        
+        # raw distribution regression:
+        
         model1 = ols("y2 ~ x", data).fit()
         model2 = ols("y1 ~ x + ck_a", data).fit()
         # print the summary
         print(" ")
         print("model1, alpha_cre = a1 * lwp + a2: ", ' ', model1.summary())
         print(" ")
-        print("model2, albedo = a1* lwp + a2 * albedo_cs + a3: ", ' ', model2.summary())
-
+        print("model2, albedo = a1 * lwp + a2 * albedo_cs + a3: ", ' ', model2.summary())
         coef_array_alpha_cre = np.asarray([model1._results.params[1], model1._results.params[0]])
         coef_array_albedo = np.asarray([model2._results.params[1], model2._results.params[2], model2._results.params[0]])
         
+        # store the coef dictionary for different albedo_cs thresholds.
+        coef_dict_Albedo_bin[str(threshold_list[a] *100.)] = coef_array_albedo_bin
         coef_dict_Albedo[str(threshold_list[a] *100.)] = coef_array_albedo
         coef_dict_Alpha_cre[str(threshold_list[a] *100.)] = coef_array_alpha_cre
     
     
-    return coef_dict_Albedo, coef_dict_Alpha_cre
+    return coef_dict_Albedo, coef_dict_Alpha_cre, coef_dict_Albedo_bin
 
 
 
-def pLot_sca_sensitivity_to_albedo_cs_obs(data_dict, coef_dict, threshold_list, c_albedo_cs= 0.1):
+def pLot_sca_sensitivity_to_albedo_cs_obs1(data_dict, coef_dict, threshold_list, c_albedo_cs= 0.115):
     # ---------------
     # 'data_dict' is the dictionary store the variables for visualize relation between albedo over lwp, color by albedo_cs;
     # 'threshold_list' is a list of the threshold values of 'albedo_cs': for filtering out the points with albedo_cs >= Threshold;
@@ -260,12 +289,12 @@ def pLot_sca_sensitivity_to_albedo_cs_obs(data_dict, coef_dict, threshold_list, 
     
     color_list = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:brown", "tab:olive", "tab:cyan"]
     
-    x = np.linspace(-0.005, np.nanmax(lwp), 54)
+    x = np.linspace(0.005, np.nanmax(lwp), 54)
     y = x
     
     # scatter plot of specific gcm:
-    scac2 = ax2.scatter(lwp[(ck_albedo <= 1.0)],albedo[(ck_albedo<= 1.0)]
-                              , c = ck_albedo[(ck_albedo<= 1.0)], s = 15, cmap = cm.rainbow)
+    scac2 = ax2.scatter(lwp[(ck_albedo <= 1.0)], albedo[(ck_albedo<= 1.0)]
+                            , c = ck_albedo[(ck_albedo<= 1.0)], s = 15, cmap = cm.rainbow)
 
     # scac2=ax2.scatter(lwp[(ck_albedo>= 0.18)&(ck_albedo<= 0.25)],albedo[(ck_albedo>= 0.18)&(ck_albedo<= 0.25)]
                              # , c = ck_albedo[(ck_albedo>= 0.18)& (ck_albedo<= 0.25)], s = 15, cmap = cm.rainbow)
@@ -277,14 +306,82 @@ def pLot_sca_sensitivity_to_albedo_cs_obs(data_dict, coef_dict, threshold_list, 
     
     for i in range(len(threshold_list)):
         
-        ax2.plot(x, coef_dict[str(threshold_list[i] *100.)][0]*x + coef_dict[str(threshold_list[i] *100.)][1] * c_albedo_cs + coef_dict[str(threshold_list[i] *100.)][2], linewidth = 1.56, color = color_list[i], label = r'$ \alpha_{cs} < $' + str(threshold_list[i]))
+        ax2.plot(x, coef_dict[str(threshold_list[i] *100.)][0]* np.log(x) + coef_dict[str(threshold_list[i] *100.)][1] * c_albedo_cs + coef_dict[str(threshold_list[i] *100.)][2], linewidth = 1.56, color = color_list[i], label = r'$ \alpha_{cs} < $' + str(threshold_list[i]))
 
     plt.title("OBS: " + r"$\ with\ fitting\ line\ of\ appling\ TR_{\alpha_{cs}} $", fontsize = 17)  # \ 0.18 \leq \alpha_{cs} \leq 0.25\
     plt.legend(loc = 'lower right', fontsize = 13)
-    plt.savefig(path6 + "OBS:_"+"albedo_LWP(95per)_coloredby_albedo_cs.jpg", bbox_inches ='tight', dpi = 300)
+    plt.savefig(path6 + "LOG OBS:_"+"albedo_LWP(995per)_coloredby_albedo_cslog-scale.jpg", bbox_inches ='tight', dpi = 300)
     
     
     plt.close()
     
     return None
+
+
+def pLot_sca_sensitivity_to_albedo_cs_obs2(data_dict, coef_dict, coef_dict_bin, threshold_list, c_albedo_cs= 0.115):
+    # ---------------
+    # 'data_dict' is the dictionary store the variables for visualize relation between albedo over lwp, color by albedo_cs;
+    # 'threshold_list' is a list of the threshold values of 'albedo_cs': for filtering out the points with albedo_cs >= Threshold;
+    # 'coef_dict' is the dictionary store the fitting line coefficients for raw distributed M1(current) (or M2);
+    # 'coef_dict_bin' is the dict store the coefficients for binned distributed M1(current) (or M2);
+    # ---------------
     
+    # s_range = arange(-90., 90., 5.) + 2.5  #..global-region latitude edge: (36)
+    # x_range = arange(-180., 180., 5.)  #..logitude sequences edge: number: 72
+    # y_range = arange(-85, -40., 5.) +2.5  #..southern-ocaen latitude edge: 9
+    
+    # path1 = '/glade/scratch/chuyan/CMIP_output/CMIP_lrm_RESULT/'
+    path6 = '/glade/scratch/chuyan/Plots/CMIP_R_lwp_3/'
+    
+    albedo = np.array(data_dict['albedo'])
+    # print(albedo)
+    ck_albedo = np.array(data_dict['albedo_cs'])
+    # print(ck_albedo)
+    lwp = np.array(data_dict['LWP'])
+    # print(lwp)
+    
+    # PLot:
+    from matplotlib import cm
+    fig = plt.figure(figsize = (16, 6))
+    ax1 = fig.add_subplot(121)
+    # PLot 'albedo' vs. 'lwp', colored by 'albedo_cs':
+    color_list = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:brown", "tab:olive", "tab:cyan"]
+    
+    x = np.linspace(0.005, np.nanmax(lwp), 54)
+    y = x
+    
+    # scatter plot of specific gcm:
+    denc1 = ax1.scatter(lwp[(ck_albedo <= 0.30)], albedo[(ck_albedo<= 0.30)]
+                            , c = ck_albedo[(ck_albedo<= 0.30)], s = 15, cmap = cm.rainbow, vmin = 0, vmax = 0.30)
+    # denc1 = ax1.scatter(lwp[(ck_albedo>= 0.18)&(ck_albedo<= 0.25)],albedo[(ck_albedo>= 0.18)&(ck_albedo<= 0.25)]
+                             # , c = ck_albedo[(ck_albedo>= 0.18)& (ck_albedo<= 0.25)], s = 15, cmap = cm.rainbow)
+
+    ax1.set_xlabel("$LWP,\ [kg\ m^{2}]$", fontsize = 15)
+    ax1.set_ylabel(r"$\alpha \ $", fontsize = 15)
+    cb1 = fig.colorbar(denc1, ax = ax1, shrink = 0.9, aspect = 6.5)
+    cb1.set_label(r"$clear-sky\ \alpha$", fontsize = 15)
+    
+    for i in range(len(threshold_list)):
+        # raw distributed M1:
+        ax1.plot(x, (coef_dict[str(threshold_list[i] *100.)][0]* x + coef_dict[str(threshold_list[i] *100.)][1] * c_albedo_cs + coef_dict[str(threshold_list[i] *100.)][2]), linewidth = 1.56, color = color_list[i], label = r'$ \alpha_{cs} < $' + str(threshold_list[i]))
+        # binned distributed M1:
+        ax1.plot(x, (coef_dict_bin[str(threshold_list[i] *100.)][0]* x + coef_dict_bin[str(threshold_list[i] *100.)][1] * c_albedo_cs + coef_dict_bin[str(threshold_list[i] *100.)][2]), linewidth = 2.0, linestyle = '--', color = color_list[i], label = r'$binned\ LWP\ fit,\ \alpha_{cs} <$' + str(threshold_list[i]))
+        
+    ax1.set_title(r"$\ fitting\ line\ of\ appling\ TR_{\alpha_{cs}} $", fontsize = 15)  # \ 0.18 \leq \alpha_{cs} \leq 0.25\
+    ax1.legend(loc = 'lower right', fontsize = 9)
+
+    ax2 = fig.add_subplot(122)
+    # PLot the density distribution(#) of points:
+    denc2 = ax2.hexbin(lwp[(ck_albedo <= 0.30)], albedo[(ck_albedo<= 0.30)], gridsize =(25, 25), cmap = plt.cm.Greens)  # , cmap = plt.cm.Greens)
+    
+    ax2.set_xlabel("$LWP,\ [kg\ m^{2}]$", fontsize = 12)
+    ax2.set_ylabel(r"$\alpha $", fontsize = 12)
+    cb2 = fig.colorbar(denc2, ax = ax2, shrink = 0.9, aspect = 6.5)
+    ax2.set_title(" distribution", fontsize = 15)
+    
+    plt.suptitle("OBS ", fontsize = 17)
+    plt.savefig(path6 + "pD+bin OBS:_"+"albedo_LWP(995per)_coloredby_albedo_csle0.30.jpg", bbox_inches ='tight', dpi = 250)
+    
+    plt.close()
+    
+    return None

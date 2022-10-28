@@ -29,7 +29,7 @@ from useful_func_cy import *
 def calc_Radiation_LRM_2(inputVar_pi, inputVar_abr, **model_data):
 
     # inputVar_pi, inputVar_abr are the data from read module: get_CMIP6data.py
-
+    
     #..get the shapes of monthly data
     shape_lat = len(inputVar_pi['lat'])
     shape_lon = len(inputVar_pi['lon'])
@@ -102,12 +102,16 @@ def calc_Radiation_LRM_2(inputVar_pi, inputVar_abr, **model_data):
     Albedo_cs_abr[(Albedo_cs_abr <= 0.08) & (Albedo_cs_abr >= 1.00)] = np.nan
     Alpha_cre_abr[(Albedo_cs_abr <= 0.08) & (Albedo_cs_abr >= 1.00)] = np.nan
     LWP_abr[(Albedo_cs_abr <= 0.08) & (Albedo_cs_abr >= 1.00)] = np.nan
+    # LWP_abr[LWP_abr <= 0.0085] = np.nan
+    LWP_abr[LWP_abr >= np.nanpercentile(LWP_abr, 95)] = np.nan
     Rsdt_abr[(Albedo_cs_abr <= 0.08) & (Albedo_cs_abr >= 1.00)] = np.nan
     
     Albedo_pi[(Albedo_cs_pi <= 0.08) & (Albedo_cs_pi >= 1.00)] = np.nan
     Albedo_cs_pi[(Albedo_cs_pi <= 0.08) & (Albedo_cs_pi >= 1.00)] = np.nan
     Alpha_cre_pi[(Albedo_cs_pi <= 0.08) & (Albedo_cs_pi >= 1.00)] = np.nan
     LWP_pi[(Albedo_cs_pi <= 0.08) & (Albedo_cs_pi >= 1.00)] = np.nan
+    # LWP_pi[LWP_pi <= 0.0085] = np.nan
+    LWP_pi[LWP_pi >= np.nanpercentile(LWP_pi, 95)] = np.nan
     Rsdt_pi[(Albedo_cs_pi <= 0.08) & (Albedo_cs_pi >= 1.00)] = np.nan
     
     # As data dictionary:
@@ -161,7 +165,7 @@ def calc_Radiation_LRM_2(inputVar_pi, inputVar_abr, **model_data):
     # Plotting:
     
     print(model_data)
-    pLot_sca_sensitivity_to_albedo_cs(dict1_PI_var, coef_dict_Albedo_PI, threshold_list, c_albedo_cs=0.08, **model_data)
+    pLot_sca_sensitivity_to_albedo_cs_2(dict1_PI_var, coef_dict_Albedo_PI, threshold_list, c_albedo_cs = 0.10, **model_data)
     
     
     return coef_dict_Alpha_cre_PI, coef_dict_Albedo_PI, coef_dict_Alpha_cre_abr, coef_dict_Albedo_abr
@@ -202,7 +206,7 @@ def radiative_transfer_model(data_dict, threshold_list, label = 'piControl'):
         
         # rsdt[rsdt < 10.0] = np.nan
         # ck_a[ck_a < 0] = np.nan
-        x[x >= np.nanpercentile(x, 95)] = np.nan
+        # x[x >= np.nanpercentile(x, 95)] = np.nan
         print("threshold = ", TR_albedo_cs)
         
         # Processing 'nan' in aggregated data:
@@ -223,11 +227,10 @@ def radiative_transfer_model(data_dict, threshold_list, label = 'piControl'):
         print(" ")
         print("model1, alpha_cre = a1 * lwp + a2: ", ' ', model1.summary())
         print(" ")
-        print("model2, albedo = a1* lwp + a2 * albedo_cs + a3: ", ' ', model2.summary())
+        print("model2, albedo = a1 * lwp + a2 * albedo_cs + a3: ", ' ', model2.summary())
 
         coef_array_alpha_cre = np.asarray([model1._results.params[1], model1._results.params[0]])
         coef_array_albedo = np.asarray([model2._results.params[1], model2._results.params[2], model2._results.params[0]])
-        
         
         coef_dict_Albedo[str(threshold_list[a] *100.)] = coef_array_albedo
         coef_dict_Alpha_cre[str(threshold_list[a] *100.)] = coef_array_alpha_cre
@@ -236,7 +239,7 @@ def radiative_transfer_model(data_dict, threshold_list, label = 'piControl'):
 
 
 
-def pLot_sca_sensitivity_to_albedo_cs(data_dict, coef_dict, threshold_list, c_albedo_cs= 0.1, **model_data):
+def pLot_sca_sensitivity_to_albedo_cs_1(data_dict, coef_dict, threshold_list, c_albedo_cs= 0.1, **model_data):
     # ---------------
     # 'data_dict' is the dictionary store the variables for visualize relation between albedo over lwp, color by albedo_cs;
     # 'threshold_list' is a list of the threshold values of 'albedo_cs': for filtering out the points with albedo_cs >= Threshold;
@@ -264,11 +267,11 @@ def pLot_sca_sensitivity_to_albedo_cs(data_dict, coef_dict, threshold_list, c_al
     
     color_list = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:brown", "tab:olive", "tab:cyan"]
     
-    x = np.linspace(-0.005, np.nanmax(lwp), 54)
+    x = np.linspace(0.005, np.nanmax(lwp), 54)
     y = x
     
     # scatter plot of specific gcm:
-    scac2 = ax2.scatter(lwp[(ck_albedo <= 1.0)],albedo[(ck_albedo<= 1.0)]
+    scac2 = ax2.scatter(lwp[(ck_albedo <= 1.0)], albedo[(ck_albedo<= 1.0)]
                               , c = ck_albedo[(ck_albedo<= 1.0)], s = 15, cmap = cm.rainbow)
 
     # scac2=ax2.scatter(lwp[(ck_albedo>= 0.18)&(ck_albedo<= 0.25)],albedo[(ck_albedo>= 0.18)&(ck_albedo<= 0.25)]
@@ -281,14 +284,87 @@ def pLot_sca_sensitivity_to_albedo_cs(data_dict, coef_dict, threshold_list, c_al
     
     for i in range(len(threshold_list)):
         
-        ax2.plot(x, coef_dict[str(threshold_list[i] *100.)][0]*x + coef_dict[str(threshold_list[i] *100.)][1] * c_albedo_cs + coef_dict[str(threshold_list[i] *100.)][2], linewidth = 1.56, color = color_list[i], label = r'$ \alpha_{cs} < $' + str(threshold_list[i]))
+        ax2.plot(x, (coef_dict[str(threshold_list[i] *100.)][0]* np.log(x) + coef_dict[str(threshold_list[i] *100.)][1] * c_albedo_cs + coef_dict[str(threshold_list[i] *100.)][2]), linewidth = 1.56, color = color_list[i], label = r'$ \alpha_{cs} < $' + str(threshold_list[i]))
 
     plt.title("GCM: " + model_data['modn'] + r"$\ with\ fitting\ line\ of\ appling\ TR_{\alpha_{cs}} $", fontsize = 17)  # \ 0.18 \leq \alpha_{cs} \leq 0.25\
     plt.legend(loc = 'lower right', fontsize = 13)
-    plt.savefig(path6 + "GCM: " + model_data['modn']+"_albedo_LWP(95per)_coloredby_albedo_cs.jpg", bbox_inches ='tight', dpi = 300)
+    plt.savefig(path6 + "LOG GCM: " + model_data['modn']+"_albedo_LWP(95per)_coloredby_albedo_cslog-scale.jpg", bbox_inches ='tight', dpi = 300)
     
     
     plt.close()
     
     return None
+
+
+
+def pLot_sca_sensitivity_to_albedo_cs_2(data_dict, coef_dict, threshold_list, c_albedo_cs= 0.1, **model_data):
+    # ---------------
+    # 'data_dict' is the dictionary store the variables for visualize relation between albedo over lwp, color by albedo_cs;
+    # 'threshold_list' is a list of the threshold values of 'albedo_cs': for filtering out the points with albedo_cs >= Threshold;
+    # 'coef_dict' is the dictionary store the fitting line coefficients for M1, M2.
+    # ---------------
     
+    # s_range = arange(-90., 90., 5.) + 2.5  #..global-region latitude edge: (36)
+    # x_range = arange(-180., 180., 5.)  #..logitude sequences edge: number: 72
+    # y_range = arange(-85, -40., 5.) +2.5  #..southern-ocaen latitude edge: 9
+    
+    # path1 = '/glade/scratch/chuyan/CMIP_output/CMIP_lrm_RESULT/'
+    path6 = '/glade/scratch/chuyan/Plots/CMIP_R_lwp_3/'
+    
+    albedo = np.array(data_dict['albedo'])
+    # print(albedo)
+    ck_albedo = np.array(data_dict['albedo_cs'])
+    # print(ck_albedo)
+    lwp = np.array(data_dict['LWP'])
+    # print(lwp)
+    
+    # PLot:
+    from matplotlib import cm
+    fig2 = plt.figure(figsize = (16, 6))
+    ax21 = fig2.add_subplot(121)
+    
+    color_list = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:brown", "tab:olive", "tab:cyan"]
+    
+    x = np.linspace(0.005, np.nanmax(lwp), 54)
+    y = x
+    
+    # scatter plot of specific gcm:
+    denc1 = ax21.scatter(lwp[(ck_albedo <= 0.30)], albedo[(ck_albedo <= 0.30)], 
+                        c = ck_albedo[(ck_albedo <= 0.30)], s = 15, cmap = cm.rainbow, vmin = 0, vmax = 0.30)
+
+    # scac2=ax21.scatter(lwp[(ck_albedo>= 0.18)&(ck_albedo<= 0.25)],albedo[(ck_albedo>= 0.18)&(ck_albedo<= 0.25)]
+                             # , c = ck_albedo[(ck_albedo>= 0.18)& (ck_albedo<= 0.25)], s = 15, cmap = cm.rainbow)
+
+    ax21.set_xlabel("$LWP,\ [kg\ m^{2}]$", fontsize = 15)
+    ax21.set_ylabel(r"$\alpha \ $", fontsize = 15)
+    cb1 = fig2.colorbar(denc1, ax = ax21, shrink = 0.9, aspect = 6.5)
+    cb1.set_label(r"$clear-sky\ \alpha$", fontsize = 15)
+    
+    for i in range(len(threshold_list)):
+        
+        ax21.plot(x, (coef_dict[str(threshold_list[i] *100.)][0]*x + coef_dict[str(threshold_list[i] *100.)][1] * c_albedo_cs + coef_dict[str(threshold_list[i] *100.)][2]), linewidth = 1.56, color = color_list[i], label = r'$ \alpha_{cs} < $' + str(threshold_list[i]))
+
+    ax21.set_title("GCM: " + model_data['modn'] + r"$\ with\ fitting\ line\ of\ appling\ TR_{\alpha_{cs}} $", fontsize = 15)  # \ 0.18 \leq \alpha_{cs} \leq 0.25\
+    ax21.legend(loc = 'lower right', fontsize = 13)
+    
+    # dencity plot of the distributiob of points:
+
+    ax22 = fig2.add_subplot(122)
+    
+    denc2 = ax22.hexbin(lwp[(ck_albedo <= 0.30)], albedo[(ck_albedo <= 0.30)], gridsize = (25, 25), cmap = plt.cm.Greens)
+    
+    ax22.set_xlabel("$LWP,\ [(kg\ m^{2})]$", fontsize = 15)
+    ax22.set_ylabel(r"$\alpha,\ $", fontsize = 15)
+    cb22 = fig2.colorbar(denc2, ax = ax22, shrink = 0.9, aspect = 6.5)
+    
+    ax22.set_title(" distribution", fontsize = 15)
+    
+    plt.suptitle("GCM: " + model_data['modn'] + " ", fontsize = 17)
+
+    plt.savefig(path6 + "pD GCM: " + model_data['modn']+"_albedo_LWP(95per)_coloredby_albedo_csle0.30.jpg", bbox_inches ='tight', dpi = 250)
+    
+    
+    plt.close()
+    
+    
+    return None

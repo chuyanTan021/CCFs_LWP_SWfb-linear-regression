@@ -31,7 +31,7 @@ from fitLRM_cy2 import *
 from useful_func_cy import *
 from calc_Radiation_LRM_1 import *
 from calc_Radiation_LRM_2 import *
-
+from calc_Radiation_OBS_2 import *
 
 
 def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
@@ -76,7 +76,7 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
 
     shape_latSO =  (latsi0+1) - latsi1
     #print(shape_latSO)
-
+    
     
     #..abrupt-4xCO2 Variables: LWP, tas(gmt), SST, (MC), p-e; SW radiation metrics
     LWP_abr = array(inputVar_abr['clwvi']) - array(inputVar_abr['clivi'])   #..units in kg m^-2
@@ -302,7 +302,7 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
 
     rawdata_dict3['TR_sst'] = THRESHOLD_sst
 
-    savez(WD+C_dict['model_data']['modn']+'_r2r1_hotcold(Jan)_(largestpiR2)_Sep9th_Anomalies_Rtest'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
+    # savez(WD+C_dict['model_data']['modn']+'_r2r1_hotcold(Jan)_(largestpiR2)_Sep9th_Anomalies_eRtest(995per)'+str(round(TR_sst, 2))+'_dats', model_data = C_dict['model_data'],rawdata_dict = rawdata_dict3)
     
     #.. best fit save_2lrm command:
     # savez(WD+C_dict['model_data']['modn']+'_r1r1_(Jan)_(largestpiR2)_Sep9th_Anomalies_'+'0.0K'+'_dats', model_data = C_dict['model_data'], rawdata_dict = rawdata_dict3, Mean_LWP_training = rawdata_dict1['Mean_training'], Stdev_LWP_training= rawdata_dict1['Stdev_training'])
@@ -314,11 +314,11 @@ def calc_LRM_metrics(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     rawdata_dict4['TR_sst'] = THRESHOLD_sst
     rawdata_dict4['TR_sub'] = THRESHOLD_sub
 
-    savez(WD+C_dict['model_data']['modn']+'_r4r1(Jan)_(largestpiR2)_Sep9th_Anomalies_Rtest'+str(round(TR_sst, 2))+'K_'+'ud'+str(round(TR_sub*100, 2))+'_dats', model_data =  C_dict['model_data'], rawdata_dict = rawdata_dict4)
+    # savez(WD+C_dict['model_data']['modn']+'_r4r1(Jan)_(largestpiR2)_Sep9th_Anomalies_eRtest(995per)'+str(round(TR_sst, 2))+'K_'+'ud'+str(round(TR_sub*100, 2))+'_dats', model_data =  C_dict['model_data'], rawdata_dict = rawdata_dict4)
     
     #.. best fit save_4lrm command:
     # savez(WD+C_dict['model_data']['modn']+'_r2r1_updown(Jan)_(largestpiR2)_Sep9th_Anomalies_'+ '0.0K_ud'+str(round(TR_sub*100, 2))+'_dats', model_data = C_dict['model_data'], rawdata_dict = rawdata_dict4, Mean_LWP_training = rawdata_dict2['Mean_training'], Stdev_LWP_training= rawdata_dict2['Stdev_training'])
     
 
     return None
-    
+
