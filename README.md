@@ -7,12 +7,8 @@ Build a two-steps constraint model on constraining Shortwave (SW) cloud feedback
 
 (2). Connect the area-averaged liquid changes in SO to the adjustment of SW cloud radiative effect from calculating & constraining the radiative susceptibility of liquid cloud changes.
 
-See 'master' branch for more details and the updated code. 
- 
 
-
-
-# Nov 27 updated
+# updated
 Cloud metric choosed: Liquid Water Path ('clwvi' - 'clivi');  CCF: Srface Temperature ('ts'), Precipitation - Evaporation ('pr', 'hfls') (Need to to prove they are close to Moisture Convergence),
 Subsidence at 500 mb ('wap' at 500 hPa) , and LTS (Lower Tropospheric Stability = (the Potential Temperature at 700 mb - Surface), 'ps', 'ts', 'ta' at 700 hPa). 
-Using some modules to help analyze the GCM and Observational data.
+Build some modules in '/Course_objective_ana/' to help analyze the GCM and Observational data. 
