@@ -9,6 +9,5 @@ Build a two-steps constraint model on constraining Shortwave (SW) cloud feedback
 
 
 # updated
-Cloud metric choosed: Liquid Water Path ('clwvi' - 'clivi');  CCF: Srface Temperature ('ts'), Precipitation - Evaporation ('pr', 'hfls') (Need to to prove they are close to Moisture Convergence),
-Subsidence at 500 mb ('wap' at 500 hPa) , and LTS (Lower Tropospheric Stability = (the Potential Temperature at 700 mb - Surface), 'ps', 'ts', 'ta' at 700 hPa). 
+Cloud metric choosed: Liquid Water Path ('clwvi' - 'clivi');  CCF: Srface Temperature ('ts'), Precipitation - Evaporation ('pr', 'hfls'), Subsidence at 500 mb ('wap' at 500 hPa) , and LTS (Lower Tropospheric Stability = (the Potential Temperature at 700 mb - Surface), 'ps', 'ts', 'ta' at 700 hPa). 
 Build some modules in '/Course_objective_ana/' to help analyze the GCM and Observational data. 
