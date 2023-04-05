@@ -13,7 +13,7 @@ def binned_cyGlobal5(S, lat, lon):
     Calculate the binned array for the mean value within 5X5 degree Bin Boxes in global REGION
     '''
     if max(lon) > 180.:
-        print("")
+        print("Please convert 0 - 360 longitude scale to -180 - 180 scale.")
     XX, YY = np.meshgrid(lon, lat, indexing='xy')
     #..Global region from 90S ~ 90N
     x_range = np.arange(-180., 180.5, 5.)   #.. number: 72
@@ -62,9 +62,9 @@ def binned_cySouthOcean5(S, lat, lon):
     return S_binned_array
 
 
-def binned_cySO_count(S, lat, lon):
+def binned_cySO_availabledata(S, lat, lon):
     '''
-    Calculate the binned array for the mean value within 5X5 degree Bin Boxes in Southern Ocean REGION
+    Calculate the "sum / count" binned array for 5X5 degree Bin Boxes in Southern Ocean REGION:
     '''
 
     XX, YY = np.meshgrid(lon, lat, indexing='xy')

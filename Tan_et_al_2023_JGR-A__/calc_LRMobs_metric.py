@@ -229,7 +229,7 @@ def Pre_processing(s_range, x_range, y_range, valid_range1=[2002, 7, 15], valid_
     print("End annually data binned.")
 
     # count the ratio of values that are missing in each bin boxes:
-    ratio_array = binned_cySO_count(x_array_mon, inputVar_obs['lat_ceres'], inputVar_obs['lon_ceres'])
+    ratio_array = binned_cySO_availabledata(x_array_mon, inputVar_obs['lat_ceres'], inputVar_obs['lon_ceres'])
 
     ind_binned_omit = np.where(ratio_array>0.499, True, False)  # ignoring bin boxes which has the ratio of np.nan points over 0.5.
 
