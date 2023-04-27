@@ -1,4 +1,4 @@
-# CCFs_ LWP_ SWfb-linear-regressions 
+# CCFs_ LWP_ SWfb-linear-regression 
 
 This project contains all the code I used for my research:
 
