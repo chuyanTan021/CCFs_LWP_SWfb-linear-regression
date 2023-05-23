@@ -430,19 +430,19 @@ def p4plot1(s_range, y_range, x_range, Mean_training, Stdev_training, shape_yr_p
 
     datarepo_nas = ['LWP']  # 'IWP', albedo', 'albedo_cs', 'rsut', 'rsutcs'
 
-    # load annually-mean bin data:
+    # load annual mean binned data:
     dict1_yr_bin_PI = deepcopy(dict0_PI_var['dict1_yr_bin_PI'])
     dict1_yr_bin_abr = deepcopy(dict0_abr_var['dict1_yr_bin_abr'])
 
-    # load monthly bin data:
+    # load monthly binned data:
     dict1_mon_bin_PI = deepcopy(dict0_PI_var['dict1_mon_bin_PI'])
     dict1_mon_bin_abr = deepcopy(dict0_abr_var['dict1_mon_bin_abr'])
     
-    # load anomalies (or normalized) monthly bin data:
+    # load anomalies (or normalized) monthly binned data:
     dict_metric_actual_PI = deepcopy(rawdata_dict['metric_training'])
     dict_metric_actual_abr = deepcopy(rawdata_dict['metric_predict'])
     
-    # load normalized predicted bin data:
+    # load anomalies predicted binned data:
     LWP_metric_predi_PI = deepcopy(rawdata_dict['LWP_predi_bin_PI'])
     LWP_metric_predi_abr = deepcopy(rawdata_dict['LWP_predi_bin_abr'])
     
@@ -457,11 +457,11 @@ def p4plot1(s_range, y_range, x_range, Mean_training, Stdev_training, shape_yr_p
     
     for e in range(len(datarepo_nas)):
     
-        #  "monthly" convert to "annually":
-        areamean_dict_PI[datarepo_nas[e]+ '_yr_bin'] = get_annually_metric(dict_metric_actual_PI['LWP'].reshape(shape_mon_PI_3), shape_mon_PI_3[0], shape_mon_PI_3[1], shape_mon_PI_3[2]) 
+        #  "monthly" convert to "annual" data:
+        areamean_dict_PI[datarepo_nas[e]+ '_yr_bin'] = get_annually_metric(dict_metric_actual_PI['LWP'].reshape(shape_mon_PI_3), shape_mon_PI_3[0], shape_mon_PI_3[1], shape_mon_PI_3[2])
         areamean_dict_abr[datarepo_nas[e]+ '_yr_bin'] = get_annually_metric(dict_metric_actual_abr['LWP'].reshape(shape_mon_abr_3), shape_mon_abr_3[0], shape_mon_abr_3[1], shape_mon_abr_3[2])
 
-        # "yr_bin" area_mean to 'shape_yr_':
+        # "yr_bin" area_mean to 1-D array in 'shape_yr_':
         areamean_dict_PI[datarepo_nas[e]+ '_area_yr'] = area_mean(areamean_dict_PI[datarepo_nas[e]+ '_yr_bin'], y_range, x_range)
         areamean_dict_abr[datarepo_nas[e]+ '_area_yr'] = area_mean(areamean_dict_abr[datarepo_nas[e]+ '_yr_bin'], y_range, x_range)
     
@@ -477,7 +477,7 @@ def p4plot1(s_range, y_range, x_range, Mean_training, Stdev_training, shape_yr_p
         areamean_dict_predi[datapredi_nas[f]+'_predi_yr_bin_pi'] = get_annually_metric(rawdata_dict[datapredi_nas[f]+'_predi_bin_PI'], shape_mon_PI_3[0], shape_mon_PI_3[1], shape_mon_PI_3[2])
         areamean_dict_predi[datapredi_nas[f]+'_predi_yr_bin_abr'] = get_annually_metric(rawdata_dict[datapredi_nas[f]+'_predi_bin_abr'], shape_mon_abr_3[0], shape_mon_abr_3[1], shape_mon_abr_3[2])
     
-    # "yr_bin" area_mean to 'shape_yr_':
+    # "yr_bin" area_mean to 1-D array in 'shape_yr_':
     for g in range(len(datapredi_nas)):
 
         areamean_dict_predi[datapredi_nas[g]+'_area_yr_pi'] = area_mean(areamean_dict_predi[datapredi_nas[g]+'_predi_yr_bin_pi'], y_range, x_range)
@@ -488,9 +488,9 @@ def p4plot1(s_range, y_range, x_range, Mean_training, Stdev_training, shape_yr_p
     rawdata_dict['areamean_dict_abr'] = areamean_dict_abr
     rawdata_dict['areamean_dict_PI'] = areamean_dict_PI
 
-    # calc d_DeltaLWP /d_DeltaGMT |(abrupt-4xCO2 - avg(piControl)) add June 27th.
-    output_2report_pi = area_mean(get_annually_metric(dict1_mon_bin_PI['LWP_mon_bin'],shape_mon_PI_3[0],shape_mon_PI_3[1],shape_mon_PI_3[2]), y_range, x_range)[:]
-    output_2report_abr = area_mean(get_annually_metric(dict1_mon_bin_abr['LWP_mon_bin'],shape_mon_abr_3[0],shape_mon_abr_3[1],shape_mon_abr_3[2]), y_range, x_range)[0:150]
+    # calc d_DeltaLWP /d_DeltaGMT |(abrupt-4xCO2 - avg(piControl)), added on June 27th.
+    output_2report_pi = area_mean(get_annually_metric(dict1_mon_bin_PI['LWP_mon_bin'], shape_mon_PI_3[0], shape_mon_PI_3[1], shape_mon_PI_3[2]), y_range, x_range)[:]
+    output_2report_abr = area_mean(get_annually_metric(dict1_mon_bin_abr['LWP_mon_bin'], shape_mon_abr_3[0], shape_mon_abr_3[1], shape_mon_abr_3[2]), y_range, x_range)[0:150]
     
     output_2predict_pi = area_mean(get_annually_metric(LWP_raw_predi_PI, shape_mon_PI_3[0],shape_mon_PI_3[1],shape_mon_PI_3[2]), y_range, x_range)[:]
     output_2predict_abr = area_mean(get_annually_metric(LWP_raw_predi_abr, shape_mon_abr_3[0],shape_mon_abr_3[1],shape_mon_abr_3[2]), y_range, x_range)[0:150]
@@ -501,9 +501,9 @@ def p4plot1(s_range, y_range, x_range, Mean_training, Stdev_training, shape_yr_p
     output_dabrmeanpi_predict2 = areamean_dict_predi['LWP_area_yr_abr'][0:150] - nanmean(areamean_dict_predi['LWP_area_yr_pi'][0:99])
     output_dabrmeanpi_GMT2 = areamean_dict_abr['gmt_area_yr'][0:150] - mean(areamean_dict_PI['gmt_area_yr'])
     
-    # regressed delta_LWP over delta_GMT, using 'statsmodels' ols functions
+    # Regressed delta_LWP over delta_GMT, using 'statsmodels' ols functions
     data = pd.DataFrame({'x': output_dabrmeanpi_GMT2, 'y1':output_dabrmeanpi_report2, 'y2':output_dabrmeanpi_predict2})
-
+    
     model_report = ols("y1 ~ x", data).fit()
     model_predicted = ols("y2 ~ x", data).fit()
     
@@ -514,7 +514,7 @@ def p4plot1(s_range, y_range, x_range, Mean_training, Stdev_training, shape_yr_p
     Dx_DtG = asarray([[model_report._results.params[1], model_report._results.params[0]], [model_predicted._results.params[1], model_predicted._results.params[0]]])
     rawdata_dict['dX_dTg'] = Dx_DtG
     
-    # Generate continous annually-mean array are convenient for plotting LWP changes:
+    # Generate continous annual mean array are convenient for plotting LWP changes:
     #..Years from 'piControl' to 'abrupt4xCO2' experiment, which are choosed years
     Yrs = arange(shape_yr_pi+shape_yr_abr)
     rawdata_dict['Yrs'] = Yrs
@@ -525,7 +525,8 @@ def p4plot1(s_range, y_range, x_range, Mean_training, Stdev_training, shape_yr_p
     GMT[0:shape_yr_pi] = areamean_dict_PI['gmt_area_yr']
     GMT[shape_yr_pi:] = areamean_dict_abr['gmt_area_yr']
     rawdata_dict['GMT'] = GMT
-    # LRM predict annually mean, area-mean values, from 'piControl' to 'abrupt4xCO2' experiment
+    
+    # LRM predict annual mean, area-mean values, from 'piControl' to 'abrupt4xCO2' experiment
     predict_metrics_annually = {}
     report_metrics_annually = {}
     
@@ -534,7 +535,7 @@ def p4plot1(s_range, y_range, x_range, Mean_training, Stdev_training, shape_yr_p
         predict_metrics_annually[datapredi_nas[h]][0:shape_yr_pi] = areamean_dict_predi[datapredi_nas[h] + '_area_yr_pi'][0:shape_yr_pi]
         predict_metrics_annually[datapredi_nas[h]][shape_yr_pi:(shape_yr_pi + areamean_dict_predi[datapredi_nas[h] + '_area_yr_abr'].shape[0])] = areamean_dict_predi[datapredi_nas[h]+'_area_yr_abr']
         
-    # GCM actual annually mean, area-mean values, from 'piControl' to 'abrupt4xCO2' experiment
+    # GCM actual annual mean, area-mean values, from 'piControl' to 'abrupt4xCO2' experiments:
 
     for i in range(len(datarepo_nas)):
         report_metrics_annually[datarepo_nas[i]] = full((shape_yr_pi + areamean_dict_abr[datarepo_nas[i] + '_area_yr'].shape[0]), 0.0)  

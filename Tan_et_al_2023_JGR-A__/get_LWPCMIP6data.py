@@ -44,7 +44,7 @@ def get_LWPCMIP6(modn='', consort='', cmip='', exper='', ensmem='', gg='', typev
         time2=[int(min(TEST1_time[:,0]))+149, 12, 15]
     
     elif modn == 'EC-Earth3':
-        ensmem = 'r3i1p1f1'
+        ensmem = 'r8i1p1f1'
 
         TEST1_time= read_var_mod(modn=modn,consort=consort,varnm='pr',cmip=cmip,exper=exper,ensmem=ensmem,gg=gg,typevar=typevar,time1=[1,1,1], time2=[3349, 12, 31])[-1]
         time1=[int(min(TEST1_time[:,0])),1,1]
@@ -108,8 +108,8 @@ def get_LWPCMIP6(modn='', consort='', cmip='', exper='', ensmem='', gg='', typev
     elif modn == 'NESM3':
         ensmem = 'r1i1p1f1'
         TEST2_time= read_var_mod(modn=modn,consort=consort,varnm='ta',cmip=cmip, exper=exper,ensmem=ensmem,gg=gg,typevar=typevar, read_p= True, time1=[1,1,1], time2=[8000,12,31])[-1]
-        timep1=[int(min(TEST2_time[:,0])), 1, 1]   #.. max-799
-        timep2=[int(min(TEST2_time[:,0]))+98, 12, 31]  #.. max-750
+        timep1=[int(min(TEST2_time[:,0])), 1, 1]   #.. start at 700
+        timep2=[int(min(TEST2_time[:,0]))+98, 12, 31]  #.. start at 700
     
     elif modn == 'CNRM-CM6-1':
         ensmem = 'r1i1p1f2'

@@ -55,8 +55,8 @@ def region_cropping(dict_raw, variable_nas, lats, lons, lat_range = [-85., -40.]
             continue
     
     print(' ended cropping ')
+    
     return dict_crop, lats_crop, lons_crop
-
 
 
 def region_cropping_var(data, lats, lons, lat_range = [-85., -40.], lon_range = [-180., 180.]):
@@ -180,7 +180,6 @@ def get_annually_dict(dict_rawdata, variable_nas, times, label = 'mon'):
                 print('wrong month value.')
 
             dict_annually_mean[variable_nas[v]] = annually_array
-
     
     return dict_annually_mean
 
@@ -1059,64 +1058,4 @@ def rdlrm_1_training_raw(X_dict, lats, lons, predictant = 'LWP', predictor = ['S
     
     return predict_dict, ind_true, ind_false, coef_array, shape_fla_training
 
-
-
-def stats_metrics_Visualization(modn = 'IPSLCM6ALR'):
-    
-    
-    
-    WD = '/glade/scratch/chuyan/CMIP6_output/'
-    WD_plot = '/glade/work/chuyan/Research/Cloud_CCFs_RMs/Course_objective_ana/plot_file/plots_July9_CFMIP/'
-    
-    folder =  glob.glob(WD+ modn+'__'+ 'STAT_pi+abr_'+'22x_31y'+'.npz')
-    print(folder)
-    
-    output_ARRAY  =  load(folder[0], allow_pickle=True)  # str(TR_sst)
-    x_gcm =  array(output_ARRAY['bound_x'])
-    y_gcm =  array(output_ARRAY['bound_y'])
-    output_stat1   = output_ARRAY['stats_2']
-    output_stat2   = output_ARRAY['stats_5']
-
-    fig3, ax3  = plt.subplots(1, 2, figsize = (19.8, 9.8))  #(16.2, 9.3))
-
-    #..defined a proper LWP ticks within its range
-    p10_valuespace1 = nanpercentile(output_stat1, 25.) - nanpercentile(output_stat1, 15.)
-    levels_value1 = linspace(nanpercentile(output_stat1, 1.5)-p10_valuespace1, nanpercentile(output_stat1, 99.5)+p10_valuespace1, 164)# arange(0.368, 0.534, 0.002) 
-    # print(levels_value1)
-    p10_valuespace2 = nanpercentile(output_stat2, 25.) - nanpercentile(output_stat2, 15.)
-    # levels_value2  = linspace(nanpercentile(output_stat2, 1.5)-p10_valuespace2, nanpercentile(output_stat2, 99.5)+p10_valuespace2, 164)
-    levels_value2 = linspace(0.5, 1., 164)  # start - end - num
-    # print(levels_value2)
-    
-    #..print(linspace(nanpercentile(output_stat, 1.5), nanpercentile(output_stat, 99.5), 164))
-    #..pick the desired colormap
-    cmap  = plt.get_cmap('YlOrRd') 
-    cmap_2 = plt.get_cmap('viridis_r')   # 'YlOrRd'
-    norm1 = BoundaryNorm(levels_value1, ncolors= cmap.N, extend='both')
-    norm2 = BoundaryNorm(levels_value2, ncolors= cmap_2.N, extend='both')
-
-    im1  = ax3[0].pcolormesh(x_gcm, y_gcm, array(output_stat1), cmap=cmap, norm= norm1)   #..anmean_LWP_bin_Tskew_wvp..LWP_bin_Tskin_sub
-    ax3[0].set_xlabel(r'$\TR_{\omega_{500}},\ Pa s^{-1}$', fontsize= 19)
-    ax3[0].set_ylabel(r'$\TR_{Ts},\ K$', fontsize= 19)
-    ax3[0].set_title(r"$(a)\ ABS\_bias:(deltaLWP_{pred} - deltaLWP_{GCM})$", loc='left', fontsize = 11)
-    
-    im2  = ax3[1].pcolormesh(x_gcm, y_gcm, array(output_stat2), cmap=cmap_2, norm= norm2)
-    ax3[1].set_xlabel(r'$\TR_{\omega_{500}},\ Pa s^{-1}$', fontsize= 19)
-    ax3[1].set_ylabel(r'$\TR_{Ts},\ K$', fontsize= 19)
-    # ax3[1].set_title(r"$(b)\ R^{2}(PI\ predict\ with\ PI\ true LWP)$", loc='left', fontsize = 11)
-    ax3[1].set_title(modn+" ", loc='left', fontsize = 18)
-    
-    fig3.colorbar(im1, ax = ax3[0], label= r"$(kg\ m^{-2})$")
-    fig3.colorbar(im2, ax = ax3[1], label= r"$ Coefficient of Determination$")
-
-    
-    # plt.xlabel('SUB at 500mb, '+ r'$Pa s^{-1}$', fontsize= 15)
-    # plt.ylabel('SST, ' + 'K', fontsize= 15)
-    plt.suptitle( modn+ " Bias Metrics for USING piControl data Predict abr4xCO2 LWP", fontsize = 18)
-
-    # plt.legend(loc='upper right',  fontsize = 12)
-
-    # plt.savefig(WD_plot+'model_bias_' + modn)
-    
-    return None
 
