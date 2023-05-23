@@ -154,7 +154,7 @@ def calc_Radiation_LRM_2(inputVar_pi, inputVar_abr, **model_data):
         dict1_abr_var[datavar_nas[c]] = dict1_abr_var[datavar_nas[c]][:,latsi0:latsi1+1, :]  # Southern Ocean data
     
     # radiative transfer model: single-regime LRM:
-    threshold_list = [0.100, 0.110, 0.120, 0.150, 0.200, 0.300, 0.350, 0.500, 1.000]
+    threshold_list = [0.110, 0.120, 0.150, 0.200, 0.250, 0.300, 0.350, 0.400, 1.000]  # 0.105, 0.110, 0.120, 0.150, 0.200, 0.300, 0.350, 0.500, 1.000
     
     # piControl:
     coef_dict_Albedo_PI, coef_dict_Alpha_cre_PI = radiative_transfer_model(dict1_PI_var, threshold_list, label = 'piControl')
