@@ -24,7 +24,7 @@ from binned_cyFunctions5 import *
 from read_hs_file import read_var_mod
 from useful_func_cy import *
 
-def fitLRM(C_dict, TR_sst, s_range, y_range, x_range, lats, lons):
+def fitLRM1(C_dict, TR_sst, s_range, y_range, x_range, lats, lons):
     # 'C_dict' is the raw data dict, 'TR_sst' is the pre-defined skin_Temperature Threshold to distinguish two Multi-Linear Regression Models
 
     # 's_range , 'y_range', 'x_range' used to do area mean for repeat gmt ARRAY
@@ -105,7 +105,7 @@ def fitLRM(C_dict, TR_sst, s_range, y_range, x_range, lats, lons):
     
     GMT_abr_mon = area_mean(dict1_mon_bin_abr['gmt_mon_bin'], s_range, x_range)   #.. MONTHLY time series of global area_mean surface air temperature
     
-    # Use the southernOCEAN value as the gmt variable
+    # gmt
     dict2_predi_fla_PI['gmt'] = GMT_pi_mon
     dict2_predi_fla_abr['gmt'] = GMT_abr_mon
     dict2_predi['gmt'] = deepcopy(dict2_predi_fla_PI['gmt'])
@@ -293,9 +293,9 @@ def fitLRM2(C_dict, TR_sst, TR_sub, s_range, y_range, x_range, lats, lons):
     
     #..Use area_mean method, 'np.repeat' and 'np.tile' to reproduce gmt area-mean Array as the same shape as other flattened variables
     GMT_pi_mon = area_mean(dict1_mon_bin_PI['gmt_mon_bin'], s_range,  x_range)   #.. MONTHLY time series of global area_mean surface air temperature
-    
     GMT_abr_mon = area_mean(dict1_mon_bin_abr['gmt_mon_bin'], s_range, x_range)   #.. MONTHLY time series of global area_mean surface air temperature
-    # Use the southernOCEAN value as the gmt variable
+    
+    # gmt
     dict2_predi_fla_PI['gmt'] = GMT_pi_mon
     dict2_predi_fla_abr['gmt'] = GMT_abr_mon
     dict2_predi['gmt'] = deepcopy(dict2_predi_fla_PI['gmt'])
@@ -551,3 +551,99 @@ def p4plot1(s_range, y_range, x_range, Mean_training, Stdev_training, shape_yr_p
     
     return rawdata_dict
 
+
+
+def fitLRM1_splitperiod(C_dict, TR_sst, s_range, y_range, x_range, lats, lons):
+    # 'C_dict' is the raw data dict, 'TR_sst' is the pre-defined skin_Temperature Threshold to distinguish two multi-linear regression models
+    # 's_range , 'y_range', 'x_range' used to do area mean
+    
+    # 'Result_dict' is the dictionary for storing the piControl coef and the 15-yr splitted coefs in abrupt4xCO2 exp:
+    Result_dict = {}
+    
+    # read data:
+    dict0_abr_var = C_dict['dict1_abr_var']
+    dict0_PI_var = C_dict['dict1_PI_var']
+    #print(dict0_PI_var['times'])
+
+    model = C_dict['model_data']   #.. type in dict
+    datavar_nas = ['LWP', 'TWP', 'IWP', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'SST', 'p_e', 'LTS', 'SUB'] #..12 varisables except for gmt
+    
+    # load annual mean bin data:
+    dict1_yr_bin_PI = dict0_PI_var['dict1_yr_bin_PI']
+    dict1_yr_bin_abr = dict0_abr_var['dict1_yr_bin_abr']
+    #print(dict1_yr_bin_PI['LWP_yr_bin'].shape)
+    
+    # load monthly bin data:
+    dict1_mon_bin_PI = dict0_PI_var['dict1_mon_bin_PI']
+    dict1_mon_bin_abr = dict0_abr_var['dict1_mon_bin_abr']
+    
+    # load data shape:
+    shape_yr_PI = dict0_PI_var['shape_yr']
+    shape_yr_abr = dict0_abr_var['shape_yr']
+    shape_mon_PI = dict0_PI_var['shape_mon']
+    shape_mon_abr = dict0_abr_var['shape_mon']
+    
+
+    # for the entire 99 years period of piControl exp, calc the LRM coefficients and save:
+    dict2_predi_fla_PI = {}
+    dict2_predi_ano_PI = {}  # need climatological values of variables
+    dict2_predi_nor_PI = {}  # standardized anomalies of variables
+    
+    dict2_predi = {}
+    #.. Flatten binned array /Standardized data ARRAY :
+    for a in range(len(datavar_nas)):
+        
+        dict2_predi_fla_PI[datavar_nas[a]] = dict1_mon_bin_PI[datavar_nas[a]+'_mon_bin'].flatten()
+        # anomalies in the raw units:
+        # 'dict2_predi' saves the reference-period (piControl) mean for data variable
+        dict2_predi[datavar_nas[a]] = deepcopy(dict1_mon_bin_PI[datavar_nas[a]+'_mon_bin'])
+        dict2_predi_ano_PI[datavar_nas[a]] = dict2_predi_fla_PI[datavar_nas[a]] - nanmean(area_mean(dict2_predi[datavar_nas[a]], y_range, x_range))
+        # normalized stardard deviation in unit of './std':
+        dict2_predi_nor_PI[datavar_nas[a]] = dict2_predi_ano_PI[datavar_nas[a]] / nanstd(dict2_predi_fla_PI[datavar_nas[a]])  # divided by 1 standard deviation of monthly data
+    
+    # gmt
+    GMT_pi_mon = area_mean(dict1_mon_bin_PI['gmt_mon_bin'], s_range, x_range)  #.. Monthly time series of global mean surface air temperature
+    dict2_predi_fla_PI['gmt'] = GMT_pi_mon
+    dict2_predi['gmt'] = deepcopy(dict2_predi_fla_PI['gmt'])
+    dict2_predi_ano_PI['gmt'] = dict2_predi_fla_PI['gmt'] - nanmean(dict2_predi['gmt'])
+    dict2_predi_nor_PI['gmt'] = dict2_predi_ano_PI['gmt'] / nanstd(dict1_mon_bin_PI['gmt_mon_bin'])
+    
+    metric_training = deepcopy(dict2_predi_ano_PI)
+    #.. Training 1Regime LRM
+    #.. piControl
+    predict_dict_PI, _, _, coef_array_PI, shape_fla_training = rdlrm_1_training(metric_training, predictant='LWP')
+    Result_dict["piControl"] = coef_array_PI
+    
+    
+    # for every 15 years period in abrupt4xCO2 exp, calc the LRM coefficients and saved for data array:
+    print(shape_yr_abr)
+    for t in range(shape_yr_abr//15):
+        print(t)
+        # Splitwise according to each 15 years:
+        dict2_predi_fla_abr = {}
+        dict2_predi_ano_abr = {}
+        dict2_predi_nor_abr = {}
+
+        #.. Flatten binned array /Standardized data ARRAY :
+        for b in range(len(datavar_nas)):
+
+            dict2_predi_fla_abr[datavar_nas[b]] = dict1_mon_bin_abr[datavar_nas[b]+'_mon_bin'][12*15*t:12*15*(t+1),:,:].flatten()
+
+            # anomalies in the raw units:
+            # 'dict2_predi' saves the reference-period (piControl) mean for data variable
+            dict2_predi_ano_abr[datavar_nas[b]] = dict2_predi_fla_abr[datavar_nas[b]] - nanmean(area_mean(dict2_predi[datavar_nas[b]], y_range,x_range))
+            # normalized stardard deviation in unit of './std':
+            dict2_predi_nor_abr[datavar_nas[b]] = dict2_predi_ano_abr[datavar_nas[b]] / nanstd(dict2_predi_fla_PI[datavar_nas[b]]) # divided by 1 standard deviation of monthly data
+        
+        GMT_abr_mon = area_mean(dict1_mon_bin_abr['gmt_mon_bin'][12*15*t:12*15*(t+1),:,:], s_range, x_range)  #.. Monthly time series of global mean surface air temperature
+        dict2_predi_fla_abr['gmt'] = GMT_abr_mon
+        dict2_predi_ano_abr['gmt'] = dict2_predi_fla_abr['gmt'] - nanmean(dict2_predi['gmt'])
+        dict2_predi_nor_abr['gmt'] = dict2_predi_ano_abr['gmt'] / nanstd(dict1_mon_bin_PI['gmt_mon_bin'])
+    
+        metric_predict = deepcopy(dict2_predi_ano_abr)
+        #.. Training 1Regime LRM
+        #.. for every 15 years of abrupt4xCO2
+        predict_dict_abr_split, _, _, coef_array_abr_split, shape_fla_abr_split = rdlrm_1_training(metric_predict, predictant='LWP')
+        Result_dict["abrupt4xCO2"+"_"+str(t)] = coef_array_abr_split
+    
+    return Result_dict 

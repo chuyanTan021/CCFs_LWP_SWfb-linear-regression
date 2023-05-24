@@ -84,38 +84,13 @@ def region_cropping_var(data, lats, lons, lat_range = [-85., -40.], lon_range = 
 
 
 
-def annually_mean(data, times, label = 'mon'):
-    # This function is for converting finer time scale data to annually mean data;
-    # ..currently can only process: monthly data;
-    # The default data shape is: (time, lat, lon);
-    # 'times' is the time array of data, which in shape of (length_of_time, 3) for storing (year, month, day) information.
-    
-    if label == 'mon':
-        shape_yr = asarray(times).shape[0]// 12
-        annually_array = zeros((shape_yr, asarray(data).shape[1], asarray(data).shape[2]))
-        
-        # Is the first month of data be 'January'? 
-        if times[0, 1]== 1.0:  # start at January
-            for i in range(shape_yr):
-                annually_array[i,:,:] = nanmean(data[i*12:(i+1)*12, :,:], axis = 0)
-        elif any(times[0,1]== x for x in [2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.]):  # not start at Jan
-            for i in range(shape_yr):
-                annually_array[i,:,:] = nanmean(data[i*12+(13-int(times[0,1])):(i+1)*12+(13-int(times[0,1])),:,:], axis = 0)
-        else:
-            print('wrong month value.')
-    
-    return annually_array
-
-
-
-def get_annually_metric(data, shape_m0, shape_1, shape_2):
+def annual_mean(data, shape_m0, shape_1, shape_2):
     ###..'data' is the origin data array for 3D variable(i.e., (times, lat, lon)), 
     ###. 'shape_m0' was the shape of dimension_times, should be in 'mon' before converting to 'yr'
     
-    shape_yr = shape_m0//12   #.. times dimension shapes in annually
-    ##. 'layover_yr' is the data array for storing the 2-d data array for annually-eman:
+    shape_yr = shape_m0//12   #.. times dimension shapes in annual
+    ##. 'layover_yr' is the data array for storing the 2-d data array for annual mean
     layover_yr = zeros((shape_yr, shape_1, shape_2))
-    
         
     for i in range(shape_yr):
 
@@ -125,10 +100,34 @@ def get_annually_metric(data, shape_m0, shape_1, shape_2):
 
 
 
-def get_annually_dict_so(dict_rawdata, dict_names, shape_time, lat_si0, lat_si1, shape_lon):
+def get_annual_metric(data, times, label = 'mon'):
+    # This function is for converting finer time scale data to annual mean data;
+    # ..currently can only process: monthly data;
+    # The default data shape is: (time, lat, lon);
+    # 'times' is the time array of data, which in shape of (length_of_time, 3) for storing (year, month, day) information.
+    
+    if label == 'mon':
+        shape_yr = asarray(times).shape[0]// 12
+        annual_array = zeros((shape_yr, asarray(data).shape[1], asarray(data).shape[2]))
+        
+        # Is the first month of data be 'January'? 
+        if times[0, 1]== 1.0:  # start at January
+            for i in range(shape_yr):
+                annual_array[i,:,:] = nanmean(data[i*12:(i+1)*12, :,:], axis = 0)
+        elif any(times[0,1]== x for x in [2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.]):  # not start at January
+            for i in range(shape_yr):
+                annual_array[i,:,:] = nanmean(data[i*12+(13-int(times[0,1])):(i+1)*12+(13-int(times[0,1])),:,:], axis = 0)
+        else:
+            print('wrong month value.')
+    
+    return annual_array
+
+
+
+def get_annual_dict_so(dict_rawdata, dict_names, shape_time, lat_si0, lat_si1, shape_lon):
     #.. 'dict_rawdat' : originally in monthly data, all variables are 3D(times, lat, lon) data in the same shape;
     #.. 'shape_time' : # of Months, which as the 1st dimension in each variables INSIDE 'dict_rawdata';
-    #.. 'dict_names' : the name string list (or a dict) of each variables Inside 'dict_rawdata' and you wanted to calc the annually-mean;
+    #.. 'dict_names' : the name string list (or a dict) of each variables Inside 'dict_rawdata' and you wanted to calc the annual mean;
     #.. 'lat_si0': the smallest index of latitude of bound; 'lat_si1': the largest index of latitude of bound
 
     dict_yr  = {}
@@ -148,40 +147,40 @@ def get_annually_dict_so(dict_rawdata, dict_names, shape_time, lat_si0, lat_si1,
         
         #tips: dictionary didn't really copy the value into the 'dict_yr', but works like an ‘indicator'
         dict_yr[dict_names[a]+'_yr'] =  layover_yr[a,:,:,:]
-        print(dict_names[a], " annually data done")
+        print(dict_names[a], "convert annual data done")
 
     return dict_yr
 
 
 
-def get_annually_dict(dict_rawdata, variable_nas, times, label = 'mon'):
-    #.. This function is for converting finer time scale data in the dict to be annually data, and save into another dict.
+def get_annual_dict(dict_rawdata, variable_nas, times, label = 'mon'):
+    #.. This function is for converting finer time scale data in the dict to be annual data, and save into another dict.
     #.. currently can only handle 'monthly' data;
     #.. 'dict_rawdata' : the data dictionary save all the variables, the default shape is: (times, lat, lon);
-    #.. 'variable_nas' : the string list of variable(s) that we wanted to calc the annually-mean;
+    #.. 'variable_nas' : the string list of variable(s) that we wanted to calc the annual mean;
     #.. 'times' : is the time array of data, which in shape of (length_of_time, 3) for storing (year, month, day) information.
     
-    dict_annually_mean = deepcopy(dict_rawdata)
+    dict_annual_mean = {}
     
     if label == 'mon':
         shape_yr = asarray(times).shape[0]// 12
         
         for v in range(len(variable_nas)):
-            annually_array = zeros((shape_yr, asarray(dict_annually_mean[variable_nas[v]]).shape[1], asarray(dict_annually_mean[variable_nas[v]]).shape[2]))
+            annual_array = zeros((shape_yr, asarray(dict_rawdata[variable_nas[v]]).shape[1], asarray(dict_rawdata[variable_nas[v]]).shape[2]))
             
             # Is the first month of data be 'January'? 
             if times[0, 1]== 1.0:  # start at January
                 for i in range(shape_yr):
-                    annually_array[i,:,:] = nanmean(dict_annually_mean[variable_nas[v]][i*12:(i+1)*12, :,:], axis = 0)
-            elif any(times[0,1]== x for x in [2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.]):  # not start at Jan
+                    annual_array[i,:,:] = nanmean(dict_rawdata[variable_nas[v]][i*12:(i+1)*12, :,:], axis = 0)
+            elif any(times[0,1]== x for x in [2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.]):  # not start at January
                 for i in range(shape_yr):
-                    annually_array[i,:,:] = nanmean(dict_annually_mean[variable_nas[v]][i*12+(13-int(times[0,1])):(i+1)*12+(13-int(times[0,1])),:,:], axis = 0)
+                    annual_array[i,:,:] = nanmean(dict_rawdata[variable_nas[v]][i*12+(13-int(times[0,1])):(i+1)*12+(13-int(times[0,1])),:,:], axis = 0)
             else:
                 print('wrong month value.')
 
-            dict_annually_mean[variable_nas[v]] = annually_array
+            dict_annual_mean[variable_nas[v]] = annual_array
     
-    return dict_annually_mean
+    return dict_annual_mean
 
 
 
@@ -254,12 +253,12 @@ def rdlrm_1_training(X_dict, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS
     for i in range(len(predictor)):
         Predictors.append(X_dict[predictor[i]] *1.)
     Predictors = asarray(Predictors)
-    print("predictors metrix shape: ", Predictors.shape)  # (4, ..)
+    print("predictors metrix shape: ", Predictors.shape)  # (4,  ..)
     
     shape_fla_training = X_dict[predictant].shape
     print("shape1: ", shape_fla_training)   # shape1
     
-
+    
     # Detecting nan values in the CCFs metrics
     Z = X_dict['LTS'] * 1.
 
@@ -271,7 +270,7 @@ def rdlrm_1_training(X_dict, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS
     ind_true = logical_not(ind_false)
     
     print("shape2: ", asarray(nonzero(ind_true ==True)).shape)
-
+    
     # Replace '0'/'nan' value in right place
     predict_label_LWP[ind_false] = 0
     predict_value_LWP[ind_false] = nan
@@ -292,15 +291,16 @@ def rdlrm_1_training(X_dict, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS
     predict_label_LWP[ind_true] = 1
     
     
-    # Save coefs and intps
-    coef_array = asarray([aeffi, aintp])
-    # print(asarray(coef_array).shape)
+    # Save coefs and intps:
+    coef_array_list = deepcopy([aeffi, aintp])
+    coef_array = asarray(coef_array_list, dtype = object)
+    # print(coef_array.shape)
     
     # Save predicted Value, and save values and labels into predict_dict
     predict_value_LWP[ind_true] = dot(aeffi.reshape(1, -1), Predictors[:][0:len(predictor), ind_true]).flatten() + aintp  #.. valid data points
 
-    predict_dict['label'] =  predict_label_LWP
-    predict_dict['value'] =  predict_value_LWP
+    predict_dict['label'] = predict_label_LWP
+    predict_dict['value'] = predict_value_LWP
     
     return predict_dict, ind_true, ind_false, coef_array, shape_fla_training
 
@@ -444,7 +444,7 @@ def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', predictor = ['SST', '
 
     regr1 = linear_model.LinearRegression()
     result1 = regr1.fit(Predictors[:][0:len(predictor), ind6].T,  X_dict[predictant][ind6])
-    #..Save the coef and intp
+    #..Save the coef and intp:
     aeffi = result1.coef_
     aintp = result1.intercept_
 
@@ -464,8 +464,9 @@ def rdlrm_2_training(X_dict, cut_off1, predictant = 'LWP', predictor = ['SST', '
     predict_label_LWP[ind6] = 2
     
     # Save coefs and intps
-    coef_array = asarray([[beffi, bintp], [aeffi, aintp]])
-    # print(asarray(coef_array).shape)
+    coef_array_list = deepcopy([[beffi, bintp], [aeffi, aintp]])
+    coef_array = asarray(coef_array_list, dtype = object)
+    # print("coef_array's shape: ", coef_array.shape)
     
     # Save predicted Values
     predict_value_LWP[ind6] = dot(aeffi.reshape(1, -1), Predictors[:][0:len(predictor), ind6]).flatten() +aintp  #..larger or equal than Tr_SST
@@ -541,7 +542,7 @@ def rdlrm_2_predict(X_dict, coef_array, cut_off1, predictant = 'LWP', predictor 
         predict_value_LWP[ind] = dot(coef_array[k,0].reshape(1, -1), Predictors[:][0:len(predictor), ind]).flatten() + coef_array[k,1]  #..larger or equal than Tr_SST
     
     # print("predict_value_LWP ", predict_value_LWP)
-    # print("label", predict_label_LWP)  # '1' for 'Cold' regime, '2' for 'Hot' regime
+    # print("label", predict_label_LWP)  # '1' for 'Cold' regime, '2' for 'Warm' regime
     
     
     predict_dict['label'] = predict_label_LWP
@@ -587,7 +588,7 @@ def Test_performance_2(A, B, ind6, ind7):
 
 
 def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', predictor = ['SST', 'p_e', 'LTS', 'SUB'], r = 4):
-    # 'If r = 4: divided by Hot/ Cold (by SST) & Up/ Dn (By SUB500) regimes'
+    # 'If r = 4: divided by Warm/ Cold (by SST) & Up/ Dn (By SUB500) regimes'
     # 'If r = 2: divided by only Up/ Down (By SUB500) regimes'
     
     # 'predict_dict' is a dictionary to store the 'predict_label_LWP' and 'predict_value_LWP'
@@ -694,14 +695,15 @@ def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', predictor =
             print('you input a non-wise value for TR_sub at 500 mb')
             print('please try another TR_sub input...')
 
-        # '1' for 'Cold' & 'Up' regime; '2' for 'Hot' & 'Up' regime; '3' for 'Cold' and 'Down' regime; and '4' for 'Hot' and 'Down' regime
+        # '1' for 'Cold' & 'Up' regime; '2' for 'Warm' & 'Up' regime; '3' for 'Cold' and 'Down' regime; and '4' for 'Warm' and 'Down' regime
         predict_label_LWP[ind7] = 1
         predict_label_LWP[ind8] = 2
         predict_label_LWP[ind9] = 3
         predict_label_LWP[ind10] = 4
-
-        # Save coefs and intps
-        coef_array = asarray([[aeffi, aintp], [beffi, bintp], [ceffi, cintp], [deffi, dintp]])
+        
+        # Save coefs and intps:
+        coef_array_list = deepcopy([[aeffi, aintp], [beffi, bintp], [ceffi, cintp], [deffi, dintp]])
+        coef_array = asarray(coef_array_list, dtype = object)
         # print(asarray(coef_array).shape)
 
         # Save predict Value 
@@ -752,8 +754,9 @@ def rdlrm_4_training(X_dict, cut_off1, cut_off2, predictant = 'LWP', predictor =
         predict_label_LWP[ind8] = 2
         
         
-        # Save coefs and intps
-        coef_array = asarray([[aeffi, aintp], [beffi, bintp]]) # 'Up' and 'Down'
+        # Save coefs and intps:
+        coef_array_list = deepcopy([[aeffi, aintp], [beffi, bintp]]) # 'Up' and 'Down'
+        coef_array = asarray(coef_array_list, dtype = object)
         
         # Save predicted values and labels into predict_dict
         predict_value_LWP[ind7] = dot(aeffi.reshape(1, -1), Predictors[:][0:len(predictor), ind7]).flatten() +aintp  #..less/euqal to Tr_SUB
@@ -1047,7 +1050,7 @@ def rdlrm_1_training_raw(X_dict, lats, lons, predictant = 'LWP', predictor = ['S
 
     
     # Save coefs and intps
-    coef_array = asarray([aeffi, aintp])
+    coef_array = deepcopy(asarray([aeffi, aintp]))
     # print(asarray(coef_array).shape)
     
     # Save predicted Value, and save values and labels into predict_dict

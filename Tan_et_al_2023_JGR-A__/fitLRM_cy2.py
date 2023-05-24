@@ -103,10 +103,9 @@ def fitLRM3(C_dict, TR_sst, s_range, y_range, x_range, lats, lons):
     
     #..Use area_mean method, 'np.repeat' and 'np.tile' to reproduce gmt area-mean Array as the same shape as other flattened variables
     GMT_pi_mon = area_mean(dict1_mon_bin_PI['gmt_mon_bin'], s_range,  x_range)   #.. MONTHLY time series of global area_mean surface air temperature
-    
     GMT_abr_mon = area_mean(dict1_mon_bin_abr['gmt_mon_bin'], s_range, x_range)   #.. MONTHLY time series of global area_mean surface air temperature
     
-    # Use the southernOCEAN value as the gmt variable
+    # gmt
     dict2_predi_fla_PI['gmt'] = GMT_pi_mon
     dict2_predi_fla_abr['gmt'] = GMT_abr_mon
     dict2_predi['gmt'] = deepcopy(dict2_predi_fla_PI['gmt'])
@@ -305,10 +304,9 @@ def fitLRM4(C_dict, TR_sst, TR_sub, s_range, y_range, x_range, lats, lons):
     
     #..Use area_mean method, 'np.repeat' and 'np.tile' to reproduce gmt area-mean Array as the same shape as other flattened variables
     GMT_pi_mon = area_mean(dict1_mon_bin_PI['gmt_mon_bin'], s_range,  x_range)   #.. MONTHLY time series of global area_mean surface air temperature
-    
     GMT_abr_mon = area_mean(dict1_mon_bin_abr['gmt_mon_bin'], s_range, x_range)   #.. MONTHLY time series of global area_mean surface air temperature
     
-    # Use the southernOCEAN value as the gmt variable
+    # gmt
     dict2_predi_fla_PI['gmt'] = GMT_pi_mon
     dict2_predi_fla_abr['gmt'] = GMT_abr_mon
     dict2_predi['gmt'] = deepcopy(dict2_predi_fla_PI['gmt'])
