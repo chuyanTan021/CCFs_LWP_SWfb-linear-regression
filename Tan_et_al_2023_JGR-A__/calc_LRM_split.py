@@ -103,7 +103,7 @@ def calc_LRM_split15yrs(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     Albedo_cs_abr = Rsutcs_abr / Rsdt_abr
     Alpha_cre_abr = Albedo_abr - Albedo_cs_abr
 
-    if np.min(LWP_abr)<1e-5:
+    if np.min(LWP_abr)<-1e-3:
         LWP_abr = Twp_abr
         print('clwvi mislabeled')
 
@@ -139,7 +139,7 @@ def calc_LRM_split15yrs(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     Albedo_cs_pi = Rsutcs_pi / Rsdt_pi
     Alpha_cre_pi = Albedo_pi - Albedo_cs_pi
 
-    if np.min(LWP)<1e-5:
+    if np.min(LWP)<-1e-3:
         LWP = Twp
         print('clwvi mislabeled')
 
@@ -271,6 +271,6 @@ def calc_LRM_split15yrs(THRESHOLD_sst, THRESHOLD_sub, **model_data):
     # rawdata_dict3 = p4plot1(s_range=s_range, y_range=y_range, x_range=x_range, Mean_training = rawdata_dict1['Mean_training'], Stdev_training = rawdata_dict1['Stdev_training'], shape_yr_pi=shape_yr_pi, shape_yr_abr=shape_yr_abr, rawdata_dict=rawdata_dict1)
     Coef_dict1['TR_sst'] = THRESHOLD_sst
 
-    savez(WD + C_dict['model_data']['modn'] + "_15yrscoefs_May24th_23_Anomalies", rawdata_dict = Coef_dict1)
+    savez(WD + C_dict['model_data']['modn'] + "_15yrscoefs_June7th_23_Anomalies", rawdata_dict = Coef_dict1)
     
     return None

@@ -8,6 +8,8 @@ import glob
 
 from calc_LRM_metric import *
 from save_meanstateLWP import *
+from calc_LRM_split import *
+
 import sys
 
 def main():
@@ -143,7 +145,7 @@ def run_single_model(N_of_model):
 
     WD = '/glade/scratch/chuyan/CMIP_output/CMIP_partition_RESULT/'
 
-    folder = glob.glob(WD+ deck_nas[N_of_model]+'__'+ 'STAT_pi+abr_'+'22x_31y_May22_23_anomalies'+ '.npz')
+    folder = glob.glob(WD+ deck_nas[N_of_model]+'__'+ 'STAT_pi+abr_'+'22x_31y_June7_23_anomalies'+ '.npz')
     # print(folder)
     output_ARRAY = np.load(folder[0], allow_pickle=True)  # str(TR_sst)
     TR_sst1 = output_ARRAY['TR_minabias_SST']
@@ -155,7 +157,9 @@ def run_single_model(N_of_model):
     print("TR_large_pi_R_2: ", TR_sst2, '  K ', TR_sub2 , ' Pa/s ')
     
     # save_meanstateLWP(float(TR_sst2), float(TR_sub2), **deck[N_of_model])   # create on Nov 11th, 2022.
+    
     calc_LRM_metrics(float(TR_sst2), float(TR_sub2), **deck[N_of_model])
+    # calc_LRM_split15yrs(float(TR_sst2), float(TR_sub2), **deck[N_of_model])
     
     # calc_LRM_metrics(float(0.0), float(0.0), **deck[N_of_model])
     return 0

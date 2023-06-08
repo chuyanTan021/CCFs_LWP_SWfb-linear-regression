@@ -235,7 +235,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis = 'calcstats'):
     Iwp_abr  = array(inputVar_abr['clivi'])
     
     # handle with midlabled total cloud water ('clwvi') data
-    if np.min(LWP_abr) < -1e-5:
+    if np.min(LWP_abr) < -1e-3:
         LWP_abr = Twp_abr
         print('abrupt4xCO2 clwvi mislabeled.')
 
@@ -244,7 +244,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis = 'calcstats'):
 
     gmt = array(inputVar_pi['tas'])
     SST = array(inputVar_pi['sfc_T'])
-
+    
     Precip = array(inputVar_pi['P'])* (24.*60.*60.)    #..Precipitation. Convert the units from kg m^-2 s^-1 -> mm*day^-1
     lh_vaporization = (2.501 - (2.361 * 10**-3) * (SST - 273.15)) * 1e6  # the latent heat of vaporization at the surface Temperature
     Eva1 = array(inputVar_pi['E']) / lh_vaporization * (24. * 60 * 60)
@@ -255,7 +255,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis = 'calcstats'):
     Twp = array(inputVar_pi['clwvi'])
     Iwp = array(inputVar_pi['clivi'])
     
-    if np.min(LWP)<-1e-5:
+    if np.min(LWP) < -1e-3:
         LWP = Twp
         print('piControl clwvi mislabeled.')
 
@@ -539,7 +539,7 @@ def loop_LRM_simple(modn = 'IPSLCM6ALR', type_analysis = 'calcstats'):
     # store arrays into .npz file for each GCMs:
     WD = '/glade/scratch/chuyan/CMIP_output/CMIP_partition_RESULT/'
     
-    savez(WD + modn+'__'+ 'STAT_pi+abr_'+'22x_31y_May22_23_anomalies', bound_y = y_gcm, bound_x = x_gcm, stats_1 = s1, stats_2 = s2, stats_3 = s3, stats_4 = s4, stats_5 = s5, cut_off1=cut_off1, cut_off2=cut_off2, TR_minabias_SST=TR_minabias_SST, TR_minabias_SUB=TR_minabias_SUB, TR_maxR2_SST=TR_maxR2_SST, TR_maxR2_SUB=TR_maxR2_SUB,  coef_a = coefa, coef_b = coefb, coef_c = coefc, coefd = coefd)
+    savez(WD + modn+'__'+ 'STAT_pi+abr_'+'22x_31y_June7_23_anomalies', bound_y = y_gcm, bound_x = x_gcm, stats_1 = s1, stats_2 = s2, stats_3 = s3, stats_4 = s4, stats_5 = s5, cut_off1=cut_off1, cut_off2=cut_off2, TR_minabias_SST=TR_minabias_SST, TR_minabias_SUB=TR_minabias_SUB, TR_maxR2_SST=TR_maxR2_SST, TR_maxR2_SUB=TR_maxR2_SUB,  coef_a = coefa, coef_b = coefb, coef_c = coefc, coefd = coefd)
     
     return None
 

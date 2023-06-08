@@ -63,11 +63,11 @@ def calc_Radiation_LRM_2(inputVar_pi, inputVar_abr, **model_data):
     LWP_abr = np.array(inputVar_abr['clwvi']) - np.array(inputVar_abr['clivi'])   #..units in kg m^-2
     
     # abnormal 'Liquid Water Path' value:
-    if np.nanmin(LWP_abr)<1e-5:
+    if np.nanmin(LWP_abr)<-1e-3:
         LWP_abr = np.array(inputVar_abr['clwvi'])
         print('abr4x clwvi mislabeled')
         
-    if np.nanmin(LWP_pi)<1e-5:
+    if np.nanmin(LWP_pi)<-1e-3:
         LWP_pi = np.array(inputVar_pi['clwvi'])
         print('piControl clwvi mislabeled')
     

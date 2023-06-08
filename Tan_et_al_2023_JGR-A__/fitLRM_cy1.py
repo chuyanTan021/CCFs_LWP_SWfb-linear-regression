@@ -458,8 +458,8 @@ def p4plot1(s_range, y_range, x_range, Mean_training, Stdev_training, shape_yr_p
     for e in range(len(datarepo_nas)):
     
         #  "monthly" convert to "annual" data:
-        areamean_dict_PI[datarepo_nas[e]+ '_yr_bin'] = get_annually_metric(dict_metric_actual_PI['LWP'].reshape(shape_mon_PI_3), shape_mon_PI_3[0], shape_mon_PI_3[1], shape_mon_PI_3[2])
-        areamean_dict_abr[datarepo_nas[e]+ '_yr_bin'] = get_annually_metric(dict_metric_actual_abr['LWP'].reshape(shape_mon_abr_3), shape_mon_abr_3[0], shape_mon_abr_3[1], shape_mon_abr_3[2])
+        areamean_dict_PI[datarepo_nas[e]+ '_yr_bin'] = annual_mean(dict_metric_actual_PI['LWP'].reshape(shape_mon_PI_3), shape_mon_PI_3[0], shape_mon_PI_3[1], shape_mon_PI_3[2])
+        areamean_dict_abr[datarepo_nas[e]+ '_yr_bin'] = annual_mean(dict_metric_actual_abr['LWP'].reshape(shape_mon_abr_3), shape_mon_abr_3[0], shape_mon_abr_3[1], shape_mon_abr_3[2])
 
         # "yr_bin" area_mean to 1-D array in 'shape_yr_':
         areamean_dict_PI[datarepo_nas[e]+ '_area_yr'] = area_mean(areamean_dict_PI[datarepo_nas[e]+ '_yr_bin'], y_range, x_range)
@@ -474,8 +474,8 @@ def p4plot1(s_range, y_range, x_range, Mean_training, Stdev_training, shape_yr_p
     datapredi_nas = ['LWP']  # 'IWP', 'albedo', 'rsut', 'albedo_lL', 'rsut_lL'
     
     for f in range(len(datapredi_nas)):
-        areamean_dict_predi[datapredi_nas[f]+'_predi_yr_bin_pi'] = get_annually_metric(rawdata_dict[datapredi_nas[f]+'_predi_bin_PI'], shape_mon_PI_3[0], shape_mon_PI_3[1], shape_mon_PI_3[2])
-        areamean_dict_predi[datapredi_nas[f]+'_predi_yr_bin_abr'] = get_annually_metric(rawdata_dict[datapredi_nas[f]+'_predi_bin_abr'], shape_mon_abr_3[0], shape_mon_abr_3[1], shape_mon_abr_3[2])
+        areamean_dict_predi[datapredi_nas[f]+'_predi_yr_bin_pi'] = annual_mean(rawdata_dict[datapredi_nas[f]+'_predi_bin_PI'], shape_mon_PI_3[0], shape_mon_PI_3[1], shape_mon_PI_3[2])
+        areamean_dict_predi[datapredi_nas[f]+'_predi_yr_bin_abr'] = annual_mean(rawdata_dict[datapredi_nas[f]+'_predi_bin_abr'], shape_mon_abr_3[0], shape_mon_abr_3[1], shape_mon_abr_3[2])
     
     # "yr_bin" area_mean to 1-D array in 'shape_yr_':
     for g in range(len(datapredi_nas)):
@@ -489,11 +489,11 @@ def p4plot1(s_range, y_range, x_range, Mean_training, Stdev_training, shape_yr_p
     rawdata_dict['areamean_dict_PI'] = areamean_dict_PI
 
     # calc d_DeltaLWP /d_DeltaGMT |(abrupt-4xCO2 - avg(piControl)), added on June 27th.
-    output_2report_pi = area_mean(get_annually_metric(dict1_mon_bin_PI['LWP_mon_bin'], shape_mon_PI_3[0], shape_mon_PI_3[1], shape_mon_PI_3[2]), y_range, x_range)[:]
-    output_2report_abr = area_mean(get_annually_metric(dict1_mon_bin_abr['LWP_mon_bin'], shape_mon_abr_3[0], shape_mon_abr_3[1], shape_mon_abr_3[2]), y_range, x_range)[0:150]
+    output_2report_pi = area_mean(annual_mean(dict1_mon_bin_PI['LWP_mon_bin'], shape_mon_PI_3[0], shape_mon_PI_3[1], shape_mon_PI_3[2]), y_range, x_range)[:]
+    output_2report_abr = area_mean(annual_mean(dict1_mon_bin_abr['LWP_mon_bin'], shape_mon_abr_3[0], shape_mon_abr_3[1], shape_mon_abr_3[2]), y_range, x_range)[0:150]
     
-    output_2predict_pi = area_mean(get_annually_metric(LWP_raw_predi_PI, shape_mon_PI_3[0],shape_mon_PI_3[1],shape_mon_PI_3[2]), y_range, x_range)[:]
-    output_2predict_abr = area_mean(get_annually_metric(LWP_raw_predi_abr, shape_mon_abr_3[0],shape_mon_abr_3[1],shape_mon_abr_3[2]), y_range, x_range)[0:150]
+    output_2predict_pi = area_mean(annual_mean(LWP_raw_predi_PI, shape_mon_PI_3[0],shape_mon_PI_3[1],shape_mon_PI_3[2]), y_range, x_range)[:]
+    output_2predict_abr = area_mean(annual_mean(LWP_raw_predi_abr, shape_mon_abr_3[0],shape_mon_abr_3[1],shape_mon_abr_3[2]), y_range, x_range)[0:150]
 
     output_yrs = arange(99 + 150)
     
