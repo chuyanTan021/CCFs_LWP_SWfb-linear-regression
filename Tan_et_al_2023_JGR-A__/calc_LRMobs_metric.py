@@ -102,6 +102,11 @@ def Pre_processing(s_range, x_range, y_range, valid_range1=[2002, 7, 15], valid_
     # Data processing
     # --Liquid water path, Unit in kg m^-2
     LWP = inputVar_obs['lwp'] / 1000.
+    
+    # Test on Systematic Error: set it as -0.01 kg m^-2:
+    LWP = LWP * 1.
+    # print("+- 15% percentage biases for training dLWP/dCCF.")
+    
     # 1-Sigma Liquid water path statistic error, Unit in kg m^-2
     LWP_error = inputVar_obs['lwp_error'] / 1000.
     # the MaskedArray of 'MAC-LWP' dataset
@@ -110,13 +115,13 @@ def Pre_processing(s_range, x_range, y_range, valid_range1=[2002, 7, 15], valid_
 
     # GMT: Global mean surface air Temperature (2-meter), Unit in K
     gmt = inputVar_obs['tas'] * 1.
-    # SST: Sea Surface Temperature or skin- Temperature, Unit in K
+    # T_s: Sea Surface Temperature or skin- Temperature, Unit in K
     SST = inputVar_obs['sfc_T'] * 1.
     # Precip: Precipitation, Unit in mm day^-1 (convert from kg m^-2 s^-1)
     Precip = inputVar_obs['P'] * (24. * 60 * 60)
     # Eva: Evaporation, Unit in mm day^-1 (here use the latent heat flux from the sfc, unit convert from W m^-2 --> kg m^-2 s^-1 --> mm day^-1)
     lh_vaporization = (2.501 - (2.361 * 10**-3) * (SST - 273.15)) * 1e6  # the latent heat of vaporization at the surface Temperature
-    Eva = inputVar_obs['E'] / lh_vaporization *(24. * 60 * 60)
+    Eva = inputVar_obs['E'] / lh_vaporization * (24. * 60 * 60)
 
     # MC: Moisture Convergence, represent the water vapor abundance, Unit in mm day^-1
     MC = Precip - Eva
@@ -129,13 +134,13 @@ def Pre_processing(s_range, x_range, y_range, valid_range1=[2002, 7, 15], valid_
     theta_skin = inputVar_obs['sfc_T'] * (100000. / inputVar_obs['sfc_P'])**k
     LTS_m = theta_700 - theta_skin  # LTS with np.nan
 
-    #.. mask the place with np.nan value
-    LTS_e = np.ma.masked_where(theta_700==np.nan, LTS_m)
-    # print(LTS_e)
+    # #.. mask the place with np.nan value
+    # LTS_e = np.ma.masked_where(theta_700==np.nan, LTS_m)
+    # # print(LTS_e)
 
     Subsidence = inputVar_obs['sub']
 
-    # SW radiative flux:
+    # SW radiative fluxes:
     Rsdt = inputVar_obs['rsdt']
     Rsut = inputVar_obs['rsut']
     Rsutcs = inputVar_obs['rsutcs']
@@ -143,9 +148,12 @@ def Pre_processing(s_range, x_range, y_range, valid_range1=[2002, 7, 15], valid_
     albedo = Rsut / Rsdt
     albedo_cs = Rsutcs / Rsdt
     Alpha_cre = albedo - albedo_cs
+    
     # abnormal values:
     albedo_cs[(albedo_cs <= 0.08) & (albedo_cs >= 1.00)] == np.nan
     Alpha_cre[(albedo_cs <= 0.08) & (albedo_cs >= 1.00)] == np.nan
+    
+    LWP[LWP <= 0.0] = np.nan
 
     # define Dictionary to store: CCFs(4), gmt, other variables :
     dict0_var = {'gmt': gmt, 'SST': SST, 'p_e': MC, 'LTS': LTS_m, 'SUB': Subsidence, 'LWP': LWP, 'rsdt': Rsdt, 'rsut': Rsut, 'rsutcs': Rsutcs, 'albedo' : albedo, 'albedo_cs': albedo_cs, 'alpha_cre': Alpha_cre, 'LWP_statistic_error': LWP_error, 'Maskarray_mac': Maskarray_mac}
@@ -162,10 +170,10 @@ def Pre_processing(s_range, x_range, y_range, valid_range1=[2002, 7, 15], valid_
     dict2_SO_mon = deepcopy(dict1_SO)
 
     # annually mean variable
-    dict2_SO_yr = get_annually_dict(dict1_SO, ['gmt', 'SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre'], inputVar_obs['times_merra2'], label = 'mon')
+    dict2_SO_yr = get_annual_dict(dict1_SO, ['gmt', 'SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre'], inputVar_obs['times_merra2'], label = 'mon')
 
 
-    # Propagate the np.nan values in 3 different datasets
+    # Propagate the np.nan values in 3 different datasets:
     # monthly data
     test_array_mon = np.ones((dict2_SO_mon['LWP'].shape))
     for i in ['SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre']:
@@ -202,7 +210,7 @@ def Pre_processing(s_range, x_range, y_range, valid_range1=[2002, 7, 15], valid_
     for j in ['SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre']:
         if dict2_SO_yr[j].shape == dict2_SO_yr['LWP'].shape:
             dict2_SO_yr[j][Maskarray_all_yr] = np.nan
-
+    
     # binned (spatial) avergae.
     # Southern Ocean 5 * 5 degree bin box
 
@@ -224,10 +232,10 @@ def Pre_processing(s_range, x_range, y_range, valid_range1=[2002, 7, 15], valid_
     print("End monthly data binned.")
 
     # binned Annually data (it's different than do the binned operation on the 'dict2_SO_yr'):
-    dict3_SO_yr_bin = get_annually_dict(dict3_SO_mon_bin, ['gmt', 'SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre'], inputVar_obs['times_merra2'])
+    dict3_SO_yr_bin = get_annual_dict(dict3_SO_mon_bin, ['gmt', 'SST', 'p_e', 'LTS', 'SUB', 'LWP', 'LWP_statistic_error', 'rsdt', 'rsut', 'rsutcs', 'albedo', 'albedo_cs', 'alpha_cre'], inputVar_obs['times_merra2'])
 
-    print("End annually data binned.")
-
+    print("End annual data binned.")
+    
     # count the ratio of values that are missing in each bin boxes:
     ratio_array = binned_cySO_availabledata(x_array_mon, inputVar_obs['lat_ceres'], inputVar_obs['lon_ceres'])
 

@@ -5,7 +5,6 @@ import netCDF4
 from numpy import *
 import matplotlib.pyplot as plt
 import xarray as xr
-
 # import PyNIO as Nio   #  deprecated
 import pandas as pd
 import glob

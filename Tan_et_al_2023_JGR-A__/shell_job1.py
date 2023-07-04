@@ -158,8 +158,8 @@ def run_single_model(N_of_model):
     
     # save_meanstateLWP(float(TR_sst2), float(TR_sub2), **deck[N_of_model])   # create on Nov 11th, 2022.
     
-    calc_LRM_metrics(float(TR_sst2), float(TR_sub2), **deck[N_of_model])
-    # calc_LRM_split15yrs(float(TR_sst2), float(TR_sub2), **deck[N_of_model])
+    # calc_LRM_metrics(float(TR_sst2), float(TR_sub2), **deck[N_of_model])
+    calc_LRM_split15yrs(float(TR_sst2), float(TR_sub2), **deck[N_of_model])
     
     # calc_LRM_metrics(float(0.0), float(0.0), **deck[N_of_model])
     return 0
