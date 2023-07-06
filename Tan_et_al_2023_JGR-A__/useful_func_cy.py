@@ -231,7 +231,7 @@ def latitude_mean(X, lats, lons, lat_range=[-85., -40.]):
         
         S[i] = xx_weight_mean
         
-
+        
     return S
 
 
