@@ -54,6 +54,11 @@ def calc_Radiation_OBS_2(s_range, x_range, y_range, valid_range1 = [2002, 7, 15]
     # Training Data processing:
     # Liquid water path, Unit in kg m^-2
     LWP_training = inputVar_training_obs['lwp'] / 1000.
+    
+    # Test on Systematic Error: set it as +-0.01 kg m^-2:
+    LWP_training = LWP_training * 1.
+    # print("+- 10.8% percentage biases for scaling d_alpha/d_LWP.")
+    
     # 1-Sigma Liquid water path statistic error, Unit in kg m^-2
     LWP_error_training = inputVar_training_obs['lwp_error'] / 1000.
     # the MaskedArray of 'MAC-LWP' dataset
@@ -93,6 +98,12 @@ def calc_Radiation_OBS_2(s_range, x_range, y_range, valid_range1 = [2002, 7, 15]
     # Predict Data processing:
     # Liquid water path, Unit in kg m^-2
     LWP_predict = inputVar_predict_obs['lwp'] / 1000.
+    
+    # Test on Systematic Error: set it as +-0.01 kg m^-2:
+    LWP_predict = LWP_predict * 1.
+    # print("+- 10.8% percentage biases for scaling d_alpha/d_LWP.")
+    
+    
     # 1-Sigma Liquid water path statistic error, Unit in kg m^-2
     LWP_error_predict = inputVar_predict_obs['lwp_error'] / 1000.
     # the MaskedArray of 'MAC-LWP' dataset
@@ -153,7 +164,6 @@ def calc_Radiation_OBS_2(s_range, x_range, y_range, valid_range1 = [2002, 7, 15]
 
     
     # radiative transfer model: single regime LRM:
-    
     threshold_list =  [0.110, 0.115, 0.120, 0.150, 0.200, 0.300, 0.350, 0.500, 1.000]  # [0.12, 0.15, 0.20, 0.50] 
     # training :
     

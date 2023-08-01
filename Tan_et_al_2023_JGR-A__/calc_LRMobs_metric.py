@@ -105,7 +105,7 @@ def Pre_processing(s_range, x_range, y_range, valid_range1=[2002, 7, 15], valid_
     
     # Test on Systematic Error: set it as -0.01 kg m^-2:
     LWP = LWP * 1.
-    # print("+- 15% percentage biases for training dLWP/dCCF.")
+    # print("+- 10.8% percentage biases for training dLWP/dCCF.")
     
     # 1-Sigma Liquid water path statistic error, Unit in kg m^-2
     LWP_error = inputVar_obs['lwp_error'] / 1000.
